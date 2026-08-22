@@ -4,6 +4,7 @@ Source for the private Sunday Multiplied website, including both review versions
 
 - `/` — original cinematic draft
 - `/draft-2` — traditional service-website draft
+- `/draft-hybrid` — vision-led hybrid draft combining the strongest parts of both directions
 
 ## Edit locally on Windows
 
