@@ -1,6 +1,6 @@
 # Sunday Multiplied Website
 
-Source for the private Sunday Multiplied website, including both review versions:
+Source for the private Sunday Multiplied website, including three review versions:
 
 - `/` — original cinematic draft
 - `/draft-2` — traditional service-website draft
