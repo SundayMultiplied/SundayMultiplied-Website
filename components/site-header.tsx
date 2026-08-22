@@ -18,15 +18,22 @@ export function SiteHeader() {
   const isDraftTwo = pathname.startsWith("/draft-2");
   const isHybrid = pathname.startsWith("/draft-hybrid");
   const reviewBase = isDraftTwo ? "/draft-2" : isHybrid ? "/draft-hybrid" : "";
-  const activeLinks = reviewBase
+  const activeLinks = isHybrid
+    ? [
+        ["Approach", "/draft-hybrid#approach"],
+        ["Resources", "/draft-hybrid/services"],
+        ["Workshops", "/draft-hybrid/workshops"],
+        ["Examples", "/draft-hybrid/examples"],
+        ["About", "/draft-hybrid/about"],
+      ]
+    : isDraftTwo
     ? [
         ["Services", `${reviewBase}/services`],
         ["Workshops", `${reviewBase}/workshops`],
         ["Pricing", `${reviewBase}/pricing`],
         ["Examples", `${reviewBase}/examples`],
         ["About", `${reviewBase}/about`],
-      ]
-    : links;
+      ] : links;
   const homeHref = reviewBase || "/";
   const contactHref = `${reviewBase}/contact`;
 
