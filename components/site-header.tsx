@@ -16,17 +16,19 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const isDraftTwo = pathname.startsWith("/draft-2");
-  const activeLinks = isDraftTwo
+  const isHybrid = pathname.startsWith("/draft-hybrid");
+  const reviewBase = isDraftTwo ? "/draft-2" : isHybrid ? "/draft-hybrid" : "";
+  const activeLinks = reviewBase
     ? [
-        ["Services", "/draft-2/services"],
-        ["Workshops", "/draft-2/workshops"],
-        ["Pricing", "/draft-2/pricing"],
-        ["Examples", "/draft-2/examples"],
-        ["About", "/draft-2/about"],
+        ["Services", `${reviewBase}/services`],
+        ["Workshops", `${reviewBase}/workshops`],
+        ["Pricing", `${reviewBase}/pricing`],
+        ["Examples", `${reviewBase}/examples`],
+        ["About", `${reviewBase}/about`],
       ]
     : links;
-  const homeHref = isDraftTwo ? "/draft-2" : "/";
-  const contactHref = isDraftTwo ? "/draft-2/contact" : "/contact";
+  const homeHref = reviewBase || "/";
+  const contactHref = `${reviewBase}/contact`;
 
   return (
     <header className={`site-header ${isDraftTwo ? "draft-two-header" : ""}`}>
