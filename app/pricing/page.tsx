@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ReviewLink as Link } from "../../components/review-link";
 import { PricingCalculator } from "../../components/pricing-calculator";
 
 export default function PricingPage() {

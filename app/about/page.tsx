@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ReviewLink as Link } from "../../components/review-link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -60,7 +60,9 @@ export default function AboutPage() {
           <h2>I could see the gap between a faithful message and a crowded week.</h2>
           <p className="about-lead">Sunday can be meaningful. People can leave encouraged, challenged, and ready to respond. Then work, school, family, notifications, and ordinary pressure compete for their attention.</p>
           <p>My background is in corporate learning and development, where success is not measured by whether information was delivered. The real question is whether people understood it, remembered it, and could apply it in the moment they needed it.</p>
+          <p>Sunday Multiplied also grew from a personal question of stewardship. I had spent years using my professional experience to help organizations develop people, but I kept returning to a deeper question: how could I use that same ability in service of Kingdom work?</p>
           <p>Sunday Multiplied began by bringing that same design question into discipleship: how can one church’s actual sermon keep creating opportunities to remember, reflect, discuss, and practice throughout the week?</p>
+          <a className="text-link" href="https://www.linkedin.com/in/brianwdavis/" target="_blank" rel="noreferrer">Connect with Brian on LinkedIn ↗</a>
         </div>
       </section>
 
@@ -109,6 +111,11 @@ export default function AboutPage() {
           <p>Sunday Multiplied is not a theological shift. It is a pedagogical one. The work is to create continuity around the message—not more content for people to consume.</p>
           <p className="signature light">Brian Davis <span>Founder, Sunday Multiplied</span></p>
         </div>
+      </section>
+
+      <section className="about-mission page-section">
+        <p className="eyebrow light">Our mission</p>
+        <blockquote>To help churches carry Sunday’s message into the week through intentional opportunities to remember, discuss, practice, and live God’s Word.</blockquote>
       </section>
 
       <section className="inline-cta page-section">
