@@ -205,7 +205,7 @@ footer p, footer a { color: #9aab9d; line-height: 1.6; font-size: 14px; }
 .about-profile-orbit { position: relative; display: grid; place-items: center; width: min(430px, 78vw); aspect-ratio: 1; border-radius: 50%; background: var(--deep); box-shadow: 0 0 0 45px rgba(19,34,26,.05), 0 0 0 90px rgba(19,34,26,.025); }
 .about-profile-orbit:before, .about-profile-orbit:after { content: ""; position: absolute; border-radius: 50%; border: 1px solid rgba(214,182,110,.42); }
 .about-profile-orbit:before { inset: 15%; } .about-profile-orbit:after { inset: 30%; }
-.profile-initials { position: relative; z-index: 2; color: var(--cream); font-family: Georgia, serif; font-size: 76px; letter-spacing: -.06em; }
+.profile-photo { position:relative; z-index:2; width:43%; aspect-ratio:1; border:3px solid var(--gold); border-radius:50%; object-fit:cover; object-position:50% 30%; box-shadow:0 16px 45px rgba(0,0,0,.35); }
 .profile-tag { position: absolute; z-index: 2; color: #b9c8bb; font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
 .tag-design { top: 7%; left: 46%; } .tag-practice { bottom: 8%; left: 43%; } .tag-reflect { top: 48%; left: 1%; }
 .about-profile > p { display: flex; flex-direction: column; margin-top: 34px; text-align: center; }

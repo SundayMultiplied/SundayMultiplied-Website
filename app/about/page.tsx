@@ -47,8 +47,8 @@ export default function AboutPage() {
 
       <section className="about-origin page-section">
         <div className="about-profile" aria-label="Brian Davis, founder of Sunday Multiplied">
-          <div className="about-profile-orbit" aria-hidden="true">
-            <span className="profile-initials">BD</span>
+          <div className="about-profile-orbit">
+            <img className="profile-photo" src="/bdavis.webp" alt="Brian Davis, founder of Sunday Multiplied" />
             <span className="profile-tag tag-design">Design</span>
             <span className="profile-tag tag-practice">Practice</span>
             <span className="profile-tag tag-reflect">Reflect</span>
