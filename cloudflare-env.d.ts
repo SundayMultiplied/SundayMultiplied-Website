@@ -42,7 +42,7 @@ declare namespace Cloudflare {
   interface Env {
     ASSETS: Fetcher;
     DB: D1Database;
-    RESOURCES: R2Bucket;
+    BUCKET: R2Bucket;
     BREVO_API_KEY?: string;
     APPROVAL_ADMIN_EMAIL?: string;
     APPROVAL_NOTIFICATION_EMAIL?: string;
