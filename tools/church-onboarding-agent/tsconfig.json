@@ -1,0 +1,10 @@
+{
+  "extends": "agents/tsconfig",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "WebWorker"],
+    "types": ["vite/client"],
+    "noEmit": true,
+    "strict": true
+  },
+  "include": ["src", "tests", "vite.config.ts", "worker-configuration.d.ts"]
+}
