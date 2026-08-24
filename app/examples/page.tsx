@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ReviewLink as Link } from "../../components/review-link";
 import { ExampleGallery } from "../../components/example-gallery";
 
 export default function ExamplesPage() {

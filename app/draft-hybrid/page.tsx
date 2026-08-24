@@ -7,7 +7,7 @@ const resources = [
   ["Midweek Reinforcement", "Return", "A timely prompt that brings the week’s truth back into view when life gets loud."],
 ];
 
-export default function Home() {
+export default function HybridHome() {
   return <main>
     <section className="hero hybrid-hero">
       <div className="hero-noise" aria-hidden="true" />
@@ -16,7 +16,7 @@ export default function Home() {
         <h1>The sermon is<br /><em>not the finish line.</em></h1>
         <p className="hero-lead">Sunday Multiplied helps churches turn one faithful message into intentional rhythms that carry God’s Word into the other 167 hours.</p>
         <div className="hero-actions">
-          <Link className="button button-light" href="/contact">Explore what your week could become <span>↗</span></Link>
+          <Link className="button button-light" href="/draft-hybrid/contact">Explore what your week could become <span>↗</span></Link>
           <Link className="text-link light" href="#approach">See the approach <span>↓</span></Link>
         </div>
       </div>
@@ -40,7 +40,7 @@ export default function Home() {
     <section className="rhythm section-pad">
       <div className="section-heading"><p className="eyebrow light">One sermon. Multiple touchpoints.</p><h2>A weekly rhythm built from what your church actually heard.</h2><p>Pastoral in tone. Branded for your church. Designed for formation, not content volume.</p></div>
       <div className="resource-grid">{resources.map(([name,moment,copy],index)=><article className="resource-card" key={name}><div className="resource-top"><span>0{index+1}</span><span>{moment}</span></div><h3>{name}</h3><p>{copy}</p><div className="resource-line" /></article>)}</div>
-      <Link className="text-link light hybrid-section-link" href="/services">Explore the complete weekly rhythm ↗</Link>
+      <Link className="text-link light hybrid-section-link" href="/draft-hybrid/services">Explore the complete weekly rhythm ↗</Link>
     </section>
 
     <section className="hybrid-benefits section-pad">
@@ -55,8 +55,8 @@ export default function Home() {
 
     <section className="formation section-pad"><div className="formation-quote"><span className="quote-mark">“</span><blockquote>God produces the fruit.<br />We cultivate the conditions<br />for people to <em>abide.</em></blockquote></div><div className="formation-note"><p className="eyebrow">Conviction + craft</p><p>Sunday Multiplied is not a theological shift. It is a pedagogical one—joining confidence in the Spirit’s work with thoughtful rhythms of remembering, conversation, and practice.</p></div></section>
 
-    <section className="founder-home section-pad"><div className="founder-home-mark" aria-hidden="true"><span>19</span><small>years in learning design</small></div><div className="founder-home-copy"><p className="eyebrow">Why Sunday Multiplied is different</p><h2>Built by a learning designer.<br />Made to serve the pastor’s message.</h2><p>AI helps with scale. It is not the product. The real value is the instructional-design judgment behind every resource: finding the sermon’s actual emphasis, designing for different audiences, and creating a clear path from hearing to practice.</p><Link className="text-link" href="/about">Meet Brian and see the approach ↗</Link></div></section>
+    <section className="founder-home section-pad"><div className="founder-home-mark" aria-hidden="true"><span>19</span><small>years in learning design</small></div><div className="founder-home-copy"><p className="eyebrow">Why Sunday Multiplied is different</p><h2>Built by a learning designer.<br />Made to serve the pastor’s message.</h2><p>AI helps with scale. It is not the product. The real value is the instructional-design judgment behind every resource: finding the sermon’s actual emphasis, designing for different audiences, and creating a clear path from hearing to practice.</p><Link className="text-link" href="/draft-hybrid/about">Meet Brian and see the approach ↗</Link></div></section>
 
-    <section className="hybrid-conversation section-pad"><p className="eyebrow">Start with the ministry need—not a package.</p><h2>What could your other 167 hours become?</h2><p>Every church already has a rhythm between Sundays. Let’s identify where the message currently travels, where people lose contact with it, and which touchpoint could make the most meaningful difference.</p><div><Link className="button button-light" href="/contact">Start a conversation ↗</Link><Link className="text-link light" href="/examples">See what one sermon can become ↗</Link></div></section>
+    <section className="hybrid-conversation section-pad"><p className="eyebrow">Start with the ministry need—not a package.</p><h2>What could your other 167 hours become?</h2><p>Every church already has a rhythm between Sundays. Let’s identify where the message currently travels, where people lose contact with it, and which touchpoint could make the most meaningful difference.</p><div><Link className="button button-light" href="/draft-hybrid/contact">Start a conversation ↗</Link><Link className="text-link light" href="/draft-hybrid/examples">See what one sermon can become ↗</Link></div></section>
   </main>;
 }

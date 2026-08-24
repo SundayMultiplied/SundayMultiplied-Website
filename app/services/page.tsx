@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ReviewLink as Link } from "../../components/review-link";
 import { ResourceExplorer } from "../../components/resource-explorer";
 
 export default function ServicesPage() {
@@ -12,8 +12,8 @@ export default function ServicesPage() {
 
       <section className="page-section resource-explorer-section">
         <div className="page-section-lead">
-          <p className="eyebrow">Explore the weekly rhythm</p>
-          <h2>One message can meet people in more than one moment.</h2>
+          <p className="eyebrow">Start where you are. Grow over time.</p>
+          <h2>Begin with one environment—or connect several touchpoints into a thoughtful weekly rhythm.</h2>
         </div>
         <ResourceExplorer />
       </section>

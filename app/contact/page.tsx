@@ -1,5 +1,5 @@
 import { ContactForm } from "../../components/contact-form";
-import Link from "next/link";
+import { ReviewLink as Link } from "../../components/review-link";
 
 export default function ContactPage() {
   return (
