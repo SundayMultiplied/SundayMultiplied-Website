@@ -1,6 +1,6 @@
 type ApprovalEnv = {
   DB?: D1Database;
-  RESOURCES?: R2Bucket;
+  BUCKET?: R2Bucket;
   BREVO_API_KEY?: string;
   APPROVAL_ADMIN_EMAIL?: string;
   APPROVAL_NOTIFICATION_EMAIL?: string;
@@ -224,8 +224,8 @@ async function resourceResponse(env: ApprovalEnv, packageId: string | null, reso
   const resource = await env.DB.prepare("SELECT storage_key, preview_url FROM review_resources WHERE id = ? AND package_id = ? LIMIT 1")
     .bind(resourceId, packageId).first<{ storage_key: string | null; preview_url: string | null }>();
   if (!resource) return json({ error: "Resource not found." }, 404);
-  if (resource.storage_key && env.RESOURCES) {
-    const object = await env.RESOURCES.get(resource.storage_key);
+  if (resource.storage_key && env.BUCKET) {
+    const object = await env.BUCKET.get(resource.storage_key);
     if (!object) return json({ error: "Resource file not found." }, 404);
     const headers = new Headers();
     object.writeHttpMetadata(headers);
