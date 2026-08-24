@@ -25,4 +25,9 @@ timeout \
   "${SITES_BUILD_TIMEOUT:-3m}" \
   "${vinext}" build
 
+if [[ -d "${SITES_PROJECT_ROOT}/drizzle" ]]; then
+  mkdir -p "${SITES_PROJECT_ROOT}/dist/.openai/drizzle"
+  cp -R "${SITES_PROJECT_ROOT}/drizzle/." "${SITES_PROJECT_ROOT}/dist/.openai/drizzle/"
+fi
+
 "${script_dir}/validate-artifact.sh"
