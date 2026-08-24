@@ -38,3 +38,24 @@ The repository is the editable master copy. The hosted ChatGPT Sites version rem
 ## Build check
 
 Run `npm run build` before a major handoff or deployment. The site uses React, Next-compatible routing, Vinext, and Cloudflare Workers.
+
+## Approval MVP
+
+The approval workflow now lives in this repository alongside the marketing site:
+
+- `/approvals` — authenticated Sunday Multiplied package dashboard
+- `/review/[secure-token]` — no-login church reviewer experience
+- `/api/approvals` — authenticated package creation and status list
+- `/api/reviews/[secure-token]` — package viewing and approval decisions
+
+Cloudflare D1 stores packages, resources, feedback, and activity. R2 can serve private HTML/PDF files through the secure review endpoint. Review tokens are generated with Web Crypto and only their SHA-256 hashes are stored.
+
+### Required Cloudflare configuration
+
+1. Provision the `DB` D1 binding and `RESOURCES` R2 binding. Both binding names are declared in `.openai/hosting.json`.
+2. Apply the SQL migrations in `drizzle/` to the production D1 database.
+3. Configure `APPROVAL_ADMIN_EMAIL` as the email allowed to use `/approvals`.
+4. Configure `APPROVAL_NOTIFICATION_EMAIL` for decision notifications.
+5. Add `BREVO_API_KEY` as a secret. Never commit it to this repository.
+
+The current admin authorization uses the hosting platform's verified `oai-authenticated-user-email` header. Before moving the dashboard to a fully public Cloudflare deployment, put `/approvals` and `/api/approvals` behind Cloudflare Access or replace this adapter with the chosen admin login system.
