@@ -205,7 +205,7 @@ footer p, footer a { color: #9aab9d; line-height: 1.6; font-size: 14px; }
 .about-profile-orbit { position: relative; display: grid; place-items: center; width: min(430px, 78vw); aspect-ratio: 1; border-radius: 50%; background: var(--deep); box-shadow: 0 0 0 45px rgba(19,34,26,.05), 0 0 0 90px rgba(19,34,26,.025); }
 .about-profile-orbit:before, .about-profile-orbit:after { content: ""; position: absolute; border-radius: 50%; border: 1px solid rgba(214,182,110,.42); }
 .about-profile-orbit:before { inset: 15%; } .about-profile-orbit:after { inset: 30%; }
-.profile-photo { position:relative; z-index:2; width:43%; aspect-ratio:1; border:3px solid var(--gold); border-radius:50%; object-fit:cover; object-position:50% 30%; box-shadow:0 16px 45px rgba(0,0,0,.35); }
+.profile-photo { position:relative; z-index:2; width:70%; aspect-ratio:1; border:3px solid var(--gold); border-radius:50%; object-fit:cover; object-position:50% 30%; box-shadow:0 16px 45px rgba(0,0,0,.35); }
 .best-fit { margin-top:24px!important; padding-top:20px; border-top:1px solid var(--line); color:var(--ink)!important; font-size:14px!important; }
 .best-fit strong { color:var(--clay); }
 .about-mission { background:var(--moss); color:var(--cream); text-align:center; }

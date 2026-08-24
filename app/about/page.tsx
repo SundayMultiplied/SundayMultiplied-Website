@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "About Brian Davis | Sunday Multiplied",
-  description: "How 19 years of instructional design, adult learning, and systems thinking shape Sunday Multiplied.",
+  description: "How 20+ years of instructional design, adult learning, and systems thinking shape Sunday Multiplied.",
 };
 
 const expertise = [
@@ -42,16 +42,16 @@ export default function AboutPage() {
       <section className="page-hero about-hero">
         <p className="eyebrow light">About Sunday Multiplied</p>
         <h1>Learning design<br />in service of <em>discipleship.</em></h1>
-        <p>I’m Brian Davis. For 19 years, my work has centered on a practical question: how do we help people do something meaningful with what they hear?</p>
+        <p>I’m Brian Davis. For 20+ years, my work has centered on a practical question: how do we help people do something meaningful with what they hear?</p>
       </section>
 
       <section className="about-origin page-section">
         <div className="about-profile" aria-label="Brian Davis, founder of Sunday Multiplied">
           <div className="about-profile-orbit">
             <img className="profile-photo" src="/bdavis.webp" alt="Brian Davis, founder of Sunday Multiplied" />
-            <span className="profile-tag tag-design">Design</span>
-            <span className="profile-tag tag-practice">Practice</span>
-            <span className="profile-tag tag-reflect">Reflect</span>
+            <span className="profile-tag tag-design"> </span>
+            <span className="profile-tag tag-practice"> </span>
+            <span className="profile-tag tag-reflect"> </span>
           </div>
           <p><strong>Brian Davis</strong><span>Founder · Instructional Designer</span></p>
         </div>
@@ -62,7 +62,7 @@ export default function AboutPage() {
           <p>My background is in corporate learning and development, where success is not measured by whether information was delivered. The real question is whether people understood it, remembered it, and could apply it in the moment they needed it.</p>
           <p>Sunday Multiplied also grew from a personal question of stewardship. I had spent years using my professional experience to help organizations develop people, but I kept returning to a deeper question: how could I use that same ability in service of Kingdom work?</p>
           <p>Sunday Multiplied began by bringing that same design question into discipleship: how can one church’s actual sermon keep creating opportunities to remember, reflect, discuss, and practice throughout the week?</p>
-          <a className="text-link" href="https://www.linkedin.com/in/brianwdavis/" target="_blank" rel="noreferrer">Connect with Brian on LinkedIn ↗</a>
+          <br></br><a className="text-link" href="https://www.linkedin.com/in/brianwdavis/" target="_blank" rel="noreferrer">Connect with Brian on LinkedIn ↗</a>
         </div>
       </section>
 
