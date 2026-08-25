@@ -2,18 +2,26 @@
 
 Generated during onboarding. Confirm all inferred colors, fonts, and assets before activation.
 
-Automated review suggests a bright, bold, structured visual system. Confirm recommendations against current logo files and recent social graphics.
+## Confirmed brand profile
+
+- Primary: #3f6e82
+- Secondary: #aeb862
+- Accent: #dbedeb
+- Background: #ffffff
+- Text: #525252
+- Heading font: Oswald
+- Body font: Open Sans
+- Button style: square
+- Corner radius: 3px
+- Accessibility rule: use #3f6e82 for small labels on white; reserve #dbedeb for backgrounds and decorative treatments.
 
 ## Automated brand review
 
 - Visual tone: bright, bold, structured
-- Button style: square
-- Corner radius: 3px
 - Pages inspected: 4
 - Stylesheets inspected: 12
-
-- Review: Primary text contrast is 2.75:1 and needs review.
-- Review: Text on primary contrast is 2.75:1 and needs review.
+- The automated contrast warnings below describe the initially suggested #2ea3f2 palette, not the confirmed palette.
+- ETmodules and FontAwesome were detected in the source CSS but rejected as icon fonts.
 
 ## Research provenance
 
@@ -23,6 +31,5 @@ Automated review suggests a bright, bold, structured visual system. Confirm reco
 - **brand_color**: #333333 (high; https://skidawaychurch.org/)
 - **brand_color**: #2ea3f2 (high; https://skidawaychurch.org/)
 - **brand_color**: #666666 (high; https://skidawaychurch.org/)
-- **brand_font**: ETmodules (high; https://skidawaychurch.org/)
-- **brand_font**: FontAwesome (high; https://skidawaychurch.org/)
-- **brand_font**: ETmodules!important (high; https://skidawaychurch.org/)
+- **brand_font**: Open Sans (confirmed; https://skidawaychurch.org/)
+- **brand_font**: Oswald (confirmed; https://skidawaychurch.org/)
