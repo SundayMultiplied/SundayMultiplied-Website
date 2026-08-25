@@ -1,12 +1,15 @@
 import { Agent, callable, routeAgentRequest } from "agents";
 import { createOnboardingPullRequest } from "./services/github";
 import { buildRepositoryFiles } from "./services/repo-files";
+import { syncOnboardingCrm, type CrmUpdate } from "./services/crm";
 import { inspectChurchWebsite, validatePublicUrl } from "./services/site-inspector";
 import { emptyState, type BrandProfile, type ChurchBasics, type ChurchLink, type OnboardingState, type Reviewer, type ResourceType } from "./types";
 
 type AppEnv = Cloudflare.Env & {
   ASSETS: Fetcher;
   GITHUB_TOKEN: string;
+  CRM_WEBHOOK_URL?: string;
+  CRM_WEBHOOK_SECRET?: string;
 };
 
 const now = () => new Date().toISOString();
@@ -19,11 +22,24 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
     this.setState({ ...this.state, ...patch, updatedAt: now() });
   }
 
+  private async syncCrm(update: CrmUpdate) {
+    const result = await syncOnboardingCrm(this.env, this.state, update);
+    if (result.status === "failed") console.error("Onboarding continued without CRM update", result.message);
+    return result;
+  }
+
   @callable()
-  saveBasics(basics: ChurchBasics) {
+  async saveBasics(basics: ChurchBasics) {
     if (!basics.name.trim() || !slugPattern.test(basics.slug)) throw new Error("A church name and URL-safe slug are required.");
     validatePublicUrl(basics.website);
+    const startedAt = now();
     this.save({ basics, phase: "researching", checklist: { ...this.state.checklist, identity: true } });
+    return this.syncCrm({
+      stage: "Researching",
+      startedAt,
+      brandProfile: "Not Started",
+      repositoryWorkspace: "Not Created",
+    });
   }
 
   @callable()
@@ -41,6 +57,7 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       phase: "needs_confirmation",
       checklist: { ...this.state.checklist, sources: links.length > 0, brandResearch: true },
     });
+    await this.syncCrm({ stage: "Brand Review", brandProfile: "Draft" });
     return result;
   }
 
@@ -51,16 +68,17 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
   }
 
   @callable()
-  saveBrand(brand: BrandProfile) {
+  async saveBrand(brand: BrandProfile) {
     const color = /^#[0-9a-f]{6}$/i;
     for (const value of [brand.primaryColor, brand.secondaryColor, brand.accentColor, brand.backgroundColor, brand.textColor]) {
       if (!color.test(value)) throw new Error("Brand colors must use six-digit hex values.");
     }
     this.save({ brand, phase: "style_ready", checklist: { ...this.state.checklist, brand: true } });
+    return this.syncCrm({ stage: "Approval Setup", brandProfile: "Approved" });
   }
 
   @callable()
-  saveApproval(reviewers: Reviewer[], resources: ResourceType[], deliveryDay: string) {
+  async saveApproval(reviewers: Reviewer[], resources: ResourceType[], deliveryDay: string) {
     if (!reviewers.length || reviewers.some((reviewer) => !reviewer.email.includes("@"))) {
       throw new Error("At least one valid reviewer is required.");
     }
@@ -72,6 +90,7 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       phase: "approval_ready",
       checklist: { ...this.state.checklist, reviewer: true },
     });
+    return this.syncCrm({ stage: "Approval Setup" });
   }
 
   async onRequest(request: Request) {
@@ -137,7 +156,13 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       github: { ...result, createdAt: now() },
       checklist: { ...this.state.checklist, repository: true },
     });
-    return result;
+    const crm = await this.syncCrm({
+      stage: "Repository PR",
+      brandProfile: "Approved",
+      repositoryWorkspace: "PR Open",
+      onboardingDraftUrl: result.pullRequestUrl,
+    });
+    return { ...result, crm };
   }
 }
 
