@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sunday-multiplied-onboarding",
+  "main": "src/server.ts",
+  "compatibility_date": "2026-08-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ChurchOnboardingAgent",
+        "class_name": "ChurchOnboardingAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["ChurchOnboardingAgent"]
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "CHURCH_ASSETS",
+      "bucket_name": "sunday-multiplied-church-assets"
+    }
+  ],
+  "vars": {
+    "ENVIRONMENT": "production",
+    "GITHUB_OWNER": "SundayMultiplied",
+    "GITHUB_REPO": "SundayMultiplied-Website",
+    "GITHUB_BASE_BRANCH": "main"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

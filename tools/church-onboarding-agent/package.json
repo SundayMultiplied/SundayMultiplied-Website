@@ -1,0 +1,28 @@
+{
+  "name": "sunday-multiplied-church-onboarding",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "check": "tsc --noEmit && vitest --config vitest.config.ts run",
+    "deploy": "npm run check && npm run build && wrangler deploy",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "agents": "0.21.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.53.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "typescript": "5.9.3",
+    "vite": "8.2.2",
+    "vitest": "4.0.18",
+    "wrangler": "4.125.0"
+  }
+}

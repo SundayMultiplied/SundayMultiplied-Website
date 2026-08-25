@@ -1,0 +1,31 @@
+:root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #14211d; background: #edf1ec; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+.shell { width: min(1080px, calc(100% - 32px)); margin: 0 auto; padding: 42px 0 80px; }
+.topbar { display: flex; justify-content: space-between; align-items: end; margin-bottom: 28px; }
+h1 { margin: 4px 0 0; font-family: Georgia, serif; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 500; }
+h2 { margin: 5px 0 8px; font: 500 clamp(1.65rem, 3vw, 2.4rem)/1.15 Georgia, serif; }
+.eyebrow { margin: 0; color: #587066; font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.status { display: grid; text-align: right; }.status strong { font-size: 1.5rem; }.status span { color: #62736c; font-size: .8rem; }
+nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; overflow: hidden; border: 1px solid #cad4ce; border-radius: 12px 12px 0 0; background: #cad4ce; }
+nav button { display: flex; gap: 10px; align-items: center; border: 0; padding: 15px; color: #66776f; background: #f3f5f1; }
+nav button b { font-size: .72rem; color: #91a097; } nav button.active { color: #fff; background: #153f35; } nav button.active b { color: #c8dcd3; }
+.card { min-height: 510px; padding: clamp(26px, 5vw, 58px); border: 1px solid #cad4ce; border-top: 0; border-radius: 0 0 12px 12px; background: #fffdf8; box-shadow: 0 18px 55px rgba(27,52,43,.08); }
+.lede { max-width: 720px; margin: 0 0 30px; color: #5a6b64; line-height: 1.65; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+label { display: grid; gap: 7px; color: #465a51; font-size: .78rem; font-weight: 700; }
+input, select, textarea { width: 100%; border: 1px solid #bdcbc4; border-radius: 7px; padding: 12px 13px; color: #14211d; background: #fff; }
+input:focus, select:focus, textarea:focus { outline: 3px solid rgba(43,112,91,.17); border-color: #2b705b; }
+textarea { min-height: 110px; resize: vertical; }
+.colors { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px; }.colors input { height: 48px; padding: 4px; }
+footer { display: flex; justify-content: flex-end; margin-top: 34px; padding-top: 24px; border-top: 1px solid #e0e5e1; }
+.primary, .secondary { border: 1px solid #153f35; border-radius: 7px; padding: 12px 18px; font-weight: 800; }.primary { color: #fff; background: #153f35; }.secondary { color: #153f35; background: transparent; }.text { border: 0; padding: 10px 0; color: #1f624e; background: transparent; font-weight: 800; }
+button:disabled { cursor: wait; opacity: .55; }.error { margin-bottom: 14px; border: 1px solid #d68b83; border-radius: 8px; padding: 12px 15px; color: #812b22; background: #fff0ee; }
+.links { display: grid; gap: 10px; margin-top: 18px; }.link-row { display: grid; grid-template-columns: 180px 180px 1fr; gap: 8px; }
+.upload-note { display: grid; gap: 4px; margin-top: 20px; border: 1px dashed #a7b8ae; border-radius: 8px; padding: 15px; color: #586b62; }.upload-note strong { color: #213f35; }
+.logo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }.logo-grid input { padding: 8px; font-size: .72rem; }
+fieldset { display: flex; gap: 22px; margin: 24px 0 0; border: 1px solid #cdd7d1; border-radius: 8px; padding: 16px; }legend { padding: 0 8px; font-size: .8rem; font-weight: 800; }.check { display: flex; grid-template-columns: auto 1fr; align-items: center; }.check input { width: auto; }
+.tree { list-style: none; margin: 26px 0; border: 1px solid #d4ddd8; border-radius: 9px; padding: 8px 0; font: .88rem/1.5 ui-monospace, SFMono-Regular, monospace; }.tree li { padding: 9px 16px; border-bottom: 1px solid #edf0ed; }.tree li:last-child { border: 0; }.link { display: inline-block; text-decoration: none; }
+@media (max-width: 760px) { .shell { width: min(100% - 20px, 1080px); padding-top: 22px; }.topbar { align-items: start; }.status { display: none; }nav { grid-template-columns: repeat(5, minmax(52px, 1fr)); }nav button { justify-content: center; padding: 13px 5px; font-size: 0; }nav button b { font-size: .7rem; }.card { padding: 25px 18px; }.grid, .colors, .logo-grid { grid-template-columns: 1fr; }.link-row { grid-template-columns: 1fr; }fieldset { display: grid; gap: 12px; } }

@@ -1,0 +1,60 @@
+name: Deploy church onboarding agent
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "tools/church-onboarding-agent/**"
+      - ".github/workflows/deploy-onboarding-agent.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: church-onboarding-production
+  cancel-in-progress: false
+
+jobs:
+  validate-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/church-onboarding-agent
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/church-onboarding-agent/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+
+      - name: Ensure private church asset bucket exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if ! npx wrangler r2 bucket info sunday-multiplied-church-assets >/dev/null 2>&1; then
+            npx wrangler r2 bucket create sunday-multiplied-church-assets
+          fi
+
+      - name: Deploy to Cloudflare
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: tools/church-onboarding-agent
+          command: deploy
