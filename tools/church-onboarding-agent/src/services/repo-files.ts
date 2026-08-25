@@ -15,6 +15,7 @@ function css(state: OnboardingState): string {
   --sm-color-text: ${b.textColor};
   --sm-font-heading: ${b.headingFont};
   --sm-font-body: ${b.bodyFont};
+  --sm-corner-radius: ${b.cornerRadius};
 }
 
 .sm-resource {
@@ -30,6 +31,32 @@ function css(state: OnboardingState): string {
   font-family: var(--sm-font-heading);
 }
 
+.sm-resource__eyebrow,
+.sm-resource__section-label {
+  color: var(--sm-color-accent);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.sm-resource__card,
+.sm-resource__scripture,
+.sm-resource__practice {
+  border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent);
+  border-radius: var(--sm-corner-radius);
+  background: color-mix(in srgb, var(--sm-color-background) 94%, var(--sm-color-secondary));
+}
+
+.sm-resource a,
+.sm-resource__button {
+  color: var(--sm-color-primary);
+  font-weight: 700;
+}
+
+.sm-resource__button {
+  border-radius: ${b.buttonStyle === "rounded" ? "999px" : b.buttonStyle === "square" ? "0" : "var(--sm-corner-radius)"};
+}
+
 .sm-resource__header-logo {
   display: block;
   max-height: 4rem;
@@ -37,7 +64,10 @@ function css(state: OnboardingState): string {
 }
 
 @media print {
-  .sm-resource { background: #fff; }
+  .sm-resource { color: #111; background: #fff; }
+  .sm-resource__card,
+  .sm-resource__scripture,
+  .sm-resource__practice { border-color: #bbb; background: #fff; }
   .sm-no-print { display: none !important; }
 }
 `;
@@ -74,6 +104,16 @@ Generated during onboarding. Confirm all inferred colors, fonts, and assets befo
 
 ${state.brand.visualNotes || "No additional visual notes recorded."}
 
+## Automated brand review
+
+- Visual tone: ${state.brand.visualTone || "Not recorded"}
+- Button style: ${state.brand.buttonStyle}
+- Corner radius: ${state.brand.cornerRadius}
+- Pages inspected: ${state.brandAnalysis?.pagesAnalyzed.length || 0}
+- Stylesheets inspected: ${state.brandAnalysis?.stylesheetsAnalyzed.length || 0}
+
+${state.brandAnalysis?.warnings.map((warning) => `- Review: ${warning}`).join("\n") || "- No automated warnings."}
+
 ## Research provenance
 
 ${state.findings.map((item) => `- **${item.field}**: ${item.value} (${item.confidence}; ${item.sourceUrl})`).join("\n") || "- No automated findings recorded."}
@@ -82,8 +122,8 @@ ${state.findings.map((item) => `- **${item.field}**: ${item.value} (${item.confi
     { path: `${root}/church.json`, content: `${JSON.stringify(church, null, 2)}\n` },
     { path: `${root}/styles/${state.basics.slug}.css`, content: css(state) },
     { path: `${root}/sources/streaming.json`, content: `${JSON.stringify(streaming, null, 2)}\n` },
+    { path: `${root}/brand/analysis.json`, content: `${JSON.stringify(state.brandAnalysis || null, null, 2)}\n` },
     { path: `${root}/brand/source-notes.md`, content: notes },
     { path: `${root}/resources/.gitkeep`, content: "" },
   ];
 }
-
