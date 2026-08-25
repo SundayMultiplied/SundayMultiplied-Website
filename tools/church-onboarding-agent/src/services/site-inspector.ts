@@ -4,7 +4,7 @@ const PRIVATE_HOST = /^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|172\.(1[6
 const PAGE_LIMIT = 450_000;
 const CSS_LIMIT = 220_000;
 const PAGE_HINTS = ["about", "sermon", "message", "watch", "ministr", "group", "event", "give", "contact"];
-const ICON_FONT = /(?:font\s*awesome|fontawesome|etmodules|dashicons|material\s+icons?|glyphicons?|icomoon|themify|flaticon|eleganticons|divi)/i;
+const ICON_FONT = /(?:font\s*awesome|fontawesome|etmodules|dashicons|material\s+icons?|glyphicons?|icomoon|entypo|foundation\s*icons?|themify|flaticon|eleganticons|divi)/i;
 const DISPLAY_FONT = /(?:oswald|bebas|anton|playfair|abril|cinzel|cormorant|archivo\s+black|roboto\s+slab|merriweather)/i;
 
 export function validatePublicUrl(raw: string): URL {
