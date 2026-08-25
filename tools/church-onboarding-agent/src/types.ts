@@ -59,7 +59,36 @@ export type BrandProfile = {
   textColor: string;
   headingFont: string;
   bodyFont: string;
+  cornerRadius: string;
+  buttonStyle: "square" | "soft" | "rounded";
+  visualTone: string;
   visualNotes: string;
+};
+
+export type BrandCandidate = {
+  value: string;
+  occurrences: number;
+  sources: string[];
+};
+
+export type ContrastCheck = {
+  label: string;
+  foreground: string;
+  background: string;
+  ratio: number;
+  level: "pass" | "review";
+};
+
+export type BrandAnalysis = {
+  analyzedAt: string;
+  pagesAnalyzed: string[];
+  stylesheetsAnalyzed: string[];
+  colorCandidates: BrandCandidate[];
+  fontCandidates: BrandCandidate[];
+  radiusCandidates: BrandCandidate[];
+  suggestedProfile: BrandProfile;
+  contrastChecks: ContrastCheck[];
+  warnings: string[];
 };
 
 export type ResearchFinding = {
@@ -83,6 +112,7 @@ export type OnboardingState = {
   approvalWindowDays: number;
   draftRetentionDays: number;
   findings: ResearchFinding[];
+  brandAnalysis?: BrandAnalysis;
   checklist: Record<string, boolean>;
   github?: {
     branch: string;
@@ -112,6 +142,9 @@ export const emptyState = (): OnboardingState => ({
     textColor: "#14211d",
     headingFont: "Georgia, serif",
     bodyFont: "Arial, sans-serif",
+    cornerRadius: "8px",
+    buttonStyle: "soft",
+    visualTone: "",
     visualNotes: "",
   },
   assets: [],
@@ -132,4 +165,3 @@ export const emptyState = (): OnboardingState => ({
   },
   updatedAt: new Date(0).toISOString(),
 });
-

@@ -35,9 +35,11 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
     }
     this.save({
       findings: result.findings,
+      brandAnalysis: result.brandAnalysis,
+      brand: result.brandAnalysis.suggestedProfile,
       links,
       phase: "needs_confirmation",
-      checklist: { ...this.state.checklist, sources: links.length > 0 },
+      checklist: { ...this.state.checklist, sources: links.length > 0, brandResearch: true },
     });
     return result;
   }
