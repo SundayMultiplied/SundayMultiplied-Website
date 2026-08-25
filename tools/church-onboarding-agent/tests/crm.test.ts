@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { emptyState } from "../src/types";
-import { summarizeBrand, syncOnboardingCrm } from "../src/services/crm";
+import { syncOnboardingCrm } from "../src/services/crm";
 
 describe("onboarding CRM sync", () => {
   it("does nothing when the webhook is not configured", async () => {
-    await expect(syncOnboardingCrm({}, emptyState(), { stage: "Information gathering" }))
+    await expect(syncOnboardingCrm({}, emptyState(), { stage: "Researching" }))
       .resolves.toEqual({ status: "not_configured" });
   });
 
@@ -22,14 +22,15 @@ describe("onboarding CRM sync", () => {
       const payload = JSON.parse(String(init?.body));
       expect(payload.secret).toBe("test-secret");
       expect(payload.church.name).toBe("Calvary Baptist Temple");
-      expect(payload.fields.stage).toBe("Brand confirmed");
+      expect(payload.fields.stage).toBe("Approval Setup");
+      expect(payload.fields.brandProfile).toBe("Approved");
       return new Response(JSON.stringify({ ok: true, row: 5 }), { status: 200 });
     }) as typeof fetch;
 
     await expect(syncOnboardingCrm(
       { CRM_WEBHOOK_URL: "https://script.google.com/macros/s/test/exec", CRM_WEBHOOK_SECRET: "test-secret" },
       state,
-      { stage: "Brand confirmed", brandProfile: summarizeBrand(state) },
+      { stage: "Approval Setup", brandProfile: "Approved" },
       fakeFetch,
     )).resolves.toEqual({ status: "updated", row: 5 });
     expect(fakeFetch).toHaveBeenCalledOnce();
