@@ -3,16 +3,8 @@ import { defineConfig } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { sites } from "./build/sites-vite-plugin";
 
-const SITE_CREATOR_PLACEHOLDER_DATABASE_ID =
-  "00000000-0000-4000-8000-000000000000";
-const configuredDatabaseId =
-  process.env.D1_DATABASE_ID?.trim() ||
-  process.env.CLOUDFLARE_D1_DATABASE_ID?.trim() ||
-  SITE_CREATOR_PLACEHOLDER_DATABASE_ID;
-const configuredDatabaseName =
-  process.env.D1_DATABASE_NAME?.trim() ||
-  process.env.CLOUDFLARE_D1_DATABASE_NAME?.trim() ||
-  "site-creator-d1";
+const configuredDatabaseId = "10522aad-f31e-4fb2-a848-a2563f015171";
+const configuredDatabaseName = "sunday-multiplied-approvals";
 
 const { d1, r2 } = hostingConfig;
 
