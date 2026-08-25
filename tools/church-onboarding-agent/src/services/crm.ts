@@ -1,18 +1,21 @@
 import type { OnboardingState } from "../types";
 
 export type CrmStage =
-  | "Information gathering"
-  | "Research complete"
-  | "Brand confirmed"
-  | "Approval configured"
-  | "Pull request created"
+  | "Not Started"
+  | "Researching"
+  | "Brand Review"
+  | "Approval Setup"
+  | "Repository PR"
   | "Active";
+
+export type CrmBrandProfile = "Not Started" | "Draft" | "Needs Review" | "Approved";
+export type CrmRepositoryWorkspace = "Not Created" | "PR Open" | "Ready" | "Active";
 
 export type CrmUpdate = {
   stage: CrmStage;
   startedAt?: string;
-  brandProfile?: string;
-  repositoryWorkspace?: string;
+  brandProfile?: CrmBrandProfile;
+  repositoryWorkspace?: CrmRepositoryWorkspace;
   onboardingDraftUrl?: string;
 };
 
@@ -25,17 +28,6 @@ export type CrmSyncResult =
   | { status: "updated"; row?: number }
   | { status: "not_configured" }
   | { status: "failed"; message: string };
-
-export function summarizeBrand(state: OnboardingState): string {
-  const brand = state.brand;
-  return [
-    `Primary ${brand.primaryColor}`,
-    `Secondary ${brand.secondaryColor}`,
-    `Accent ${brand.accentColor}`,
-    `Heading: ${brand.headingFont}`,
-    `Body: ${brand.bodyFont}`,
-  ].join(" | ");
-}
 
 export async function syncOnboardingCrm(
   env: CrmEnv,
