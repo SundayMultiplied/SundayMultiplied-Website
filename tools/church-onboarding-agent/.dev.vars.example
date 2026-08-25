@@ -1,4 +1,6 @@
 ENVIRONMENT=local
 # Configure with `wrangler secret put`, never commit real values.
 GITHUB_TOKEN=
+CRM_WEBHOOK_URL=
+CRM_WEBHOOK_SECRET=
 
