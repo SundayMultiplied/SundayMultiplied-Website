@@ -2,8 +2,29 @@ import type { OnboardingState } from "../types";
 
 export type RepositoryFile = { path: string; content: string };
 
+function relativeLuminance(hex: string): number {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return 0;
+  const channels = [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)].map((part) => {
+    const value = parseInt(part, 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrast(foreground: string, background: string): number {
+  const values = [relativeLuminance(foreground), relativeLuminance(background)].sort((a, b) => b - a);
+  return (values[0] + 0.05) / (values[1] + 0.05);
+}
+
+function accessibleLabelColor(state: OnboardingState): string {
+  const { primaryColor, textColor, secondaryColor, accentColor, backgroundColor } = state.brand;
+  return [primaryColor, textColor, secondaryColor, accentColor]
+    .find((candidate) => contrast(candidate, backgroundColor) >= 4.5) || textColor;
+}
+
 function css(state: OnboardingState): string {
   const b = state.brand;
+  const labelColor = accessibleLabelColor(state);
   return `@import url("../../../styles/sunday-multiplied-base.css");
 
 /* Generated for ${state.basics.name}. Keep the shared sm-* schema intact. */
@@ -13,6 +34,7 @@ function css(state: OnboardingState): string {
   --sm-color-accent: ${b.accentColor};
   --sm-color-background: ${b.backgroundColor};
   --sm-color-text: ${b.textColor};
+  --sm-color-label: ${labelColor};
   --sm-font-heading: ${b.headingFont};
   --sm-font-body: ${b.bodyFont};
   --sm-corner-radius: ${b.cornerRadius};
@@ -33,7 +55,7 @@ function css(state: OnboardingState): string {
 
 .sm-resource__eyebrow,
 .sm-resource__section-label {
-  color: var(--sm-color-accent);
+  color: var(--sm-color-label);
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;

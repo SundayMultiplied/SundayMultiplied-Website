@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useMemo, useState } from "react";
+import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { useAgent } from "agents/react";
 import type { BrandProfile, ChurchBasics, ChurchLink, OnboardingState, Reviewer, ResourceType } from "./types";
@@ -21,10 +21,13 @@ function App() {
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const brandDirty = useRef(false);
   const agent = useAgent<OnboardingState>({
     agent: "ChurchOnboardingAgent",
     name: agentName,
-    onStateUpdate: (next) => setState(next),
+    onStateUpdate: (next) => setState((current) =>
+      brandDirty.current ? { ...next, brand: current.brand } : next
+    ),
   });
   useEffect(() => {
     if (!new URLSearchParams(location.search).has("church")) history.replaceState(null, "", `?church=${agentName}`);
@@ -47,7 +50,10 @@ function App() {
   const basics = state.basics;
   const setBasics = (patch: Partial<ChurchBasics>) => setState({ ...state, basics: { ...basics, ...patch } });
   const brand = state.brand;
-  const setBrand = (patch: Partial<BrandProfile>) => setState({ ...state, brand: { ...brand, ...patch } });
+  const setBrand = (patch: Partial<BrandProfile>) => {
+    brandDirty.current = true;
+    setState((current) => ({ ...current, brand: { ...current.brand, ...patch } }));
+  };
 
   return <main className="shell">
     <header className="topbar"><div><p className="eyebrow">Sunday Multiplied · Internal</p><h1>Church onboarding</h1></div><div className="status"><strong>{complete}/6</strong><span>setup checks</span></div></header>
@@ -58,7 +64,7 @@ function App() {
       {step === 0 && <><p className="eyebrow">Identity</p><h2>Start with the church</h2><p className="lede">Use the canonical public name. The slug becomes its permanent repository and resource identifier.</p><div className="grid"><Field label="Church name" value={basics.name} onChange={(name) => setBasics({ name, slug: basics.slug === "" || basics.slug === slugify(basics.name) ? slugify(name) : basics.slug })} /><Field label="Church slug" value={basics.slug} onChange={(slug) => setBasics({ slug: slugify(slug) })} /><Field label="Website" type="url" placeholder="https://" value={basics.website} onChange={(website) => setBasics({ website })} /><Field label="City" value={basics.city} onChange={(city) => setBasics({ city })} /><Field label="State" value={basics.state} onChange={(stateName) => setBasics({ state: stateName })} /><Field label="Timezone" value={basics.timezone} onChange={(timezone) => setBasics({ timezone })} /></div><footer><button className="primary" disabled={busy} onClick={() => run(() => agent.stub.saveBasics(basics), 1)}>Save and research</button></footer></>}
 
       {step === 1 && <Sources state={state} setState={setState} busy={busy} research={() => run(() => agent.stub.researchWebsite())} save={() => run(() => agent.stub.saveLinks(state.links), 2)} />}
-      {step === 2 && <><p className="eyebrow">Visual system</p><h2>Confirm the church style sheet</h2><p className="lede">Review the automated recommendations against the church’s current logo and social graphics. Your confirmed choices generate the production override and print rules.</p><div className="brand-workspace"><div><div className="colors">{(["primaryColor", "secondaryColor", "accentColor", "backgroundColor", "textColor"] as const).map((key) => <Field key={key} label={key.replace("Color", " color")} type="color" value={brand[key]} onChange={(value) => setBrand({ [key]: value })} />)}</div><div className="grid"><Field label="Heading font stack" value={brand.headingFont} onChange={(headingFont) => setBrand({ headingFont })} /><Field label="Body font stack" value={brand.bodyFont} onChange={(bodyFont) => setBrand({ bodyFont })} /><Field label="Corner radius" value={brand.cornerRadius} onChange={(cornerRadius) => setBrand({ cornerRadius })} /><label><span>Button style</span><select value={brand.buttonStyle} onChange={(event) => setBrand({ buttonStyle: event.target.value as BrandProfile["buttonStyle"] })}><option value="square">Square</option><option value="soft">Soft corners</option><option value="rounded">Rounded</option></select></label><Field label="Visual tone" value={brand.visualTone} onChange={(visualTone) => setBrand({ visualTone })} /></div><label><span>Visual notes and logo guidance</span><textarea value={brand.visualNotes} onChange={(event) => setBrand({ visualNotes: event.target.value })} /></label></div><ResourcePreview churchName={basics.name} brand={brand} /></div><LogoUploads state={state} agentName={agentName} setError={setError} /><footer><button className="primary" disabled={busy} onClick={() => run(() => agent.stub.saveBrand(brand), 3)}>Approve brand and generate CSS</button></footer></>}
+      {step === 2 && <><p className="eyebrow">Visual system</p><h2>Confirm the church style sheet</h2><p className="lede">Review the automated recommendations against the church’s current logo and social graphics. Your confirmed choices generate the production override and print rules.</p><div className="brand-workspace"><div><div className="colors">{(["primaryColor", "secondaryColor", "accentColor", "backgroundColor", "textColor"] as const).map((key) => <Field key={key} label={key.replace("Color", " color")} type="color" value={brand[key]} onChange={(value) => setBrand({ [key]: value })} />)}</div><div className="grid"><Field label="Heading font stack" value={brand.headingFont} onChange={(headingFont) => setBrand({ headingFont })} /><Field label="Body font stack" value={brand.bodyFont} onChange={(bodyFont) => setBrand({ bodyFont })} /><Field label="Corner radius" value={brand.cornerRadius} onChange={(cornerRadius) => setBrand({ cornerRadius })} /><label><span>Button style</span><select value={brand.buttonStyle} onChange={(event) => setBrand({ buttonStyle: event.target.value as BrandProfile["buttonStyle"] })}><option value="square">Square</option><option value="soft">Soft corners</option><option value="rounded">Rounded</option></select></label><Field label="Visual tone" value={brand.visualTone} onChange={(visualTone) => setBrand({ visualTone })} /></div><label><span>Visual notes and logo guidance</span><textarea value={brand.visualNotes} onChange={(event) => setBrand({ visualNotes: event.target.value })} /></label></div><ResourcePreview churchName={basics.name} brand={brand} /></div><LogoUploads state={state} agentName={agentName} setError={setError} /><footer><button className="primary" disabled={busy} onClick={() => run(async () => { await agent.stub.saveBrand(brand); brandDirty.current = false; }, 3)}>Approve brand and generate CSS</button></footer></>}
 
       {step === 3 && <Approval state={state} setState={setState} busy={busy} save={() => run(() => agent.stub.saveApproval(state.reviewers, state.resources, state.deliveryDay), 4)} />}
       {step === 4 && <><p className="eyebrow">Repository handoff</p><h2>Create the church workspace</h2><p className="lede">The agent will open a reviewable branch and pull request. It never writes directly to main.</p><ul className="tree"><li>churches/{basics.slug || "church-slug"}/church.json</li><li>churches/{basics.slug || "church-slug"}/brand/source-notes.md</li><li>churches/{basics.slug || "church-slug"}/styles/{basics.slug || "church-slug"}.css</li><li>churches/{basics.slug || "church-slug"}/sources/streaming.json</li><li>churches/{basics.slug || "church-slug"}/resources/YYYY/YYYY-MM-DD/…</li></ul>{state.github ? <a className="primary link" href={state.github.pullRequestUrl} target="_blank" rel="noreferrer">Open pull request</a> : <footer><button className="primary" disabled={busy} onClick={() => run(() => agent.stub.createGitHubPullRequest())}>Create GitHub pull request</button></footer>}</>}

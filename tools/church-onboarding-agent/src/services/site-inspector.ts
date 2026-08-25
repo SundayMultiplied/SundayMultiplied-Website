@@ -4,6 +4,8 @@ const PRIVATE_HOST = /^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|172\.(1[6
 const PAGE_LIMIT = 450_000;
 const CSS_LIMIT = 220_000;
 const PAGE_HINTS = ["about", "sermon", "message", "watch", "ministr", "group", "event", "give", "contact"];
+const ICON_FONT = /(?:font\s*awesome|fontawesome|etmodules|dashicons|material\s+icons?|glyphicons?|icomoon|themify|flaticon|eleganticons|divi)/i;
+const DISPLAY_FONT = /(?:oswald|bebas|anton|playfair|abril|cinzel|cormorant|archivo\s+black|roboto\s+slab|merriweather)/i;
 
 export function validatePublicUrl(raw: string): URL {
   const url = new URL(raw);
@@ -101,11 +103,20 @@ function addCandidate(store: Map<string, { count: number; sources: Set<string> }
   current.count += 1; current.sources.add(source); store.set(value, current);
 }
 
+function firstFontName(value: string): string {
+  return value.split(",")[0].trim().replace(/!important/gi, "").replace(/["']/g, "").trim();
+}
+
+function isUsableTextFont(value: string): boolean {
+  const first = firstFontName(value);
+  return Boolean(first) && !/^(inherit|initial|unset|var\()/i.test(first) && !ICON_FONT.test(first);
+}
+
 function fontStack(value: string | undefined, fallback: string): string {
-  if (!value) return fallback;
-  const first = value.split(",")[0].trim().replace(/["']/g, "");
-  if (!first || /^(inherit|initial|unset|var\()/i.test(first)) return fallback;
-  return /serif/i.test(first) ? `${first}, Georgia, serif` : `${first}, Arial, sans-serif`;
+  if (!value || !isUsableTextFont(value)) return fallback;
+  const first = firstFontName(value);
+  const family = /\s/.test(first) ? `"${first}"` : first;
+  return /serif/i.test(first) ? `${family}, Georgia, serif` : `${family}, Arial, sans-serif`;
 }
 
 function buildAnalysis(pages: Array<{ url: URL; html: string }>, stylesheets: Array<{ url: string; css: string }>): BrandAnalysis {
@@ -118,7 +129,7 @@ function buildAnalysis(pages: Array<{ url: URL; html: string }>, stylesheets: Ar
     for (const match of source.text.matchAll(/rgba?\([^)]{5,60}\)/gi)) { const value = rgbToHex(match[0]); if (value) addCandidate(colors, value, source.url); }
     for (const match of source.text.matchAll(/font-family\s*:\s*([^;}]+)/gi)) {
       const value = match[1].trim().replace(/\s+/g, " ").slice(0, 120);
-      if (value && !/^(inherit|initial|unset|var\()/i.test(value)) addCandidate(fonts, value, source.url);
+      if (isUsableTextFont(value)) addCandidate(fonts, value, source.url);
     }
     for (const match of source.text.matchAll(/border-radius\s*:\s*([^;}]+)/gi)) {
       const value = match[1].trim().split(/\s+/)[0].slice(0, 24);
@@ -139,10 +150,14 @@ function buildAnalysis(pages: Array<{ url: URL; html: string }>, stylesheets: Ar
   const radiusPixels = rawRadius.endsWith("rem") || rawRadius.endsWith("em") ? radiusNumber * 16 : rawRadius.endsWith("%") ? 24 : radiusNumber;
   const buttonStyle: BrandProfile["buttonStyle"] = radiusPixels >= 18 ? "rounded" : radiusPixels >= 5 ? "soft" : "square";
   const visualTone = `${relativeLuminance(primary) < 0.18 ? "grounded" : "bright"}, ${saturation(primary) > 0.35 ? "bold" : "restrained"}, ${buttonStyle === "rounded" ? "welcoming" : buttonStyle === "square" ? "structured" : "contemporary"}`;
+  const headingCandidate = fontCandidates.find((item) => DISPLAY_FONT.test(firstFontName(item.value))) || fontCandidates[0];
+  const bodyCandidate = fontCandidates.find((item) => item !== headingCandidate && !DISPLAY_FONT.test(firstFontName(item.value)))
+    || fontCandidates.find((item) => item !== headingCandidate)
+    || headingCandidate;
   const suggestedProfile: BrandProfile = {
     primaryColor: primary, secondaryColor: secondary, accentColor: accent, backgroundColor: background, textColor: text,
-    headingFont: fontStack(fontCandidates[0]?.value, "Georgia, serif"),
-    bodyFont: fontStack(fontCandidates[1]?.value || fontCandidates[0]?.value, "Arial, sans-serif"),
+    headingFont: fontStack(headingCandidate?.value, "Georgia, serif"),
+    bodyFont: fontStack(bodyCandidate?.value, "Arial, sans-serif"),
     cornerRadius: rawRadius, buttonStyle, visualTone,
     visualNotes: `Automated review suggests a ${visualTone} visual system. Confirm recommendations against current logo files and recent social graphics.`,
   };
