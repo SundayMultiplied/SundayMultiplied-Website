@@ -27,7 +27,23 @@ jobs:
             echo "CRM webhook secrets are not configured."
             exit 1
           fi
+
           CHURCH_NAME="${PR_TITLE#Onboard }"
           CHURCH_SLUG="${BRANCH_NAME#onboard/}"
           CHURCH_SLUG="${CHURCH_SLUG%-*}"
-          jq -n             --arg secret "$CRM_WEBHOOK_SECRET"             --arg name "$CHURCH_NAME"             --arg slug "$CHURCH_SLUG"             --arg stage "Active"             --arg workspace "https://github.com/$REPOSITORY/tree/main/churches/$CHURCH_SLUG"             --arg draft "$PR_URL"             '{secret:$secret,event:"church_onboarding",church:{name:$name,website:"",slug:$slug},fields:{stage:$stage,repositoryWorkspace:$workspace,onboardingDraftUrl:$draft}}'             | curl --fail-with-body --silent --show-error                 -H "content-type: application/json"                 --data-binary @-                 "$CRM_WEBHOOK_URL"
+
+          PAYLOAD="$(jq -n \
+            --arg secret "$CRM_WEBHOOK_SECRET" \
+            --arg name "$CHURCH_NAME" \
+            --arg slug "$CHURCH_SLUG" \
+            --arg stage "Active" \
+            --arg workspace "https://github.com/$REPOSITORY/tree/main/churches/$CHURCH_SLUG" \
+            --arg draft "$PR_URL" \
+            '{secret:$secret,event:"church_onboarding",church:{name:$name,website:"",slug:$slug},fields:{stage:$stage,repositoryWorkspace:$workspace,onboardingDraftUrl:$draft}}')"
+
+          RESPONSE="$(curl --fail-with-body --silent --show-error \
+            -H "content-type: application/json" \
+            --data-binary "$PAYLOAD" \
+            "$CRM_WEBHOOK_URL")"
+          echo "$RESPONSE"
+          echo "$RESPONSE" | jq -e '(.status // 200) < 400 and (.ok == true)' >/dev/null
