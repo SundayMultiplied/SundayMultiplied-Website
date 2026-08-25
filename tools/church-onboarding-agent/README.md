@@ -6,10 +6,13 @@ An internal, stateful Cloudflare Agent that walks a new church from identificati
 
 - Keeps one persistent onboarding record per church slug.
 - Collects canonical church identity, location, timezone, and website.
-- Inspects the public website for likely sermon, streaming, podcast, and social URLs.
+- Inspects the homepage and up to four key ministry pages for sermon, streaming, podcast, and social URLs.
+- Reads bounded, same-host stylesheets to recommend colors, fonts, corner radius, button treatment, and visual tone.
+- Runs WCAG-oriented contrast checks and presents a live resource preview before brand approval.
 - Requires a human to confirm inferred sources and brand decisions.
 - Captures colors, font stacks, visual guidance, reviewer details, and enabled resources.
 - Generates a church manifest, streaming-source file, client CSS override, provenance notes, and resource directory.
+- Stores the complete automated research record in `brand/analysis.json` for later review and regeneration.
 - Opens a branch and pull request instead of writing directly to `main`.
 - Configures the existing shared approval experience through `church.json`; it does not clone dashboard code.
 
@@ -26,6 +29,7 @@ churches/{church-slug}/
 ├── church.json
 ├── brand/
 │   └── source-notes.md
+│   └── analysis.json
 ├── styles/
 │   └── {church-slug}.css
 ├── sources/
