@@ -42,6 +42,15 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Ensure private church asset bucket exists
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if ! npx wrangler r2 bucket info sunday-multiplied-church-assets >/dev/null 2>&1; then
+            npx wrangler r2 bucket create sunday-multiplied-church-assets
+          fi
+
       - name: Deploy to Cloudflare
         uses: cloudflare/wrangler-action@v3
         with:
