@@ -12,11 +12,12 @@ describe("repository structure", () => {
       "churches/southside/church.json",
       "churches/southside/styles/southside.css",
       "churches/southside/sources/streaming.json",
+      "churches/southside/brand/analysis.json",
       "churches/southside/brand/source-notes.md",
       "churches/southside/resources/.gitkeep",
     ]);
     expect(files[0].content).toContain('"dashboardMode": "shared"');
     expect(files[1].content).toContain("sunday-multiplied-base.css");
+    expect(files[1].content).toContain("--sm-corner-radius");
   });
 });
-
