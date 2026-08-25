@@ -37,7 +37,7 @@ jobs:
             --arg name "$CHURCH_NAME" \
             --arg slug "$CHURCH_SLUG" \
             --arg stage "Active" \
-            --arg workspace "https://github.com/$REPOSITORY/tree/main/churches/$CHURCH_SLUG" \
+            --arg workspace "Active" \
             --arg draft "$PR_URL" \
             '{secret:$secret,event:"church_onboarding",church:{name:$name,website:"",slug:$slug},fields:{stage:$stage,repositoryWorkspace:$workspace,onboardingDraftUrl:$draft}}')"
 
