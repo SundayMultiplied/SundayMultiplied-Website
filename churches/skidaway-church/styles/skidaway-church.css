@@ -1,4 +1,5 @@
 @import url("../../../styles/sunday-multiplied-base.css");
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Oswald:wght@500;600;700&display=swap");
 
 /* Generated for Skidaway Church. Keep the shared sm-* schema intact. */
 :root {
@@ -7,8 +8,8 @@
   --sm-color-accent: #dbedeb;
   --sm-color-background: #ffffff;
   --sm-color-text: #525252;
-  --sm-font-heading: ETmodules, Arial, sans-serif;
-  --sm-font-body: FontAwesome, Arial, sans-serif;
+  --sm-font-heading: "Oswald", Helvetica, Arial, sans-serif;
+  --sm-font-body: "Open Sans", Helvetica, Arial, sans-serif;
   --sm-corner-radius: 3px;
 }
 
@@ -27,7 +28,7 @@
 
 .sm-resource__eyebrow,
 .sm-resource__section-label {
-  color: var(--sm-color-accent);
+  color: var(--sm-color-primary);
   font-weight: 700;
   letter-spacing: .08em;
   text-transform: uppercase;
