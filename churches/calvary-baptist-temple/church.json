@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "church": {
+    "name": "Calvary Baptist Temple",
+    "slug": "calvary-baptist-temple",
+    "city": "Savannah",
+    "state": "GA",
+    "timezone": "America/New_York",
+    "website": "https://www.cbtsavannah.org/"
+  },
+  "resources": [
+    "monday",
+    "group",
+    "family"
+  ],
+  "schedule": {
+    "serviceDay": "sunday",
+    "deliveryDay": "Monday"
+  },
+  "approval": {
+    "reviewers": [
+      {
+        "name": "Brian Davis",
+        "email": "atobdavis@gmail.com",
+        "role": "Experience Designer"
+      }
+    ],
+    "linkLifetimeDays": 30,
+    "draftRetentionDays": 90,
+    "dashboardMode": "shared"
+  },
+  "brand": {
+    "primaryColor": "#381b5c",
+    "secondaryColor": "#a38dbe",
+    "accentColor": "#ffe14f",
+    "backgroundColor": "#ffffff",
+    "textColor": "#000000",
+    "headingFont": "entypo, Arial, sans-serif",
+    "bodyFont": "entypo, Arial, sans-serif",
+    "cornerRadius": "0px",
+    "buttonStyle": "square",
+    "visualTone": "bright, bold, structured",
+    "visualNotes": "Automated review suggests a bright, bold, structured visual system. Confirm recommendations against current logo files and recent social graphics.",
+    "stylesheet": "churches/calvary-baptist-temple/styles/calvary-baptist-temple.css",
+    "assets": [
+      {
+        "kind": "primary",
+        "filename": "cbt_logo.png",
+        "r2Key": "churches/calvary-baptist-temple/brand/primary-cbt_logo.png"
+      },
+      {
+        "kind": "reverse",
+        "filename": "rev.png",
+        "r2Key": "churches/calvary-baptist-temple/brand/reverse-rev.png"
+      }
+    ]
+  },
+  "sources": "churches/calvary-baptist-temple/sources/streaming.json"
+}
