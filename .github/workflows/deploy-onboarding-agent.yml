@@ -19,9 +19,6 @@ concurrency:
 jobs:
   validate-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: tools/church-onboarding-agent
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -34,15 +31,16 @@ jobs:
           cache-dependency-path: tools/church-onboarding-agent/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefix tools/church-onboarding-agent
 
       - name: Validate
-        run: npm run check
+        run: npm --prefix tools/church-onboarding-agent run check
 
       - name: Build
-        run: npm run build
+        run: npm --prefix tools/church-onboarding-agent run build
 
       - name: Ensure private church asset bucket exists
+        working-directory: tools/church-onboarding-agent
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
