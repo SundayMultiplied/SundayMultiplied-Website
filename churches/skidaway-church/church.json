@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "church": {
+    "name": "Skidaway Church",
+    "slug": "skidaway-church",
+    "city": "Savannah",
+    "state": "GA",
+    "timezone": "America/New_York",
+    "website": "https://skidawaychurch.org/"
+  },
+  "resources": [
+    "monday",
+    "group",
+    "family"
+  ],
+  "schedule": {
+    "serviceDay": "sunday",
+    "deliveryDay": "Monday"
+  },
+  "approval": {
+    "reviewers": [
+      {
+        "name": "Stephanie B Davis",
+        "email": "stephbdavis@gmail.com",
+        "role": "Graphic Designer"
+      }
+    ],
+    "linkLifetimeDays": 30,
+    "draftRetentionDays": 90,
+    "dashboardMode": "shared"
+  },
+  "brand": {
+    "primaryColor": "#3f6e82",
+    "secondaryColor": "#aeb862",
+    "accentColor": "#dbedeb",
+    "backgroundColor": "#ffffff",
+    "textColor": "#525252",
+    "headingFont": "ETmodules, Arial, sans-serif",
+    "bodyFont": "FontAwesome, Arial, sans-serif",
+    "cornerRadius": "3px",
+    "buttonStyle": "square",
+    "visualTone": "bright, bold, structured",
+    "visualNotes": "Automated review suggests a bright, bold, structured visual system. Confirm recommendations against current logo files and recent social graphics.",
+    "stylesheet": "churches/skidaway-church/styles/skidaway-church.css",
+    "assets": [
+      {
+        "kind": "primary",
+        "filename": "SKidaway_2025_Horizontal-Slogan_Logo_Navy_1.svg",
+        "r2Key": "churches/skidaway-church/brand/primary-SKidaway_2025_Horizontal-Slogan_Logo_Navy_1.svg"
+      },
+      {
+        "kind": "mark",
+        "filename": "mark.png",
+        "r2Key": "churches/skidaway-church/brand/mark-mark.png"
+      }
+    ]
+  },
+  "sources": "churches/skidaway-church/sources/streaming.json"
+}
