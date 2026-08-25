@@ -8,8 +8,8 @@
   --sm-color-background: #ffffff;
   --sm-color-text: #000000;
   --sm-color-label: #381b5c;
-  --sm-font-heading: entypo, Arial, sans-serif;
-  --sm-font-body: entypo, Arial, sans-serif;
+  --sm-font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --sm-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   --sm-corner-radius: 0px;
 }
 
