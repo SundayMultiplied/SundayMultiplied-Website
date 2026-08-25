@@ -67,7 +67,8 @@ export async function syncOnboardingCrm(
 
     const body = await response.text();
     if (!response.ok) throw new Error(`CRM webhook returned ${response.status}: ${body.slice(0, 180)}`);
-    const parsed = body ? JSON.parse(body) as { row?: number } : {};
+    const parsed = body ? JSON.parse(body) as { row?: number; status?: number; error?: string } : {};
+    if (parsed.status && parsed.status >= 400) throw new Error(parsed.error || `CRM webhook reported status ${parsed.status}.`);
     return { status: "updated", row: parsed.row };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown CRM sync error.";
