@@ -1,0 +1,239 @@
+{
+  "analyzedAt": "2026-08-25T18:38:12.343Z",
+  "pagesAnalyzed": [
+    "https://www.cbtsavannah.org/",
+    "https://www.cbtsavannah.org/about/",
+    "https://www.cbtsavannah.org/events/"
+  ],
+  "stylesheetsAnalyzed": [
+    "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9",
+    "https://www.cbtsavannah.org/api/v1/branding.css?v=1.32",
+    "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/ninja-forms-display.css?nf_ver=3.1.4&",
+    "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/qtip.css?ver=tcc2.8.0",
+    "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/jquery.rating.css?ver=tcc2.8.0"
+  ],
+  "colorCandidates": [
+    {
+      "value": "#ffffff",
+      "occurrences": 26,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9",
+        "https://www.cbtsavannah.org/api/v1/branding.css?v=1.32",
+        "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/ninja-forms-display.css?nf_ver=3.1.4&"
+      ]
+    },
+    {
+      "value": "#000000",
+      "occurrences": 25,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9",
+        "https://www.cbtsavannah.org/api/v1/branding.css?v=1.32"
+      ]
+    },
+    {
+      "value": "#b3b3b3",
+      "occurrences": 12,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9",
+        "https://www.cbtsavannah.org/api/v1/branding.css?v=1.32"
+      ]
+    },
+    {
+      "value": "#00aa00",
+      "occurrences": 8,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "#003388",
+      "occurrences": 7,
+      "sources": [
+        "https://www.cbtsavannah.org/",
+        "https://www.cbtsavannah.org/about/",
+        "https://www.cbtsavannah.org/events/"
+      ]
+    },
+    {
+      "value": "#381b5c",
+      "occurrences": 7,
+      "sources": [
+        "https://www.cbtsavannah.org/api/v1/branding.css?v=1.32"
+      ]
+    },
+    {
+      "value": "#4f2683",
+      "occurrences": 7,
+      "sources": [
+        "https://www.cbtsavannah.org/api/v1/branding.css?v=1.32"
+      ]
+    },
+    {
+      "value": "#8468a9",
+      "occurrences": 7,
+      "sources": [
+        "https://www.cbtsavannah.org/api/v1/branding.css?v=1.32"
+      ]
+    },
+    {
+      "value": "#cccccc",
+      "occurrences": 7,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9",
+        "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/ninja-forms-display.css?nf_ver=3.1.4&",
+        "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/qtip.css?ver=tcc2.8.0"
+      ]
+    },
+    {
+      "value": "#f6f6f6",
+      "occurrences": 6,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "#00aced",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "#3b5998",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    }
+  ],
+  "fontCandidates": [
+    {
+      "value": "'entypo'",
+      "occurrences": 2,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "\"entypo\"",
+      "occurrences": 2,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen-Sans, Ubuntu, Cantarell, \"Helvetica Neue\", sans-serif",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "Arial, Helvetica, sans-serif",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "monospace",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    }
+  ],
+  "radiusCandidates": [
+    {
+      "value": "0px",
+      "occurrences": 79,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "100em",
+      "occurrences": 8,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "3px",
+      "occurrences": 6,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9",
+        "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/ninja-forms-display.css?nf_ver=3.1.4&",
+        "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/qtip.css?ver=tcc2.8.0"
+      ]
+    },
+    {
+      "value": "4px",
+      "occurrences": 3,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/plugins/ninja-forms/deprecated/css/ninja-forms-display.css?nf_ver=3.1.4&"
+      ]
+    },
+    {
+      "value": "50%",
+      "occurrences": 2,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "100px",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    },
+    {
+      "value": "12px",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbtsavannah.org/wp-content/themes/crtvchurch-two/assets/dist/css/site.min.css?ver=1.2.9"
+      ]
+    }
+  ],
+  "suggestedProfile": {
+    "primaryColor": "#00aa00",
+    "secondaryColor": "#003388",
+    "accentColor": "#381b5c",
+    "backgroundColor": "#ffffff",
+    "textColor": "#000000",
+    "headingFont": "entypo, Arial, sans-serif",
+    "bodyFont": "entypo, Arial, sans-serif",
+    "cornerRadius": "0px",
+    "buttonStyle": "square",
+    "visualTone": "bright, bold, structured",
+    "visualNotes": "Automated review suggests a bright, bold, structured visual system. Confirm recommendations against current logo files and recent social graphics."
+  },
+  "contrastChecks": [
+    {
+      "label": "Body text",
+      "foreground": "#000000",
+      "background": "#ffffff",
+      "ratio": 21,
+      "level": "pass"
+    },
+    {
+      "label": "Primary text",
+      "foreground": "#00aa00",
+      "background": "#ffffff",
+      "ratio": 3.11,
+      "level": "review"
+    },
+    {
+      "label": "Text on primary",
+      "foreground": "#ffffff",
+      "background": "#00aa00",
+      "ratio": 3.11,
+      "level": "review"
+    }
+  ],
+  "warnings": [
+    "Primary text contrast is 3.11:1 and needs review.",
+    "Text on primary contrast is 3.11:1 and needs review."
+  ]
+}
