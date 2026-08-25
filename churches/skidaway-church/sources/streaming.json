@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "church": "skidaway-church",
+  "links": [
+    {
+      "kind": "sermon_archive",
+      "url": "https://skidawaychurch.org/sermons/",
+      "label": "Sermons",
+      "verifiedAt": "2026-08-25T17:19:05.227Z"
+    }
+  ]
+}
