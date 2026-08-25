@@ -1,7 +1,7 @@
 import { Agent, callable, routeAgentRequest } from "agents";
 import { createOnboardingPullRequest } from "./services/github";
 import { buildRepositoryFiles } from "./services/repo-files";
-import { summarizeBrand, syncOnboardingCrm, type CrmUpdate } from "./services/crm";
+import { syncOnboardingCrm, type CrmUpdate } from "./services/crm";
 import { inspectChurchWebsite, validatePublicUrl } from "./services/site-inspector";
 import { emptyState, type BrandProfile, type ChurchBasics, type ChurchLink, type OnboardingState, type Reviewer, type ResourceType } from "./types";
 
@@ -34,7 +34,12 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
     validatePublicUrl(basics.website);
     const startedAt = now();
     this.save({ basics, phase: "researching", checklist: { ...this.state.checklist, identity: true } });
-    return this.syncCrm({ stage: "Information gathering", startedAt });
+    return this.syncCrm({
+      stage: "Researching",
+      startedAt,
+      brandProfile: "Not Started",
+      repositoryWorkspace: "Not Created",
+    });
   }
 
   @callable()
@@ -52,7 +57,7 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       phase: "needs_confirmation",
       checklist: { ...this.state.checklist, sources: links.length > 0, brandResearch: true },
     });
-    await this.syncCrm({ stage: "Research complete" });
+    await this.syncCrm({ stage: "Brand Review", brandProfile: "Draft" });
     return result;
   }
 
@@ -69,7 +74,7 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       if (!color.test(value)) throw new Error("Brand colors must use six-digit hex values.");
     }
     this.save({ brand, phase: "style_ready", checklist: { ...this.state.checklist, brand: true } });
-    return this.syncCrm({ stage: "Brand confirmed", brandProfile: summarizeBrand({ ...this.state, brand }) });
+    return this.syncCrm({ stage: "Approval Setup", brandProfile: "Approved" });
   }
 
   @callable()
@@ -85,7 +90,7 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       phase: "approval_ready",
       checklist: { ...this.state.checklist, reviewer: true },
     });
-    return this.syncCrm({ stage: "Approval configured" });
+    return this.syncCrm({ stage: "Approval Setup" });
   }
 
   async onRequest(request: Request) {
@@ -151,11 +156,10 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       github: { ...result, createdAt: now() },
       checklist: { ...this.state.checklist, repository: true },
     });
-    const repositoryWorkspace = `https://github.com/${this.env.GITHUB_OWNER}/${this.env.GITHUB_REPO}/tree/${result.branch}`;
     const crm = await this.syncCrm({
-      stage: "Pull request created",
-      brandProfile: summarizeBrand(this.state),
-      repositoryWorkspace,
+      stage: "Repository PR",
+      brandProfile: "Approved",
+      repositoryWorkspace: "PR Open",
       onboardingDraftUrl: result.pullRequestUrl,
     });
     return { ...result, crm };
