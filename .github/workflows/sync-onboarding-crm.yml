@@ -5,32 +5,52 @@ on:
     types: [closed]
     paths:
       - "churches/**/church.json"
+  workflow_dispatch:
+    inputs:
+      church_name:
+        description: "Church name"
+        required: true
+        type: string
+      church_slug:
+        description: "Stable church slug"
+        required: true
+        type: string
+      pull_request_url:
+        description: "Onboarding pull request URL"
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   sync:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'onboard/')
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'onboard/'))
     runs-on: ubuntu-latest
     steps:
       - name: Mark church active in CRM
         env:
           CRM_WEBHOOK_URL: ${{ secrets.CRM_WEBHOOK_URL }}
           CRM_WEBHOOK_SECRET: ${{ secrets.CRM_WEBHOOK_SECRET }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ inputs.pull_request_url || github.event.pull_request.html_url }}
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          REPOSITORY: ${{ github.repository }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          INPUT_CHURCH_NAME: ${{ inputs.church_name }}
+          INPUT_CHURCH_SLUG: ${{ inputs.church_slug }}
         run: |
           if [ -z "$CRM_WEBHOOK_URL" ] || [ -z "$CRM_WEBHOOK_SECRET" ]; then
             echo "CRM webhook secrets are not configured."
             exit 1
           fi
 
-          CHURCH_NAME="${PR_TITLE#Onboard }"
-          CHURCH_SLUG="${BRANCH_NAME#onboard/}"
-          CHURCH_SLUG="${CHURCH_SLUG%-*}"
+          if [ -n "$INPUT_CHURCH_NAME" ]; then
+            CHURCH_NAME="$INPUT_CHURCH_NAME"
+            CHURCH_SLUG="$INPUT_CHURCH_SLUG"
+          else
+            CHURCH_NAME="${PR_TITLE#Onboard }"
+            CHURCH_SLUG="${BRANCH_NAME#onboard/}"
+            CHURCH_SLUG="${CHURCH_SLUG%-*}"
+          fi
 
           PAYLOAD="$(jq -n \
             --arg secret "$CRM_WEBHOOK_SECRET" \
@@ -41,9 +61,13 @@ jobs:
             --arg draft "$PR_URL" \
             '{secret:$secret,event:"church_onboarding",church:{name:$name,website:"",slug:$slug},fields:{stage:$stage,repositoryWorkspace:$workspace,onboardingDraftUrl:$draft}}')"
 
-          RESPONSE="$(curl --fail-with-body --silent --show-error \
+          RESPONSE="$(curl --location --fail-with-body --silent --show-error \
             -H "content-type: application/json" \
             --data-binary "$PAYLOAD" \
             "$CRM_WEBHOOK_URL")"
           echo "$RESPONSE"
-          echo "$RESPONSE" | jq -e '(.status // 200) < 400 and (.ok == true)' >/dev/null
+
+          if ! echo "$RESPONSE" | jq -e '(.status // 200) < 400 and (.ok == true)' >/dev/null; then
+            echo "::error::CRM webhook did not return the expected JSON success response."
+            exit 1
+          fi
