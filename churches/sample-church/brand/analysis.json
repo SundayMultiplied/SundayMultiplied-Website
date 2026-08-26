@@ -1,0 +1,210 @@
+{
+  "analyzedAt": "2026-08-26T20:05:50.543Z",
+  "pagesAnalyzed": [
+    "https://sundaymultiplied.com/",
+    "https://sundaymultiplied.com/about",
+    "https://sundaymultiplied.com/contact",
+    "https://sundaymultiplied.com/examples"
+  ],
+  "stylesheetsAnalyzed": [
+    "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+  ],
+  "colorCandidates": [
+    {
+      "value": "#ffffff",
+      "occurrences": 67,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#173028",
+      "occurrences": 24,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#d6b66e",
+      "occurrences": 10,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#071710",
+      "occurrences": 6,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#536159",
+      "occurrences": 6,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#aebdb0",
+      "occurrences": 6,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#000000",
+      "occurrences": 5,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#718078",
+      "occurrences": 5,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#e0bd78",
+      "occurrences": 5,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#10271f",
+      "occurrences": 4,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#13221a",
+      "occurrences": 4,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "#4f6057",
+      "occurrences": 4,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    }
+  ],
+  "fontCandidates": [
+    {
+      "value": "Georgia,serif",
+      "occurrences": 28,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "'Geist Mono'",
+      "occurrences": 24,
+      "sources": [
+        "https://sundaymultiplied.com/",
+        "https://sundaymultiplied.com/about",
+        "https://sundaymultiplied.com/contact",
+        "https://sundaymultiplied.com/examples"
+      ]
+    },
+    {
+      "value": "'Geist'",
+      "occurrences": 20,
+      "sources": [
+        "https://sundaymultiplied.com/",
+        "https://sundaymultiplied.com/about",
+        "https://sundaymultiplied.com/contact",
+        "https://sundaymultiplied.com/examples"
+      ]
+    },
+    {
+      "value": "'Geist Mono', sans-serif",
+      "occurrences": 4,
+      "sources": [
+        "https://sundaymultiplied.com/",
+        "https://sundaymultiplied.com/about",
+        "https://sundaymultiplied.com/contact",
+        "https://sundaymultiplied.com/examples"
+      ]
+    },
+    {
+      "value": "'Geist', sans-serif",
+      "occurrences": 4,
+      "sources": [
+        "https://sundaymultiplied.com/",
+        "https://sundaymultiplied.com/about",
+        "https://sundaymultiplied.com/contact",
+        "https://sundaymultiplied.com/examples"
+      ]
+    },
+    {
+      "value": "Arial,sans-serif",
+      "occurrences": 4,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    },
+    {
+      "value": "Georgia,Times New Roman,serif",
+      "occurrences": 1,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    }
+  ],
+  "radiusCandidates": [
+    {
+      "value": "50%",
+      "occurrences": 18,
+      "sources": [
+        "https://sundaymultiplied.com/assets/index-CwZeu6l8.css"
+      ]
+    }
+  ],
+  "suggestedProfile": {
+    "primaryColor": "#d6b66e",
+    "secondaryColor": "#e0bd78",
+    "accentColor": "#e0bd78",
+    "backgroundColor": "#ffffff",
+    "textColor": "#173028",
+    "headingFont": "Georgia, Arial, sans-serif",
+    "bodyFont": "\"Geist Mono\", Arial, sans-serif",
+    "cornerRadius": "50%",
+    "buttonStyle": "rounded",
+    "visualTone": "bright, bold, welcoming",
+    "visualNotes": "Automated review suggests a bright, bold, welcoming visual system. Confirm recommendations against current logo files and recent social graphics."
+  },
+  "contrastChecks": [
+    {
+      "label": "Body text",
+      "foreground": "#173028",
+      "background": "#ffffff",
+      "ratio": 14.1,
+      "level": "pass"
+    },
+    {
+      "label": "Primary text",
+      "foreground": "#d6b66e",
+      "background": "#ffffff",
+      "ratio": 1.95,
+      "level": "review"
+    },
+    {
+      "label": "Text on primary",
+      "foreground": "#ffffff",
+      "background": "#d6b66e",
+      "ratio": 1.95,
+      "level": "review"
+    }
+  ],
+  "warnings": [
+    "Primary text contrast is 1.95:1 and needs review.",
+    "Text on primary contrast is 1.95:1 and needs review."
+  ]
+}

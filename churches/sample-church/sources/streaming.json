@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "church": "sample-church",
+  "links": [
+    {
+      "kind": "sermon_archive",
+      "url": "https://sundaymultiplied.com/examples",
+      "label": "See what one sermon can become ↗",
+      "verifiedAt": "2026-08-26T20:05:50.282Z"
+    }
+  ]
+}
