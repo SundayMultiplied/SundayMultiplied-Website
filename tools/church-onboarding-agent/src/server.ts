@@ -156,13 +156,13 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       github: { ...result, createdAt: now() },
       checklist: { ...this.state.checklist, repository: true },
     });
-    const crm = await this.syncCrm({
+    this.ctx.waitUntil(this.syncCrm({
       stage: "Repository PR",
       brandProfile: "Approved",
       repositoryWorkspace: "PR Open",
       onboardingDraftUrl: result.pullRequestUrl,
-    });
-    return { ...result, crm };
+    }));
+    return result;
   }
 }
 
