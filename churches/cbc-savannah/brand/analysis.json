@@ -1,0 +1,336 @@
+{
+  "analyzedAt": "2026-08-25T20:42:17.287Z",
+  "pagesAnalyzed": [
+    "https://www.cbcsavannah.com/",
+    "https://www.cbcsavannah.com/live",
+    "https://www.cbcsavannah.com/sermons",
+    "https://www.cbcsavannah.com/contact",
+    "https://www.cbcsavannah.com/groups"
+  ],
+  "stylesheetsAnalyzed": [],
+  "colorCandidates": [
+    {
+      "value": "#ffffff",
+      "occurrences": 334,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#000000",
+      "occurrences": 268,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#8f8f8f",
+      "occurrences": 224,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#e2e2e2",
+      "occurrences": 112,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#96b1b4",
+      "occurrences": 49,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#116dff",
+      "occurrences": 19,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#161f34",
+      "occurrences": 16,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#2b3e67",
+      "occurrences": 6,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/sermons"
+      ]
+    },
+    {
+      "value": "#080808",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#0d4f3d",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#0f2ccf",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "#151414",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    }
+  ],
+  "fontCandidates": [
+    {
+      "value": "helvetica-w01-light,sans-serif",
+      "occurrences": 135,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "proxima-n-w01-reg,sans-serif",
+      "occurrences": 86,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "futura-lt-w01-book,sans-serif",
+      "occurrences": 85,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "wfont_9e3e03_cae0521f1d8c43cfa5b5b31a88fe5def,wf_cae0521f1d8c43cfa5b5b31a8,orig_montserrat_bold",
+      "occurrences": 27,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "wfont_9e3e03_0f7ba886b0de4a59a8699a0cd1301369,wf_0f7ba886b0de4a59a8699a0cd,orig_gotham_black",
+      "occurrences": 20,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "'helvetica-w01-bold'",
+      "occurrences": 18,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "'din-next-w01-light'",
+      "occurrences": 15,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "'proxima-n-w01-reg'",
+      "occurrences": 12,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    }
+  ],
+  "radiusCandidates": [
+    {
+      "value": "50%",
+      "occurrences": 31,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "50px",
+      "occurrences": 27,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "24px",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "300px",
+      "occurrences": 5,
+      "sources": [
+        "https://www.cbcsavannah.com/",
+        "https://www.cbcsavannah.com/live",
+        "https://www.cbcsavannah.com/sermons",
+        "https://www.cbcsavannah.com/contact",
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "100px",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "2px",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbcsavannah.com/groups"
+      ]
+    },
+    {
+      "value": "3px",
+      "occurrences": 1,
+      "sources": [
+        "https://www.cbcsavannah.com/groups"
+      ]
+    }
+  ],
+  "suggestedProfile": {
+    "primaryColor": "#116dff",
+    "secondaryColor": "#2b3e67",
+    "accentColor": "#0d4f3d",
+    "backgroundColor": "#ffffff",
+    "textColor": "#000000",
+    "headingFont": "helvetica-w01-light, Arial, sans-serif",
+    "bodyFont": "proxima-n-w01-reg, Arial, sans-serif",
+    "cornerRadius": "50%",
+    "buttonStyle": "rounded",
+    "visualTone": "bright, bold, welcoming",
+    "visualNotes": "Automated review suggests a bright, bold, welcoming visual system. Confirm recommendations against current logo files and recent social graphics."
+  },
+  "contrastChecks": [
+    {
+      "label": "Body text",
+      "foreground": "#000000",
+      "background": "#ffffff",
+      "ratio": 21,
+      "level": "pass"
+    },
+    {
+      "label": "Primary text",
+      "foreground": "#116dff",
+      "background": "#ffffff",
+      "ratio": 4.51,
+      "level": "pass"
+    },
+    {
+      "label": "Text on primary",
+      "foreground": "#ffffff",
+      "background": "#116dff",
+      "ratio": 4.51,
+      "level": "pass"
+    }
+  ],
+  "warnings": []
+}

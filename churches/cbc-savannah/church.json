@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "church": {
+    "name": "CBC Savannah",
+    "slug": "cbc-savannah",
+    "city": "Savannah",
+    "state": "GA",
+    "timezone": "America/New_York",
+    "website": "https://www.cbcsavannah.com/"
+  },
+  "resources": [
+    "monday",
+    "group",
+    "family"
+  ],
+  "schedule": {
+    "serviceDay": "sunday",
+    "deliveryDay": "Sunday"
+  },
+  "approval": {
+    "reviewerConfigured": true,
+    "linkLifetimeDays": 30,
+    "draftRetentionDays": 90,
+    "dashboardMode": "shared"
+  },
+  "brand": {
+    "primaryColor": "#2b3e67",
+    "secondaryColor": "#96b1b4",
+    "accentColor": "#96b1b4",
+    "backgroundColor": "#ffffff",
+    "textColor": "#000000",
+    "headingFont": "helvetica-w01-light, Arial, sans-serif",
+    "bodyFont": "proxima-n-w01-reg, Arial, sans-serif",
+    "cornerRadius": "0",
+    "buttonStyle": "rounded",
+    "visualTone": "bright, bold, welcoming",
+    "visualNotes": "Automated review suggests a bright, bold, welcoming visual system. Confirm recommendations against current logo files and recent social graphics.",
+    "stylesheet": "churches/cbc-savannah/styles/cbc-savannah.css",
+    "assets": [
+      {
+        "kind": "primary",
+        "filename": "cbc-savannah-logo.png",
+        "r2Key": "churches/cbc-savannah/brand/primary-cbc-savannah-logo.png"
+      },
+      {
+        "kind": "reverse",
+        "filename": "cbc-savannah-reverse-logo.png",
+        "r2Key": "churches/cbc-savannah/brand/reverse-cbc-savannah-reverse-logo.png"
+      }
+    ]
+  },
+  "sources": "churches/cbc-savannah/sources/streaming.json"
+}
