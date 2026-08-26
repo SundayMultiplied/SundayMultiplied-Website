@@ -103,7 +103,7 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
     resources: state.resources,
     schedule: { serviceDay: state.serviceDay, deliveryDay: state.deliveryDay },
     approval: {
-      reviewers: state.reviewers,
+      reviewerConfigured: state.reviewers.length > 0,
       linkLifetimeDays: state.approvalWindowDays,
       draftRetentionDays: state.draftRetentionDays,
       dashboardMode: "shared",

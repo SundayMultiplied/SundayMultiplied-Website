@@ -18,13 +18,7 @@
     "deliveryDay": "Monday"
   },
   "approval": {
-    "reviewers": [
-      {
-        "name": "Brian Davis",
-        "email": "atobdavis@gmail.com",
-        "role": "Experience Designer"
-      }
-    ],
+    "reviewerConfigured": true,
     "linkLifetimeDays": 30,
     "draftRetentionDays": 90,
     "dashboardMode": "shared"

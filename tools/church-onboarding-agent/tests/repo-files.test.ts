@@ -24,6 +24,9 @@ describe("repository structure", () => {
       "churches/southside/resources/.gitkeep",
     ]);
     expect(files[0].content).toContain('"dashboardMode": "shared"');
+    expect(files[0].content).toContain('"reviewerConfigured": true');
+    expect(files[0].content).not.toContain("reviewer@example.com");
+    expect(files[0].content).not.toContain('"reviewers"');
     expect(files[1].content).toContain("sunday-multiplied-base.css");
     expect(files[1].content).toContain("--sm-corner-radius");
     expect(files[1].content).toContain("--sm-color-label: #3f6e82");

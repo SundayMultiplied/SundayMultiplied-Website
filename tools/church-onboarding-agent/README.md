@@ -10,7 +10,7 @@ An internal, stateful Cloudflare Agent that walks a new church from identificati
 - Reads bounded, same-host stylesheets to recommend colors, fonts, corner radius, button treatment, and visual tone.
 - Runs WCAG-oriented contrast checks and presents a live resource preview before brand approval.
 - Requires a human to confirm inferred sources and brand decisions.
-- Captures colors, font stacks, visual guidance, reviewer details, and enabled resources.
+- Captures colors, font stacks, visual guidance, reviewer details, and enabled resources. Reviewer contact details remain in the Worker's private Agent state and are never written to the public repository.
 - Generates a church manifest, streaming-source file, client CSS override, provenance notes, and resource directory.
 - Stores the complete automated research record in `brand/analysis.json` for later review and regeneration.
 - Opens a branch and pull request instead of writing directly to `main`.
