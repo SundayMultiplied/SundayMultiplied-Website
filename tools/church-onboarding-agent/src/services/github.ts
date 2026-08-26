@@ -26,13 +26,6 @@ async function github<T>(config: GitHubConfig, path: string, init: RequestInit =
   return (await response.json()) as T;
 }
 
-function base64(value: string): string {
-  const bytes = new TextEncoder().encode(value);
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary);
-}
-
 export async function createOnboardingPullRequest(
   config: GitHubConfig,
   slug: string,
@@ -43,21 +36,35 @@ export async function createOnboardingPullRequest(
     config,
     `/repos/${config.owner}/${config.repo}/git/ref/heads/${encodeURIComponent(config.baseBranch)}`,
   );
+  const baseCommit = await github<{ tree: { sha: string } }>(
+    config,
+    `/repos/${config.owner}/${config.repo}/git/commits/${ref.object.sha}`,
+  );
+  const tree = await github<{ sha: string }>(config, `/repos/${config.owner}/${config.repo}/git/trees`, {
+    method: "POST",
+    body: JSON.stringify({
+      base_tree: baseCommit.tree.sha,
+      tree: files.map((file) => ({
+        path: file.path,
+        mode: "100644",
+        type: "blob",
+        content: file.content,
+      })),
+    }),
+  });
+  const commit = await github<{ sha: string }>(config, `/repos/${config.owner}/${config.repo}/git/commits`, {
+    method: "POST",
+    body: JSON.stringify({
+      message: `onboard(${slug}): add church workspace`,
+      tree: tree.sha,
+      parents: [ref.object.sha],
+    }),
+  });
   const branch = `onboard/${slug}-${Date.now()}`;
   await github(config, `/repos/${config.owner}/${config.repo}/git/refs`, {
     method: "POST",
-    body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: ref.object.sha }),
+    body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: commit.sha }),
   });
-  for (const file of files) {
-    await github(config, `/repos/${config.owner}/${config.repo}/contents/${file.path}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        message: `onboard(${slug}): add ${file.path.split("/").at(-1)}`,
-        content: base64(file.content),
-        branch,
-      }),
-    });
-  }
   const pull = await github<{ html_url: string }>(config, `/repos/${config.owner}/${config.repo}/pulls`, {
     method: "POST",
     body: JSON.stringify({
@@ -69,4 +76,3 @@ export async function createOnboardingPullRequest(
   });
   return { branch, pullRequestUrl: pull.html_url };
 }
-
