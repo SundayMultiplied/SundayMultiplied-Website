@@ -15,7 +15,7 @@ describe("GitHub onboarding pull request", () => {
       {},
       { html_url: "https://github.com/SundayMultiplied/SundayMultiplied-Website/pull/99" },
     ];
-    const fakeFetch = vi.fn(async () => (
+    const fakeFetch = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => (
       new Response(JSON.stringify(responses.shift()), { status: 200 })
     ));
     vi.stubGlobal("fetch", fakeFetch);
