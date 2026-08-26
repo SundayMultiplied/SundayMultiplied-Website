@@ -18,13 +18,7 @@
     "deliveryDay": "Monday"
   },
   "approval": {
-    "reviewers": [
-      {
-        "name": "Stephanie B Davis",
-        "email": "stephbdavis@gmail.com",
-        "role": "Graphic Designer"
-      }
-    ],
+    "reviewerConfigured": true,
     "linkLifetimeDays": 30,
     "draftRetentionDays": 90,
     "dashboardMode": "shared"
