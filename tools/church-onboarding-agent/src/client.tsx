@@ -47,6 +47,24 @@ function App() {
     }
   }
 
+  async function resetOnboarding() {
+    const completed = Boolean(state.github);
+    const message = completed
+      ? "Start a new church draft? This completed onboarding record and its uploaded assets will be preserved."
+      : "Reset this onboarding form? This clears the saved draft and deletes its uploaded logos. CRM updates already sent will not be undone.";
+    if (!window.confirm(message)) return;
+    if (completed) {
+      location.assign(`?church=draft-${crypto.randomUUID()}`);
+      return;
+    }
+    await run(async () => {
+      const reset = await agent.stub.resetOnboarding();
+      brandDirty.current = false;
+      setState(reset);
+      setStep(0);
+    });
+  }
+
   const basics = state.basics;
   const setBasics = (patch: Partial<ChurchBasics>) => setState({ ...state, basics: { ...basics, ...patch } });
   const brand = state.brand;
@@ -56,7 +74,7 @@ function App() {
   };
 
   return <main className="shell">
-    <header className="topbar"><div><p className="eyebrow">Sunday Multiplied · Internal</p><h1>Church onboarding</h1></div><div className="status"><strong>{complete}/6</strong><span>setup checks</span></div></header>
+    <header className="topbar"><div><p className="eyebrow">Sunday Multiplied · Internal</p><h1>Church onboarding</h1></div><div className="topbar-actions"><div className="status"><strong>{complete}/6</strong><span>setup checks</span></div><button className="secondary reset" type="button" disabled={busy} onClick={resetOnboarding}>{state.github ? "New church" : "Reset form"}</button></div></header>
     <nav aria-label="Onboarding steps">{steps.map((label, index) => <button className={index === step ? "active" : ""} onClick={() => setStep(index)} key={label}><b>0{index + 1}</b>{label}</button>)}</nav>
     {error && <div className="error" role="alert">{error}</div>}
 
@@ -64,7 +82,7 @@ function App() {
       {step === 0 && <><p className="eyebrow">Identity</p><h2>Start with the church</h2><p className="lede">Use the canonical public name. The slug becomes its permanent repository and resource identifier.</p><div className="grid"><Field label="Church name" value={basics.name} onChange={(name) => setBasics({ name, slug: basics.slug === "" || basics.slug === slugify(basics.name) ? slugify(name) : basics.slug })} /><Field label="Church slug" value={basics.slug} onChange={(slug) => setBasics({ slug: slugify(slug) })} /><Field label="Website" type="url" placeholder="https://" value={basics.website} onChange={(website) => setBasics({ website })} /><Field label="City" value={basics.city} onChange={(city) => setBasics({ city })} /><Field label="State" value={basics.state} onChange={(stateName) => setBasics({ state: stateName })} /><Field label="Timezone" value={basics.timezone} onChange={(timezone) => setBasics({ timezone })} /></div><footer><button className="primary" disabled={busy} onClick={() => run(() => agent.stub.saveBasics(basics), 1)}>Save and research</button></footer></>}
 
       {step === 1 && <Sources state={state} setState={setState} busy={busy} research={() => run(() => agent.stub.researchWebsite())} save={() => run(() => agent.stub.saveLinks(state.links), 2)} />}
-      {step === 2 && <><p className="eyebrow">Visual system</p><h2>Confirm the church style sheet</h2><p className="lede">Review the automated recommendations against the church’s current logo and social graphics. Your confirmed choices generate the production override and print rules.</p><div className="brand-workspace"><div><div className="colors">{(["primaryColor", "secondaryColor", "accentColor", "backgroundColor", "textColor"] as const).map((key) => <Field key={key} label={key.replace("Color", " color")} type="color" value={brand[key]} onChange={(value) => setBrand({ [key]: value })} />)}</div><div className="grid"><Field label="Heading font stack" value={brand.headingFont} onChange={(headingFont) => setBrand({ headingFont })} /><Field label="Body font stack" value={brand.bodyFont} onChange={(bodyFont) => setBrand({ bodyFont })} /><Field label="Corner radius" value={brand.cornerRadius} onChange={(cornerRadius) => setBrand({ cornerRadius })} /><label><span>Button style</span><select value={brand.buttonStyle} onChange={(event) => setBrand({ buttonStyle: event.target.value as BrandProfile["buttonStyle"] })}><option value="square">Square</option><option value="soft">Soft corners</option><option value="rounded">Rounded</option></select></label><Field label="Visual tone" value={brand.visualTone} onChange={(visualTone) => setBrand({ visualTone })} /></div><label><span>Visual notes and logo guidance</span><textarea value={brand.visualNotes} onChange={(event) => setBrand({ visualNotes: event.target.value })} /></label></div><ResourcePreview churchName={basics.name} brand={brand} /></div><LogoUploads state={state} agentName={agentName} setError={setError} /><footer><button className="primary" disabled={busy} onClick={() => run(async () => { await agent.stub.saveBrand(brand); brandDirty.current = false; }, 3)}>Approve brand and generate CSS</button></footer></>}
+      {step === 2 && <><p className="eyebrow">Visual system</p><h2>Confirm the church style sheet</h2><p className="lede">Review the automated recommendations against the church’s current logo and social graphics. Your confirmed choices generate the production override and print rules.</p><div className="brand-workspace"><div><div className="colors">{(["primaryColor", "secondaryColor", "accentColor", "backgroundColor", "textColor"] as const).map((key) => <Field key={key} label={key.replace("Color", " color")} type="color" value={brand[key]} onChange={(value) => setBrand({ [key]: value })} />)}</div><div className="grid"><Field label="Heading font stack" value={brand.headingFont} onChange={(headingFont) => setBrand({ headingFont })} /><Field label="Body font stack" value={brand.bodyFont} onChange={(bodyFont) => setBrand({ bodyFont })} /><Field label="Corner radius" value={brand.cornerRadius} onChange={(cornerRadius) => setBrand({ cornerRadius })} /><label><span>Button style</span><select value={brand.buttonStyle} onChange={(event) => setBrand({ buttonStyle: event.target.value as BrandProfile["buttonStyle"] })}><option value="square">Square</option><option value="soft">Soft corners</option><option value="rounded">Rounded</option></select></label><Field label="Visual tone" value={brand.visualTone} onChange={(visualTone) => setBrand({ visualTone })} /></div><label><span>Visual notes and logo guidance</span><textarea value={brand.visualNotes} onChange={(event) => setBrand({ visualNotes: event.target.value })} /></label></div><ResourcePreview churchName={basics.name} brand={brand} /></div><LogoUploads state={state} agentName={agentName} agent={agent} setError={setError} /><footer><button className="primary" disabled={busy} onClick={() => run(async () => { await agent.stub.saveBrand(brand); brandDirty.current = false; }, 3)}>Approve brand and generate CSS</button></footer></>}
 
       {step === 3 && <Approval state={state} setState={setState} busy={busy} save={() => run(() => agent.stub.saveApproval(state.reviewers, state.resources, state.deliveryDay), 4)} />}
       {step === 4 && <><p className="eyebrow">Repository handoff</p><h2>Create the church workspace</h2><p className="lede">The agent will open a reviewable branch and pull request. It never writes directly to main.</p><ul className="tree"><li>churches/{basics.slug || "church-slug"}/church.json</li><li>churches/{basics.slug || "church-slug"}/brand/source-notes.md</li><li>churches/{basics.slug || "church-slug"}/styles/{basics.slug || "church-slug"}.css</li><li>churches/{basics.slug || "church-slug"}/sources/streaming.json</li><li>churches/{basics.slug || "church-slug"}/resources/YYYY/YYYY-MM-DD/…</li></ul>{state.github ? <a className="primary link" href={state.github.pullRequestUrl} target="_blank" rel="noreferrer">Open pull request</a> : <footer><button className="primary" disabled={busy} onClick={() => run(() => agent.stub.createGitHubPullRequest())}>Create GitHub pull request</button></footer>}</>}
@@ -72,18 +90,35 @@ function App() {
   </main>;
 }
 
-function LogoUploads({ state, agentName, setError }: { state: OnboardingState; agentName: string; setError: (error: string) => void }) {
+function LogoUploads({ state, agentName, agent, setError }: { state: OnboardingState; agentName: string; agent: ReturnType<typeof useAgent<OnboardingState>>; setError: (error: string) => void }) {
+  const [pending, setPending] = useState<string>();
   async function upload(kind: "primary" | "reverse" | "mark", file?: File) {
     if (!file) return;
     setError("");
-    const response = await fetch(`/agents/church-onboarding-agent/${agentName}`, {
-      method: "POST",
-      headers: { "content-type": file.type, "x-file-name": file.name, "x-asset-kind": kind },
-      body: file,
-    });
-    if (!response.ok) setError(await response.text());
+    setPending(kind);
+    try {
+      const response = await fetch(`/agents/church-onboarding-agent/${agentName}`, {
+        method: "POST",
+        headers: { "content-type": file.type, "x-file-name": file.name, "x-asset-kind": kind },
+        body: file,
+      });
+      if (!response.ok) setError(await response.text());
+    } finally {
+      setPending(undefined);
+    }
   }
-  return <div className="upload-note"><strong>Logo files</strong><span>Upload source-quality variants. Files stay private and the church manifest stores their references.</span><div className="logo-grid">{(["primary", "reverse", "mark"] as const).map((kind) => { const saved = state.assets.find((asset) => asset.kind === kind); return <label key={kind}><span>{kind[0].toUpperCase() + kind.slice(1)} logo {saved ? `✓ ${saved.filename}` : ""}</span><input type="file" accept="image/svg+xml,image/png,image/jpeg,image/webp" onChange={(event) => upload(kind, event.target.files?.[0])} /></label>; })}</div></div>;
+  async function remove(kind: "primary" | "reverse" | "mark") {
+    setError("");
+    setPending(kind);
+    try {
+      await agent.stub.removeLogo(kind);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The logo could not be removed.");
+    } finally {
+      setPending(undefined);
+    }
+  }
+  return <div className="upload-note"><strong>Logo files</strong><span>Upload source-quality variants. Files stay private and the church manifest stores their references.</span><div className="logo-grid">{(["primary", "reverse", "mark"] as const).map((kind) => { const saved = state.assets.find((asset) => asset.kind === kind); return <div className="logo-upload" key={kind}><label><span>{kind[0].toUpperCase() + kind.slice(1)} logo {saved ? `✓ ${saved.filename}` : ""}</span><input key={`${kind}-${saved?.uploadedAt || "empty"}`} type="file" disabled={pending === kind} accept="image/svg+xml,image/png,image/jpeg,image/webp" onChange={(event) => upload(kind, event.target.files?.[0])} /></label>{saved && <button className="text remove-logo" type="button" disabled={pending === kind} onClick={() => remove(kind)}>Remove</button>}</div>; })}</div></div>;
 }
 
 function Sources({ state, setState, busy, research, save }: { state: OnboardingState; setState: (state: OnboardingState) => void; busy: boolean; research: () => void; save: () => void }) {
