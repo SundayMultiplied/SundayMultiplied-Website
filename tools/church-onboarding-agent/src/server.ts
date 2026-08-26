@@ -29,6 +29,30 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
   }
 
   @callable()
+  async resetOnboarding() {
+    if (this.state.github) {
+      throw new Error("Completed repository handoffs cannot be erased. Start a new church draft instead.");
+    }
+    await Promise.all(this.state.assets.map((asset) => this.env.CHURCH_ASSETS.delete(asset.r2Key)));
+    const reset = emptyState();
+    this.setState(reset);
+    return reset;
+  }
+
+  @callable()
+  async removeLogo(kind: "primary" | "reverse" | "mark" | "favicon") {
+    const asset = this.state.assets.find((item) => item.kind === kind);
+    if (!asset) return this.state;
+    await this.env.CHURCH_ASSETS.delete(asset.r2Key);
+    const assets = this.state.assets.filter((item) => item.kind !== kind);
+    this.save({
+      assets,
+      checklist: { ...this.state.checklist, logos: assets.some((item) => item.kind === "primary") },
+    });
+    return this.state;
+  }
+
+  @callable()
   async saveBasics(basics: ChurchBasics) {
     if (!basics.name.trim() || !slugPattern.test(basics.slug)) throw new Error("A church name and URL-safe slug are required.");
     validatePublicUrl(basics.website);
