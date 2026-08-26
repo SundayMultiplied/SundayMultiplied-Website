@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "church": "cbc-savannah",
+  "links": [
+    {
+      "kind": "sermon_archive",
+      "url": "https://www.cbcsavannah.com/live",
+      "label": "WATCH LIVE",
+      "verifiedAt": "2026-08-25T20:42:16.993Z"
+    },
+    {
+      "kind": "facebook",
+      "url": "https://www.facebook.com/cbcofsavannah",
+      "label": "facebook",
+      "verifiedAt": "2026-08-25T20:42:16.993Z"
+    },
+    {
+      "kind": "instagram",
+      "url": "https://www.instagram.com/cbcsavannah/",
+      "label": "instagram",
+      "verifiedAt": "2026-08-25T20:42:16.993Z"
+    }
+  ]
+}
