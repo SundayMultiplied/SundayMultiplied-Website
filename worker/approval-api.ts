@@ -76,7 +76,8 @@ export async function handleApprovalApi(
 
   if (url.pathname === "/api/approvals" && request.method === "POST") {
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
-    if (!isAdmin(request, env)) return json({ error: "Unauthorized." }, 401);
+    const authError = adminAuthorizationError(request, env);
+    if (authError) return json({ error: authError }, 401);
     return createPackage(request, env.DB, url.origin);
   }
 
