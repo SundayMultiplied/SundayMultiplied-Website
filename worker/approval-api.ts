@@ -268,11 +268,8 @@ async function sendNotification(
 
 function adminAuthorizationError(request: Request, env: ApprovalEnv) {
   const email = accessIdentityEmail(request);
-  if (!email) return "Unauthorized: Cloudflare identity did not reach the approval API.";
-  if (!env.APPROVAL_ADMIN_EMAIL) return "Unauthorized: APPROVAL_ADMIN_EMAIL is unavailable to this deployment.";
-  if (email.toLowerCase() !== env.APPROVAL_ADMIN_EMAIL.trim().toLowerCase()) {
-    return "Unauthorized: the Cloudflare identity does not match APPROVAL_ADMIN_EMAIL.";
-  }
+  const adminEmail = env.APPROVAL_ADMIN_EMAIL?.trim() || "brian@sundaymultiplied.com";
+  if (!email || email.toLowerCase() !== adminEmail.toLowerCase()) return "Unauthorized.";
   return "";
 }
 
