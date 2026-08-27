@@ -58,4 +58,4 @@ Cloudflare D1 stores packages, resources, feedback, and activity. R2 can serve p
 4. Configure `APPROVAL_NOTIFICATION_EMAIL` for decision notifications.
 5. Add `BREVO_API_KEY` as a secret. Never commit it to this repository.
 
-The current admin authorization uses the hosting platform's verified `oai-authenticated-user-email` header. Before moving the dashboard to a fully public Cloudflare deployment, put `/approvals` and `/api/approvals` behind Cloudflare Access or replace this adapter with the chosen admin login system.
+Admin authorization accepts Cloudflare Access's verified `Cf-Access-Authenticated-User-Email` header (and retains the legacy hosting header as a compatibility fallback). Protect `/approvals*` and `/api/approvals*` with hostname-level Cloudflare Access policies; do not apply Access to the entire Worker because the marketing site and tokenized church review links must remain public.
