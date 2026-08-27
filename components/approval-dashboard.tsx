@@ -19,7 +19,7 @@ export function ApprovalDashboard() {
   const [createdLink, setCreatedLink] = useState("");
   const [saving, setSaving] = useState(false);
   useEffect(() => {
-    fetch("/approvals/api", { cache: "no-store" })
+    fetch("/api/approvals", { cache: "no-store" })
       .then(async (response) => {
         const data = await response.json() as { error?: string; packages: PackageSummary[] };
         if (!response.ok) throw new Error(data.error || "Unable to load approval packages.");
@@ -35,7 +35,7 @@ export function ApprovalDashboard() {
       title: `${kind} Multiplied`,
       previewUrl: String(formData.get(`${kind.toLowerCase()}Url`) || ""),
     })).filter((item) => item.previewUrl);
-    const response = await fetch("/approvals/api", {
+    const response = await fetch("/api/approvals", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
