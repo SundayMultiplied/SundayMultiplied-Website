@@ -1,0 +1,75 @@
+/* Shared Sunday Multiplied resource layout. Church styles supply the brand variables. */
+:root {
+  --sm-color-primary: #173028;
+  --sm-color-secondary: #e0bd78;
+  --sm-color-accent: #385643;
+  --sm-color-background: #ffffff;
+  --sm-color-text: #173028;
+  --sm-color-label: #173028;
+  --sm-font-heading: Georgia, "Times New Roman", serif;
+  --sm-font-body: Arial, sans-serif;
+  --sm-corner-radius: 12px;
+}
+
+* { box-sizing: border-box; }
+html { background: #eee9df; }
+body { margin: 0; color: var(--sm-color-text); background: #eee9df; font-family: var(--sm-font-body); }
+
+.sm-document {
+  width: min(860px, 100%);
+  margin: 0 auto;
+  color: var(--sm-color-text);
+  background: var(--sm-color-background);
+  box-shadow: 0 20px 70px rgba(23, 48, 40, .12);
+}
+
+.sm-header {
+  padding: clamp(30px, 6vw, 58px);
+  color: #fff;
+  background: var(--sm-color-primary);
+  border-bottom: 7px solid var(--sm-color-secondary);
+}
+.sm-header-content { display: flex; align-items: center; justify-content: space-between; gap: 34px; }
+.sm-header-text { min-width: 0; }
+.sm-header-logo-wrap { flex: 0 0 auto; max-width: 210px; padding: 12px; background: #fff; border-radius: var(--sm-corner-radius); }
+.sm-church-logo { display: block; width: 100%; max-height: 90px; object-fit: contain; }
+.sm-eyebrow { margin: 0 0 12px; color: var(--sm-color-secondary); font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+.sm-title { margin: 0; color: #fff; font-family: var(--sm-font-heading); font-size: clamp(36px, 7vw, 60px); font-weight: 400; line-height: 1.02; letter-spacing: -.035em; }
+.sm-meta { margin: 18px 0 0; color: rgba(255,255,255,.78); font-size: 13px; line-height: 1.6; }
+
+.sm-section { padding: clamp(28px, 5vw, 46px) clamp(26px, 7vw, 64px); border-bottom: 1px solid color-mix(in srgb, var(--sm-color-primary) 15%, transparent); }
+.sm-section h2 { margin: 0 0 16px; color: var(--sm-color-primary); font-family: var(--sm-font-heading); font-size: clamp(26px, 4vw, 36px); font-weight: 400; line-height: 1.15; }
+.sm-section h3 { margin: 24px 0 9px; color: var(--sm-color-accent); font-family: var(--sm-font-heading); font-size: 21px; }
+.sm-section p, .sm-section li { font-size: 16px; line-height: 1.72; }
+.sm-section p:last-child, .sm-section ul:last-child, .sm-section ol:last-child { margin-bottom: 0; }
+.sm-section ul, .sm-section ol { padding-left: 1.35rem; }
+.sm-section li + li { margin-top: 10px; }
+
+.sm-section--big-idea, .sm-section--summary, .sm-section--family-remember {
+  background: color-mix(in srgb, var(--sm-color-secondary) 16%, var(--sm-color-background));
+}
+.sm-section--scripture, .sm-section--prayer {
+  background: color-mix(in srgb, var(--sm-color-accent) 8%, var(--sm-color-background));
+  border-left: 6px solid var(--sm-color-accent);
+}
+.sm-scripture-reference { color: var(--sm-color-label); font-size: 13px !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.sm-scripture-text { color: var(--sm-color-primary); font-family: var(--sm-font-heading); font-size: 19px; }
+.sm-scripture-attribution { color: color-mix(in srgb, var(--sm-color-text) 65%, transparent); font-size: 12px !important; }
+.sm-question-group, .sm-practice-scenario, .sm-practice-task, .sm-practice-share, .sm-practice-debrief {
+  margin-top: 18px; padding: 20px 24px; border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent); border-radius: var(--sm-corner-radius); background: color-mix(in srgb, var(--sm-color-background) 96%, var(--sm-color-secondary));
+}
+.sm-question-group h3, .sm-practice-scenario h3, .sm-practice-task h3, .sm-practice-share h3, .sm-practice-debrief h3 { margin-top: 0; }
+.sm-section--leader-tip, .sm-section--parent-note { border-left: 6px solid var(--sm-color-secondary); }
+
+@media (max-width: 620px) {
+  .sm-header-content { align-items: flex-start; flex-direction: column-reverse; gap: 24px; }
+  .sm-header-logo-wrap { width: min(190px, 65vw); }
+  .sm-document { box-shadow: none; }
+  .sm-section--scripture, .sm-section--prayer, .sm-section--leader-tip, .sm-section--parent-note { border-left-width: 4px; }
+}
+
+@media print {
+  html, body { background: #fff; }
+  .sm-document { width: 100%; box-shadow: none; }
+  .sm-section { break-inside: avoid; }
+}

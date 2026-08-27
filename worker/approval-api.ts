@@ -4,6 +4,7 @@ type ApprovalEnv = {
   BREVO_API_KEY?: string;
   APPROVAL_ADMIN_EMAIL?: string;
   APPROVAL_NOTIFICATION_EMAIL?: string;
+  PUBLIC_SITE_ORIGIN?: string;
 };
 
 type DecisionBody = {
@@ -83,7 +84,7 @@ export async function handleApprovalApi(
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
     const authError = adminAuthorizationError(request, env);
     if (authError) return json({ error: authError }, 401);
-    return createPackage(request, env.DB, url.origin);
+    return createPackage(request, env.DB, env.PUBLIC_SITE_ORIGIN || "https://www.sundaymultiplied.com");
   }
 
   return null;

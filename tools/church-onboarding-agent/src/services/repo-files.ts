@@ -40,21 +40,21 @@ function css(state: OnboardingState): string {
   --sm-corner-radius: ${b.cornerRadius};
 }
 
-.sm-resource {
+.sm-resource,
+.sm-document {
   color: var(--sm-color-text);
   background: var(--sm-color-background);
   font-family: var(--sm-font-body);
 }
 
-.sm-resource h1,
-.sm-resource h2,
-.sm-resource h3 {
+.sm-resource h1, .sm-resource h2, .sm-resource h3,
+.sm-document h1, .sm-document h2, .sm-document h3 {
   color: var(--sm-color-primary);
   font-family: var(--sm-font-heading);
 }
 
-.sm-resource__eyebrow,
-.sm-resource__section-label {
+.sm-resource__eyebrow, .sm-resource__section-label,
+.sm-eyebrow {
   color: var(--sm-color-label);
   font-weight: 700;
   letter-spacing: .08em;
@@ -79,7 +79,8 @@ function css(state: OnboardingState): string {
   border-radius: ${b.buttonStyle === "rounded" ? "999px" : b.buttonStyle === "square" ? "0" : "var(--sm-corner-radius)"};
 }
 
-.sm-resource__header-logo {
+.sm-resource__header-logo,
+.sm-church-logo {
   display: block;
   max-height: 4rem;
   max-width: min(16rem, 70vw);
