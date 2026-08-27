@@ -60,7 +60,8 @@ export async function handleApprovalApi(
 
   if (url.pathname === "/api/approvals" && request.method === "GET") {
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
-    if (!isAdmin(request, env)) return json({ error: "Unauthorized." }, 401);
+    const authError = adminAuthorizationError(request, env);
+    if (authError) return json({ error: authError }, 401);
     const rows = await env.DB.prepare(`
       SELECT p.id, p.title, p.week_of AS weekOf, p.status, p.updated_at AS updatedAt,
              c.name AS churchName, COUNT(r.id) AS resourceCount
@@ -75,7 +76,8 @@ export async function handleApprovalApi(
 
   if (url.pathname === "/api/approvals" && request.method === "POST") {
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
-    if (!isAdmin(request, env)) return json({ error: "Unauthorized." }, 401);
+    const authError = adminAuthorizationError(request, env);
+    if (authError) return json({ error: authError }, 401);
     return createPackage(request, env.DB, url.origin);
   }
 
@@ -264,9 +266,14 @@ async function sendNotification(
   if (!response.ok) console.error(JSON.stringify({ event: "approval_email_failed", status: response.status }));
 }
 
-function isAdmin(request: Request, env: ApprovalEnv) {
+function adminAuthorizationError(request: Request, env: ApprovalEnv) {
   const email = accessIdentityEmail(request);
-  return Boolean(email && env.APPROVAL_ADMIN_EMAIL && email.toLowerCase() === env.APPROVAL_ADMIN_EMAIL.toLowerCase());
+  if (!email) return "Unauthorized: Cloudflare identity did not reach the approval API.";
+  if (!env.APPROVAL_ADMIN_EMAIL) return "Unauthorized: APPROVAL_ADMIN_EMAIL is unavailable to this deployment.";
+  if (email.toLowerCase() !== env.APPROVAL_ADMIN_EMAIL.trim().toLowerCase()) {
+    return "Unauthorized: the Cloudflare identity does not match APPROVAL_ADMIN_EMAIL.";
+  }
+  return "";
 }
 
 function accessIdentityEmail(request: Request) {
