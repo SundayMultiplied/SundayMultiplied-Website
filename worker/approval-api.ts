@@ -62,16 +62,21 @@ export async function handleApprovalApi(
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
     const authError = adminAuthorizationError(request, env);
     if (authError) return json({ error: authError }, 401);
-    const rows = await env.DB.prepare(`
-      SELECT p.id, p.title, p.week_of AS weekOf, p.status, p.updated_at AS updatedAt,
-             c.name AS churchName, COUNT(r.id) AS resourceCount
-      FROM review_packages p
-      JOIN churches c ON c.id = p.church_id
-      LEFT JOIN review_resources r ON r.package_id = p.id
-      GROUP BY p.id
-      ORDER BY p.updated_at DESC
-    `).all();
-    return json({ packages: rows.results });
+    try {
+      const rows = await env.DB.prepare(`
+        SELECT p.id, p.title, p.week_of AS weekOf, p.status, p.updated_at AS updatedAt,
+               c.name AS churchName, COUNT(r.id) AS resourceCount
+        FROM review_packages p
+        JOIN churches c ON c.id = p.church_id
+        LEFT JOIN review_resources r ON r.package_id = p.id
+        GROUP BY p.id
+        ORDER BY p.updated_at DESC
+      `).all();
+      return json({ packages: rows.results });
+    } catch (error) {
+      console.error("approval_list_failed", error);
+      return json({ error: "Approval database query failed. See Worker logs for approval_list_failed." }, 500);
+    }
   }
 
   if (["/api/approvals", "/approvals/api"].includes(url.pathname) && request.method === "POST") {
