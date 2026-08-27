@@ -58,7 +58,7 @@ export async function handleApprovalApi(
     return json({ error: "Method not allowed." }, 405);
   }
 
-  if (url.pathname === "/api/approvals" && request.method === "GET") {
+  if (["/api/approvals", "/approvals/api"].includes(url.pathname) && request.method === "GET") {
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
     const authError = adminAuthorizationError(request, env);
     if (authError) return json({ error: authError }, 401);
@@ -74,7 +74,7 @@ export async function handleApprovalApi(
     return json({ packages: rows.results });
   }
 
-  if (url.pathname === "/api/approvals" && request.method === "POST") {
+  if (["/api/approvals", "/approvals/api"].includes(url.pathname) && request.method === "POST") {
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
     const authError = adminAuthorizationError(request, env);
     if (authError) return json({ error: authError }, 401);
