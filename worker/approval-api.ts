@@ -265,7 +265,8 @@ async function sendNotification(
 }
 
 function isAdmin(request: Request, env: ApprovalEnv) {
-  const email = request.headers.get("oai-authenticated-user-email");
+  const email = request.headers.get("cf-access-authenticated-user-email")
+    ?? request.headers.get("oai-authenticated-user-email");
   return Boolean(email && env.APPROVAL_ADMIN_EMAIL && email.toLowerCase() === env.APPROVAL_ADMIN_EMAIL.toLowerCase());
 }
 
