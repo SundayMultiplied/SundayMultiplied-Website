@@ -265,9 +265,26 @@ async function sendNotification(
 }
 
 function isAdmin(request: Request, env: ApprovalEnv) {
-  const email = request.headers.get("cf-access-authenticated-user-email")
-    ?? request.headers.get("oai-authenticated-user-email");
+  const email = accessIdentityEmail(request);
   return Boolean(email && env.APPROVAL_ADMIN_EMAIL && email.toLowerCase() === env.APPROVAL_ADMIN_EMAIL.toLowerCase());
+}
+
+function accessIdentityEmail(request: Request) {
+  const headerEmail = request.headers.get("cf-access-authenticated-user-email")
+    ?? request.headers.get("oai-authenticated-user-email");
+  if (headerEmail) return headerEmail.trim();
+
+  const assertion = request.headers.get("cf-access-jwt-assertion");
+  const payload = assertion?.split(".")[1];
+  if (!payload) return "";
+
+  try {
+    const base64 = payload.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const claims = JSON.parse(atob(base64)) as { email?: unknown };
+    return typeof claims.email === "string" ? claims.email.trim() : "";
+  } catch {
+    return "";
+  }
 }
 
 function clean(value: unknown, max: number) {
