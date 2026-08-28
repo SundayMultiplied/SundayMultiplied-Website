@@ -355,6 +355,7 @@ async function sendReviewReadyNotificationAndRecord(
       : { status: "failed", message: brevoErrorMessage(response.status, responsePreview), providerStatus: response.status };
     await recordReviewReadyNotification(env.DB, reviewPackage.id, result, recipient);
     if (!response.ok) {
+      await sendReviewReadyFailureAlert(env, reviewPackage, result);
       console.error(JSON.stringify({ event: "review_ready_email_failed", packageId: reviewPackage.id, status: response.status, message: result.message }));
     }
     return result;
@@ -364,8 +365,35 @@ async function sendReviewReadyNotificationAndRecord(
       message: `Brevo request failed: ${error instanceof Error ? clean(error.message, 300) : "Unknown network error."}`,
     };
     await recordReviewReadyNotification(env.DB, reviewPackage.id, result, recipient);
+    await sendReviewReadyFailureAlert(env, reviewPackage, result);
     console.error(JSON.stringify({ event: "review_ready_email_failed", packageId: reviewPackage.id, message: result.message }));
     return result;
+  }
+}
+
+async function sendReviewReadyFailureAlert(
+  env: ApprovalEnv,
+  reviewPackage: Record<string, string | null>,
+  failure: NotificationResult,
+) {
+  if (!env.BREVO_API_KEY) return;
+  const recipient = env.APPROVAL_FAILURE_EMAIL || "atobdavis@gmail.com";
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": env.BREVO_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "Sunday Multiplied", email: "brian@sundaymultiplied.com" },
+        to: [{ email: recipient }],
+        subject: `Review-ready email failed: ${reviewPackage.church_name}`,
+        textContent: `The approval package was created, but its review-ready email failed.\n\nPackage: ${reviewPackage.title}\nFailure: ${failure.message}\n\nOpen the approval dashboard to retry or contact the reviewer directly.`,
+      }),
+    });
+    if (!response.ok) {
+      console.error(JSON.stringify({ event: "review_ready_failure_alert_failed", packageId: reviewPackage.id, status: response.status }));
+    }
+  } catch (error) {
+    console.error(JSON.stringify({ event: "review_ready_failure_alert_failed", packageId: reviewPackage.id, message: error instanceof Error ? clean(error.message, 300) : "Unknown network error." }));
   }
 }
 
