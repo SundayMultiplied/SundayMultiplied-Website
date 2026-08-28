@@ -25,6 +25,12 @@ type CreatePackageBody = {
   resources?: Array<{ kind?: string; title?: string; previewUrl?: string }>;
 };
 
+type NotificationResult = {
+  status: "sent" | "failed" | "skipped";
+  message: string;
+  providerStatus?: number;
+};
+
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 
 export async function handleApprovalApi(
@@ -59,6 +65,28 @@ export async function handleApprovalApi(
     return json({ error: "Method not allowed." }, 405);
   }
 
+  const retryNotificationMatch = url.pathname.match(/^\/api\/approvals\/([^/]+)\/notification$/);
+  if (retryNotificationMatch && request.method === "POST") {
+    if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
+    const authError = adminAuthorizationError(request, env);
+    if (authError) return json({ error: authError }, 401);
+    const reviewPackage = await findPackageById(env.DB, decodeURIComponent(retryNotificationMatch[1]));
+    if (!reviewPackage) return json({ error: "Approval package not found." }, 404);
+    if (!reviewPackage.id || !["approved", "revision_requested"].includes(reviewPackage.status ?? "")) {
+      return json({ error: "A notification can only be sent after a decision is recorded." }, 409);
+    }
+    const result = await sendNotificationAndRecord(
+      env,
+      reviewPackage,
+      reviewPackage.status ?? "approved",
+      reviewPackage.reviewer_name || "Sunday Multiplied admin",
+      reviewPackage.reviewer_email || "",
+      "",
+      [],
+    );
+    return json(result, result.status === "sent" ? 200 : 502);
+  }
+
   if (["/api/approvals", "/approvals/api"].includes(url.pathname) && request.method === "GET") {
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
     const authError = adminAuthorizationError(request, env);
@@ -66,14 +94,23 @@ export async function handleApprovalApi(
     try {
       const rows = await env.DB.prepare(`
         SELECT p.id, p.title, p.week_of AS weekOf, p.status, p.updated_at AS updatedAt,
-               c.name AS churchName, COUNT(r.id) AS resourceCount
+               c.name AS churchName, COUNT(r.id) AS resourceCount,
+               (SELECT a.event_type FROM review_activity a
+                WHERE a.package_id = p.id AND a.event_type LIKE 'notification_%'
+                ORDER BY a.created_at DESC LIMIT 1) AS notificationEvent,
+               (SELECT a.details FROM review_activity a
+                WHERE a.package_id = p.id AND a.event_type LIKE 'notification_%'
+                ORDER BY a.created_at DESC LIMIT 1) AS notificationDetails,
+               (SELECT a.created_at FROM review_activity a
+                WHERE a.package_id = p.id AND a.event_type LIKE 'notification_%'
+                ORDER BY a.created_at DESC LIMIT 1) AS notificationUpdatedAt
         FROM review_packages p
         JOIN churches c ON c.id = p.church_id
         LEFT JOIN review_resources r ON r.package_id = p.id
         GROUP BY p.id
         ORDER BY p.updated_at DESC
       `).all();
-      return json({ packages: rows.results });
+      return json({ packages: rows.results.map(notificationSummary) });
     } catch (error) {
       console.error("approval_list_failed", error);
       return json({ error: "Approval database query failed. See Worker logs for approval_list_failed." }, 500);
@@ -142,6 +179,14 @@ async function findPackage(db: D1Database, tokenHash: string) {
     FROM review_packages p JOIN churches c ON c.id = p.church_id
     WHERE p.token_hash = ? LIMIT 1
   `).bind(tokenHash).first<Record<string, string | null>>();
+}
+
+async function findPackageById(db: D1Database, packageId: string) {
+  return db.prepare(`
+    SELECT p.*, c.name AS church_name
+    FROM review_packages p JOIN churches c ON c.id = p.church_id
+    WHERE p.id = ? LIMIT 1
+  `).bind(packageId).first<Record<string, string | null>>();
 }
 
 async function packageResponse(db: D1Database, row: Record<string, string | null>) {
@@ -222,7 +267,12 @@ async function saveDecision(
   await db.batch(statements);
 
   if (env.BREVO_API_KEY) {
-    ctx.waitUntil(sendNotification(env, reviewPackage, status, reviewerName, reviewerEmail, overallFeedback, feedback));
+    ctx.waitUntil(sendNotificationAndRecord(env, reviewPackage, status, reviewerName, reviewerEmail, overallFeedback, feedback));
+  } else {
+    await recordNotification(env.DB, reviewPackage.id, "skipped", {
+      status: "skipped",
+      message: "BREVO_API_KEY is unavailable to this production deployment.",
+    });
   }
   return json({ ok: true, status });
 }
@@ -246,7 +296,7 @@ async function resourceResponse(env: ApprovalEnv, packageId: string | null, reso
   return json({ error: "Resource preview is not available yet." }, 404);
 }
 
-async function sendNotification(
+async function sendNotificationAndRecord(
   env: ApprovalEnv,
   reviewPackage: Record<string, string | null>,
   status: string,
@@ -254,22 +304,99 @@ async function sendNotification(
   reviewerEmail: string,
   overallFeedback: string,
   resourceFeedback: Array<{ resourceId: string; message: string }>,
-) {
+): Promise<NotificationResult> {
   const recipient = env.APPROVAL_NOTIFICATION_EMAIL || "brian@sundaymultiplied.com";
+  if (!env.BREVO_API_KEY) {
+    const result: NotificationResult = { status: "skipped", message: "BREVO_API_KEY is unavailable to this production deployment." };
+    await recordNotification(env.DB, reviewPackage.id, result.status, result);
+    return result;
+  }
   const action = status === "approved" ? "approved" : "requested revisions for";
   const details = [overallFeedback, ...resourceFeedback.map((item) => item.message)].filter(Boolean).join("\n\n");
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: { "api-key": env.BREVO_API_KEY ?? "", "content-type": "application/json" },
-    body: JSON.stringify({
-      sender: { name: "Sunday Multiplied", email: "brian@sundaymultiplied.com" },
-      to: [{ email: recipient }],
-      replyTo: reviewerEmail ? { email: reviewerEmail, name: reviewerName } : undefined,
-      subject: `${reviewPackage.church_name} ${action}: ${reviewPackage.title}`,
-      textContent: `${reviewerName} ${action} ${reviewPackage.title}.\n\n${details || "No additional comments."}`,
-    }),
-  });
-  if (!response.ok) console.error(JSON.stringify({ event: "approval_email_failed", status: response.status }));
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": env.BREVO_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "Sunday Multiplied", email: "brian@sundaymultiplied.com" },
+        to: [{ email: recipient }],
+        replyTo: reviewerEmail ? { email: reviewerEmail, name: reviewerName } : undefined,
+        subject: `${reviewPackage.church_name} ${action}: ${reviewPackage.title}`,
+        textContent: `${reviewerName} ${action} ${reviewPackage.title}.\n\n${details || "No additional comments."}`,
+      }),
+    });
+    const responsePreview = await readResponsePreview(response, 2048);
+    const result: NotificationResult = response.ok
+      ? { status: "sent", message: `Brevo accepted the email for ${recipient}.`, providerStatus: response.status }
+      : { status: "failed", message: brevoErrorMessage(response.status, responsePreview), providerStatus: response.status };
+    await recordNotification(env.DB, reviewPackage.id, result.status, result);
+    if (!response.ok) console.error(JSON.stringify({ event: "approval_email_failed", packageId: reviewPackage.id, status: response.status, message: result.message }));
+    return result;
+  } catch (error) {
+    const result: NotificationResult = {
+      status: "failed",
+      message: `Brevo request failed: ${error instanceof Error ? clean(error.message, 300) : "Unknown network error."}`,
+    };
+    await recordNotification(env.DB, reviewPackage.id, result.status, result);
+    console.error(JSON.stringify({ event: "approval_email_failed", packageId: reviewPackage.id, message: result.message }));
+    return result;
+  }
+}
+
+async function recordNotification(
+  db: D1Database | undefined,
+  packageId: string | null,
+  status: NotificationResult["status"],
+  result: NotificationResult,
+) {
+  if (!db || !packageId) return;
+  await db.prepare("INSERT INTO review_activity (id, package_id, event_type, details, created_at) VALUES (?, ?, ?, ?, ?)")
+    .bind(crypto.randomUUID(), packageId, `notification_${status}`, JSON.stringify(result), new Date().toISOString()).run();
+}
+
+function notificationSummary(row: Record<string, unknown>) {
+  const event = typeof row.notificationEvent === "string" ? row.notificationEvent : "";
+  let message = "";
+  if (typeof row.notificationDetails === "string") {
+    try {
+      const details = JSON.parse(row.notificationDetails) as { message?: unknown };
+      if (typeof details.message === "string") message = details.message;
+    } catch {
+      message = clean(row.notificationDetails, 400);
+    }
+  }
+  return {
+    ...row,
+    notificationStatus: event.startsWith("notification_") ? event.slice("notification_".length) : "not_attempted",
+    notificationMessage: message,
+  };
+}
+
+async function readResponsePreview(response: Response, limit: number) {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let output = "";
+  while (output.length < limit) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    output += decoder.decode(value, { stream: true });
+  }
+  await reader.cancel().catch(() => undefined);
+  return output.slice(0, limit);
+}
+
+function brevoErrorMessage(status: number, responseBody: string) {
+  let providerMessage = "";
+  try {
+    const parsed = JSON.parse(responseBody) as { code?: unknown; message?: unknown };
+    const code = typeof parsed.code === "string" ? clean(parsed.code, 80) : "";
+    const message = typeof parsed.message === "string" ? clean(parsed.message, 300) : "";
+    providerMessage = [code, message].filter(Boolean).join(": ");
+  } catch {
+    providerMessage = "";
+  }
+  return `Brevo rejected the email (HTTP ${status})${providerMessage ? `: ${providerMessage}` : "."}`;
 }
 
 function adminAuthorizationError(request: Request, env: ApprovalEnv) {
