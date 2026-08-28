@@ -10,6 +10,9 @@ type PackageSummary = {
   updatedAt: string;
   churchName: string;
   resourceCount: number;
+  notificationStatus: "sent" | "failed" | "skipped" | "not_attempted";
+  notificationMessage: string;
+  notificationUpdatedAt?: string;
 };
 
 export function ApprovalDashboard() {
@@ -18,6 +21,14 @@ export function ApprovalDashboard() {
   const [showCreate, setShowCreate] = useState(false);
   const [createdLink, setCreatedLink] = useState("");
   const [saving, setSaving] = useState(false);
+  const [retryingId, setRetryingId] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+  async function loadPackages() {
+    const response = await fetch("/api/approvals", { cache: "no-store" });
+    const data = await response.json() as { error?: string; packages: PackageSummary[] };
+    if (!response.ok) throw new Error(data.error || "Unable to load approval packages.");
+    setPackages(data.packages);
+  }
   useEffect(() => {
     fetch("/api/approvals", { cache: "no-store" })
       .then(async (response) => {
@@ -47,6 +58,17 @@ export function ApprovalDashboard() {
     setSaving(false);
     if (!response.ok) return setError(data.error || "Unable to create this package.");
     if (data.reviewUrl) setCreatedLink(data.reviewUrl);
+    await loadPackages();
+  }
+  async function retryNotification(item: PackageSummary) {
+    if (!window.confirm(`Send another approval notification for ${item.churchName}: ${item.title}?`)) return;
+    setRetryingId(item.id);
+    setActionMessage("");
+    const response = await fetch(`/api/approvals/${encodeURIComponent(item.id)}/notification`, { method: "POST" });
+    const data = await response.json() as { error?: string; status?: string; message?: string };
+    setRetryingId("");
+    setActionMessage(data.message || data.error || (response.ok ? "Notification sent." : "Notification failed."));
+    await loadPackages();
   }
   return (
     <main className="approval-dashboard">
@@ -63,9 +85,13 @@ export function ApprovalDashboard() {
         {createdLink && <div className="approval-created-link"><strong>Secure review link</strong><input readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} /><small>Copy this link now. Only its secure hash is stored.</small></div>}
       </form>}
       {error && <div className="approval-admin-error"><strong>Dashboard access unavailable</strong><p>{error}</p></div>}
+      {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
       {!error && <div className="approval-table">
-        <div className="approval-table-row approval-table-labels"><span>Church / Package</span><span>Week of</span><span>Resources</span><span>Status</span></div>
-        {packages.map((item) => <div className="approval-table-row" key={item.id}><span><strong>{item.churchName}</strong><small>{item.title}</small></span><span>{item.weekOf}</span><span>{item.resourceCount}</span><span className={`approval-status status-${item.status}`}>{item.status.replaceAll("_", " ")}</span></div>)}
+        <div className="approval-table-row approval-table-labels"><span>Church / Package</span><span>Week of</span><span>Resources</span><span>Status</span><span>Notification</span></div>
+        {packages.map((item) => <div className="approval-table-row" key={item.id}>
+          <span><strong>{item.churchName}</strong><small>{item.title}</small></span><span>{item.weekOf}</span><span>{item.resourceCount}</span><span className={`approval-status status-${item.status}`}>{item.status.replaceAll("_", " ")}</span>
+          <span className="approval-notification"><strong className={`notification-${item.notificationStatus}`}>{item.notificationStatus.replaceAll("_", " ")}</strong>{item.notificationMessage && <small>{item.notificationMessage}</small>}{["approved", "revision_requested"].includes(item.status) && <button type="button" onClick={() => void retryNotification(item)} disabled={retryingId === item.id}>{retryingId === item.id ? "Sending…" : "Retry email"}</button>}</span>
+        </div>)}
       </div>}
     </main>
   );
