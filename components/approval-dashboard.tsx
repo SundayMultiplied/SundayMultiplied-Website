@@ -10,9 +10,12 @@ type PackageSummary = {
   updatedAt: string;
   churchName: string;
   resourceCount: number;
-  notificationStatus: "sent" | "failed" | "skipped" | "not_attempted";
-  notificationMessage: string;
-  notificationUpdatedAt?: string;
+  reviewNotificationStatus: "sent" | "failed" | "skipped" | "not_attempted";
+  reviewNotificationMessage: string;
+  reviewNotificationUpdatedAt?: string;
+  decisionNotificationStatus: "sent" | "failed" | "skipped" | "not_attempted";
+  decisionNotificationMessage: string;
+  decisionNotificationUpdatedAt?: string;
 };
 
 export function ApprovalDashboard() {
@@ -90,7 +93,10 @@ export function ApprovalDashboard() {
         <div className="approval-table-row approval-table-labels"><span>Church / Package</span><span>Week of</span><span>Resources</span><span>Status</span><span>Notification</span></div>
         {packages.map((item) => <div className="approval-table-row" key={item.id}>
           <span><strong>{item.churchName}</strong><small>{item.title}</small></span><span>{item.weekOf}</span><span>{item.resourceCount}</span><span className={`approval-status status-${item.status}`}>{item.status.replaceAll("_", " ")}</span>
-          <span className="approval-notification"><strong className={`notification-${item.notificationStatus}`}>{item.notificationStatus.replaceAll("_", " ")}</strong>{item.notificationMessage && <small>{item.notificationMessage}</small>}{["approved", "revision_requested"].includes(item.status) && <button type="button" onClick={() => void retryNotification(item)} disabled={retryingId === item.id}>{retryingId === item.id ? "Sending…" : "Retry email"}</button>}</span>
+          <span className="approval-notification">
+            <span className="approval-notification-stage"><small>Review request</small><strong className={`notification-${item.reviewNotificationStatus}`}>{item.reviewNotificationStatus.replaceAll("_", " ")}</strong>{item.reviewNotificationMessage && <small>{item.reviewNotificationMessage}</small>}</span>
+            <span className="approval-notification-stage"><small>Decision</small><strong className={`notification-${item.decisionNotificationStatus}`}>{item.decisionNotificationStatus.replaceAll("_", " ")}</strong>{item.decisionNotificationMessage && <small>{item.decisionNotificationMessage}</small>}{["approved", "revision_requested"].includes(item.status) && <button type="button" onClick={() => void retryNotification(item)} disabled={retryingId === item.id}>{retryingId === item.id ? "Sending…" : "Retry decision email"}</button>}</span>
+          </span>
         </div>)}
       </div>}
     </main>
