@@ -4,6 +4,8 @@ type ApprovalEnv = {
   BREVO_API_KEY?: string;
   APPROVAL_ADMIN_EMAIL?: string;
   APPROVAL_NOTIFICATION_EMAIL?: string;
+  APPROVAL_REVIEWER_EMAIL?: string;
+  APPROVAL_FAILURE_EMAIL?: string;
   PUBLIC_SITE_ORIGIN?: string;
 };
 
@@ -22,6 +24,7 @@ type CreatePackageBody = {
   seriesTitle?: string;
   weekOf?: string;
   scripture?: string;
+  reviewerEmail?: string;
   resources?: Array<{ kind?: string; title?: string; previewUrl?: string }>;
 };
 
@@ -121,13 +124,14 @@ export async function handleApprovalApi(
     if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
     const authError = adminAuthorizationError(request, env);
     if (authError) return json({ error: authError }, 401);
-    return createPackage(request, env.DB, env.PUBLIC_SITE_ORIGIN || "https://www.sundaymultiplied.com");
+    return createPackage(request, { ...env, DB: env.DB }, env.PUBLIC_SITE_ORIGIN || "https://www.sundaymultiplied.com");
   }
 
   return null;
 }
 
-async function createPackage(request: Request, db: D1Database, origin: string) {
+async function createPackage(request: Request, env: ApprovalEnv & { DB: D1Database }, origin: string) {
+  const db = env.DB;
   let body: CreatePackageBody;
   try {
     body = await request.json() as CreatePackageBody;
@@ -170,7 +174,25 @@ async function createPackage(request: Request, db: D1Database, origin: string) {
       .bind(crypto.randomUUID(), packageId, resource.kind, resource.title, resource.previewUrl || null, index, now));
   });
   await db.batch(statements);
-  return json({ ok: true, reviewUrl: `${origin}/review/${token}` }, 201);
+  const reviewUrl = `${origin}/review/${token}`;
+  const persistedPackage = await findPackageById(db, packageId);
+  if (!persistedPackage) {
+    return json({ error: "The approval package could not be verified after creation." }, 500);
+  }
+  const persistedResources = await db.prepare("SELECT COUNT(*) AS count FROM review_resources WHERE package_id = ?")
+    .bind(packageId).first<{ count: number }>();
+  if (Number(persistedResources?.count ?? 0) !== resources.length) {
+    return json({ error: "The approval resources could not be verified after creation." }, 500);
+  }
+
+  const notification = await sendReviewReadyNotificationAndRecord(
+    env,
+    persistedPackage,
+    reviewUrl,
+    resources,
+    clean(body.reviewerEmail, 200),
+  );
+  return json({ ok: true, reviewUrl, notification }, 201);
 }
 
 async function findPackage(db: D1Database, tokenHash: string) {
@@ -294,6 +316,102 @@ async function resourceResponse(env: ApprovalEnv, packageId: string | null, reso
   }
   if (resource.preview_url) return Response.redirect(resource.preview_url, 302);
   return json({ error: "Resource preview is not available yet." }, 404);
+}
+
+async function sendReviewReadyNotificationAndRecord(
+  env: ApprovalEnv,
+  reviewPackage: Record<string, string | null>,
+  reviewUrl: string,
+  resources: Array<{ kind: string; title: string; previewUrl: string }>,
+  requestedRecipient: string,
+): Promise<NotificationResult> {
+  const recipient = requestedRecipient || env.APPROVAL_REVIEWER_EMAIL || "brian@sundaymultiplied.com";
+  if (!/^\S+@\S+\.\S+$/.test(recipient)) {
+    const result: NotificationResult = { status: "failed", message: "The assigned reviewer email is invalid." };
+    await recordReviewReadyNotification(env.DB, reviewPackage.id, result, recipient);
+    return result;
+  }
+  if (!env.BREVO_API_KEY) {
+    const result: NotificationResult = { status: "skipped", message: "BREVO_API_KEY is unavailable to this production deployment." };
+    await recordReviewReadyNotification(env.DB, reviewPackage.id, result, recipient);
+    return result;
+  }
+
+  const resourceList = resources.map((resource) => `- ${resource.title} (${resource.kind})`).join("\n");
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": env.BREVO_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "Sunday Multiplied", email: "brian@sundaymultiplied.com" },
+        to: [{ email: recipient }],
+        subject: `Ready for review: ${reviewPackage.church_name} — ${reviewPackage.title}`,
+        textContent: `A Sunday Multiplied approval package is ready.\n\nChurch: ${reviewPackage.church_name}\nWeek of: ${reviewPackage.week_of}\n\nResources:\n${resourceList}\n\nReview and approve the package:\n${reviewUrl}`,
+      }),
+    });
+    const responsePreview = await readResponsePreview(response, 2048);
+    const result: NotificationResult = response.ok
+      ? { status: "sent", message: `Brevo accepted the review-ready email for ${recipient}.`, providerStatus: response.status }
+      : { status: "failed", message: brevoErrorMessage(response.status, responsePreview), providerStatus: response.status };
+    await recordReviewReadyNotification(env.DB, reviewPackage.id, result, recipient);
+    if (!response.ok) {
+      await sendReviewReadyFailureAlert(env, reviewPackage, result);
+      console.error(JSON.stringify({ event: "review_ready_email_failed", packageId: reviewPackage.id, status: response.status, message: result.message }));
+    }
+    return result;
+  } catch (error) {
+    const result: NotificationResult = {
+      status: "failed",
+      message: `Brevo request failed: ${error instanceof Error ? clean(error.message, 300) : "Unknown network error."}`,
+    };
+    await recordReviewReadyNotification(env.DB, reviewPackage.id, result, recipient);
+    await sendReviewReadyFailureAlert(env, reviewPackage, result);
+    console.error(JSON.stringify({ event: "review_ready_email_failed", packageId: reviewPackage.id, message: result.message }));
+    return result;
+  }
+}
+
+async function sendReviewReadyFailureAlert(
+  env: ApprovalEnv,
+  reviewPackage: Record<string, string | null>,
+  failure: NotificationResult,
+) {
+  if (!env.BREVO_API_KEY) return;
+  const recipient = env.APPROVAL_FAILURE_EMAIL || "atobdavis@gmail.com";
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": env.BREVO_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "Sunday Multiplied", email: "brian@sundaymultiplied.com" },
+        to: [{ email: recipient }],
+        subject: `Review-ready email failed: ${reviewPackage.church_name}`,
+        textContent: `The approval package was created, but its review-ready email failed.\n\nPackage: ${reviewPackage.title}\nFailure: ${failure.message}\n\nOpen the approval dashboard to retry or contact the reviewer directly.`,
+      }),
+    });
+    if (!response.ok) {
+      console.error(JSON.stringify({ event: "review_ready_failure_alert_failed", packageId: reviewPackage.id, status: response.status }));
+    }
+  } catch (error) {
+    console.error(JSON.stringify({ event: "review_ready_failure_alert_failed", packageId: reviewPackage.id, message: error instanceof Error ? clean(error.message, 300) : "Unknown network error." }));
+  }
+}
+
+async function recordReviewReadyNotification(
+  db: D1Database | undefined,
+  packageId: string | null,
+  result: NotificationResult,
+  recipient: string,
+) {
+  if (!db || !packageId) return;
+  await db.prepare("INSERT INTO review_activity (id, package_id, event_type, details, created_at) VALUES (?, ?, ?, ?, ?)")
+    .bind(
+      crypto.randomUUID(),
+      packageId,
+      `review_ready_notification_${result.status}`,
+      JSON.stringify({ ...result, recipient }),
+      new Date().toISOString(),
+    ).run();
 }
 
 async function sendNotificationAndRecord(
