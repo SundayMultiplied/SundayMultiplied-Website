@@ -99,14 +99,23 @@ export async function handleApprovalApi(
         SELECT p.id, p.title, p.week_of AS weekOf, p.status, p.updated_at AS updatedAt,
                c.name AS churchName, COUNT(r.id) AS resourceCount,
                (SELECT a.event_type FROM review_activity a
+                WHERE a.package_id = p.id AND a.event_type LIKE 'review_ready_notification_%'
+                ORDER BY a.created_at DESC LIMIT 1) AS reviewNotificationEvent,
+               (SELECT a.details FROM review_activity a
+                WHERE a.package_id = p.id AND a.event_type LIKE 'review_ready_notification_%'
+                ORDER BY a.created_at DESC LIMIT 1) AS reviewNotificationDetails,
+               (SELECT a.created_at FROM review_activity a
+                WHERE a.package_id = p.id AND a.event_type LIKE 'review_ready_notification_%'
+                ORDER BY a.created_at DESC LIMIT 1) AS reviewNotificationUpdatedAt,
+               (SELECT a.event_type FROM review_activity a
                 WHERE a.package_id = p.id AND a.event_type LIKE 'notification_%'
-                ORDER BY a.created_at DESC LIMIT 1) AS notificationEvent,
+                ORDER BY a.created_at DESC LIMIT 1) AS decisionNotificationEvent,
                (SELECT a.details FROM review_activity a
                 WHERE a.package_id = p.id AND a.event_type LIKE 'notification_%'
-                ORDER BY a.created_at DESC LIMIT 1) AS notificationDetails,
+                ORDER BY a.created_at DESC LIMIT 1) AS decisionNotificationDetails,
                (SELECT a.created_at FROM review_activity a
                 WHERE a.package_id = p.id AND a.event_type LIKE 'notification_%'
-                ORDER BY a.created_at DESC LIMIT 1) AS notificationUpdatedAt
+                ORDER BY a.created_at DESC LIMIT 1) AS decisionNotificationUpdatedAt
         FROM review_packages p
         JOIN churches c ON c.id = p.church_id
         LEFT JOIN review_resources r ON r.package_id = p.id
@@ -473,20 +482,39 @@ async function recordNotification(
 }
 
 function notificationSummary(row: Record<string, unknown>) {
-  const event = typeof row.notificationEvent === "string" ? row.notificationEvent : "";
+  const review = notificationFields(
+    row.reviewNotificationEvent,
+    row.reviewNotificationDetails,
+    "review_ready_notification_",
+  );
+  const decision = notificationFields(
+    row.decisionNotificationEvent,
+    row.decisionNotificationDetails,
+    "notification_",
+  );
+  return {
+    ...row,
+    reviewNotificationStatus: review.status,
+    reviewNotificationMessage: review.message,
+    decisionNotificationStatus: decision.status,
+    decisionNotificationMessage: decision.message,
+  };
+}
+
+function notificationFields(eventValue: unknown, detailsValue: unknown, prefix: string) {
+  const event = typeof eventValue === "string" ? eventValue : "";
   let message = "";
-  if (typeof row.notificationDetails === "string") {
+  if (typeof detailsValue === "string") {
     try {
-      const details = JSON.parse(row.notificationDetails) as { message?: unknown };
+      const details = JSON.parse(detailsValue) as { message?: unknown };
       if (typeof details.message === "string") message = details.message;
     } catch {
-      message = clean(row.notificationDetails, 400);
+      message = clean(detailsValue, 400);
     }
   }
   return {
-    ...row,
-    notificationStatus: event.startsWith("notification_") ? event.slice("notification_".length) : "not_attempted",
-    notificationMessage: message,
+    status: event.startsWith(prefix) ? event.slice(prefix.length) : "not_attempted",
+    message,
   };
 }
 
