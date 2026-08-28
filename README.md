@@ -57,7 +57,8 @@ Cloudflare D1 stores packages, resources, feedback, and activity. R2 can serve p
 3. Configure `APPROVAL_ADMIN_EMAIL` as the email allowed to use `/approvals`.
 4. Configure `APPROVAL_NOTIFICATION_EMAIL` for approval and revision-decision notifications.
 5. Configure `APPROVAL_REVIEWER_EMAIL` for new-package review notifications. It defaults to `brian@sundaymultiplied.com`.
-6. Add `BREVO_API_KEY` as a secret. Never commit it to this repository.
+6. Configure `APPROVAL_FAILURE_EMAIL` for failed review-notification alerts. It defaults to `atobdavis@gmail.com`.
+7. Add `BREVO_API_KEY` as a secret. Never commit it to this repository.
 
 Package creation accepts an optional `reviewerEmail`. When present, it overrides the default for that package. A review-ready email is sent only after the package and all selected resource records have been written and verified.
 
