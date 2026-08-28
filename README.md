@@ -55,7 +55,10 @@ Cloudflare D1 stores packages, resources, feedback, and activity. R2 can serve p
 1. Provision the `DB` D1 binding and `BUCKET` R2 binding. Both binding names are declared in `.openai/hosting.json`.
 2. Apply the SQL migrations in `drizzle/` to the production D1 database.
 3. Configure `APPROVAL_ADMIN_EMAIL` as the email allowed to use `/approvals`.
-4. Configure `APPROVAL_NOTIFICATION_EMAIL` for decision notifications.
-5. Add `BREVO_API_KEY` as a secret. Never commit it to this repository.
+4. Configure `APPROVAL_NOTIFICATION_EMAIL` for approval and revision-decision notifications.
+5. Configure `APPROVAL_REVIEWER_EMAIL` for new-package review notifications. It defaults to `brian@sundaymultiplied.com`.
+6. Add `BREVO_API_KEY` as a secret. Never commit it to this repository.
+
+Package creation accepts an optional `reviewerEmail`. When present, it overrides the default for that package. A review-ready email is sent only after the package and all selected resource records have been written and verified.
 
 Admin authorization accepts Cloudflare Access's verified `Cf-Access-Authenticated-User-Email` header (and retains the legacy hosting header as a compatibility fallback). Protect `/approvals*` and `/api/approvals*` with hostname-level Cloudflare Access policies; do not apply Access to the entire Worker because the marketing site and tokenized church review links must remain public.
