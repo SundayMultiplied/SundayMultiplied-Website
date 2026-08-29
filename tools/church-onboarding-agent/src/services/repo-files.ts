@@ -98,7 +98,7 @@ function css(state: OnboardingState): string {
 export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
   const root = `churches/${state.basics.slug}`;
   const publicStylesheet = `/resources/${state.basics.slug}/church.css`;
-  const publicLogo = `/resources/${state.basics.slug}/logo`;
+  const publicLogo = `/api/resource-assets/${state.basics.slug}/logo`;
   const churchStyles = css(state);
   const church = {
     schemaVersion: 1,
