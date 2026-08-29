@@ -8,15 +8,8 @@
     "timezone": "America/New_York",
     "website": "https://sundaymultiplied.com/"
   },
-  "resources": [
-    "monday",
-    "group",
-    "family"
-  ],
-  "schedule": {
-    "serviceDay": "sunday",
-    "deliveryDay": "Monday"
-  },
+  "resources": ["monday", "group", "family"],
+  "schedule": { "serviceDay": "sunday", "deliveryDay": "Monday" },
   "approval": {
     "reviewerConfigured": true,
     "linkLifetimeDays": 30,
@@ -27,24 +20,24 @@
     "primaryColor": "#600203",
     "secondaryColor": "#e0bd78",
     "accentColor": "#153f35",
-    "backgroundColor": "#ffffff",
-    "textColor": "#173028",
-    "headingFont": "Georgia, Arial, sans-serif",
-    "bodyFont": "\"Geist Mono\", Arial, sans-serif",
-    "cornerRadius": "2%",
+    "backgroundColor": "#fffdf9",
+    "textColor": "#26332e",
+    "headingFont": "Georgia, 'Times New Roman', serif",
+    "bodyFont": "Arial, Helvetica, sans-serif",
+    "cornerRadius": "14px",
     "buttonStyle": "rounded",
-    "visualTone": "bright, bold, welcoming",
-    "visualNotes": "Automated review suggests a bright, bold, welcoming visual system. Confirm recommendations against current logo files and recent social graphics.",
+    "visualTone": "warm, confident, welcoming",
+    "visualNotes": "Sample presentation profile tuned for readable sermon-based discipleship resources.",
     "stylesheet": "churches/sample-church/styles/sample-church.css",
     "publicStylesheet": "/resources/sample-church/church.css",
     "sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css",
-    "logoUrl": "/resources/sample-church/logo",
+    "logoUrl": "/api/resource-assets/sample-church/logo",
     "assets": [
       {
         "kind": "primary",
-        "filename": "Gemini_Generated_Image_82u22g82u22g82u2.jfif",
+        "filename": "sample-church-logo.webp",
         "r2Key": "churches/sample-church/brand/primary-Gemini_Generated_Image_82u22g82u22g82u2.jfif",
-        "publicUrl": "/resources/sample-church/logo"
+        "publicUrl": "/api/resource-assets/sample-church/logo"
       }
     ]
   },
