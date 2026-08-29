@@ -24,6 +24,17 @@ function accessibleLabelColor(state: OnboardingState): string {
     .find((candidate) => contrast(candidate, backgroundColor) >= 4.5) || textColor;
 }
 
+export function primaryLogoPublicPath(state: OnboardingState): string | undefined {
+  const primary = state.assets.find((asset) => asset.kind === "primary");
+  if (!primary) return undefined;
+  const extension = primary.contentType === "image/svg+xml" ? "svg"
+    : primary.contentType === "image/png" ? "png"
+      : primary.contentType === "image/webp" ? "webp"
+        : primary.contentType === "image/jpeg" ? "jpg"
+          : primary.filename.split(".").pop()?.toLowerCase() || "img";
+  return `/resources/${state.basics.slug}/logo.${extension}`;
+}
+
 function css(state: OnboardingState): string {
   const b = state.brand;
   const labelColor = accessibleLabelColor(state);
@@ -97,7 +108,9 @@ function css(state: OnboardingState): string {
 
 export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
   const root = `churches/${state.basics.slug}`;
-  const publicStylesheet = `/resources/${state.basics.slug}/church.css`;
+  const publicRoot = `/resources/${state.basics.slug}`;
+  const publicStylesheet = `${publicRoot}/church.css`;
+  const publicLogo = primaryLogoPublicPath(state);
   const churchStyles = css(state);
   const church = {
     schemaVersion: 1,
@@ -113,8 +126,10 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
     brand: {
       ...state.brand,
       stylesheet: `${root}/styles/${state.basics.slug}.css`,
+      publicRoot,
       publicStylesheet,
       sharedStylesheet: SHARED_RESOURCE_STYLESHEET,
+      publicLogo,
       assets: state.assets.map(({ kind, filename, r2Key }) => ({ kind, filename, r2Key })),
     },
     sources: `${root}/sources/streaming.json`,
@@ -129,6 +144,12 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
 Generated during onboarding. Confirm all inferred colors, fonts, and assets before activation.
 
 ${state.brand.visualNotes || "No additional visual notes recorded."}
+
+## Resource asset contract
+
+- Shared layout: ${SHARED_RESOURCE_STYLESHEET}
+- Church brand layer: ${publicStylesheet}
+- Primary logo: ${publicLogo || "Not uploaded"}
 
 ## Automated brand review
 
