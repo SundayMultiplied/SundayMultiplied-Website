@@ -2,6 +2,8 @@ import type { OnboardingState } from "../types";
 
 export type RepositoryFile = { path: string; content: string };
 
+const SHARED_RESOURCE_STYLESHEET = "/resources/_shared/sunday-multiplied-base.css";
+
 function relativeLuminance(hex: string): number {
   if (!/^#[0-9a-f]{6}$/i.test(hex)) return 0;
   const channels = [hex.slice(1, 3), hex.slice(3, 5), hex.slice(5, 7)].map((part) => {
@@ -25,9 +27,7 @@ function accessibleLabelColor(state: OnboardingState): string {
 function css(state: OnboardingState): string {
   const b = state.brand;
   const labelColor = accessibleLabelColor(state);
-  return `@import url("../../../styles/sunday-multiplied-base.css");
-
-/* Generated for ${state.basics.name}. Keep the shared sm-* schema intact. */
+  return `/* Generated for ${state.basics.name}. Shared resource layout is loaded separately. */
 :root {
   --sm-color-primary: ${b.primaryColor};
   --sm-color-secondary: ${b.secondaryColor};
@@ -49,7 +49,6 @@ function css(state: OnboardingState): string {
 
 .sm-resource h1, .sm-resource h2, .sm-resource h3,
 .sm-document h1, .sm-document h2, .sm-document h3 {
-  color: var(--sm-color-primary);
   font-family: var(--sm-font-heading);
 }
 
@@ -98,6 +97,8 @@ function css(state: OnboardingState): string {
 
 export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
   const root = `churches/${state.basics.slug}`;
+  const publicStylesheet = `/resources/${state.basics.slug}/church.css`;
+  const churchStyles = css(state);
   const church = {
     schemaVersion: 1,
     church: state.basics,
@@ -112,6 +113,8 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
     brand: {
       ...state.brand,
       stylesheet: `${root}/styles/${state.basics.slug}.css`,
+      publicStylesheet,
+      sharedStylesheet: SHARED_RESOURCE_STYLESHEET,
       assets: state.assets.map(({ kind, filename, r2Key }) => ({ kind, filename, r2Key })),
     },
     sources: `${root}/sources/streaming.json`,
@@ -143,7 +146,8 @@ ${state.findings.map((item) => `- **${item.field}**: ${item.value} (${item.confi
 `;
   return [
     { path: `${root}/church.json`, content: `${JSON.stringify(church, null, 2)}\n` },
-    { path: `${root}/styles/${state.basics.slug}.css`, content: css(state) },
+    { path: `${root}/styles/${state.basics.slug}.css`, content: churchStyles },
+    { path: `public/resources/${state.basics.slug}/church.css`, content: churchStyles },
     { path: `${root}/sources/streaming.json`, content: `${JSON.stringify(streaming, null, 2)}\n` },
     { path: `${root}/brand/analysis.json`, content: `${JSON.stringify(state.brandAnalysis || null, null, 2)}\n` },
     { path: `${root}/brand/source-notes.md`, content: notes },
