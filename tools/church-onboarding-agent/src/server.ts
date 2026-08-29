@@ -10,10 +10,12 @@ type AppEnv = Cloudflare.Env & {
   GITHUB_TOKEN: string;
   CRM_WEBHOOK_URL?: string;
   CRM_WEBHOOK_SECRET?: string;
+  RESOURCE_ASSETS: R2Bucket;
 };
 
 const now = () => new Date().toISOString();
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const publicAssetKey = (slug: string, kind: string) => `resource-assets/${slug}/${kind}`;
 
 export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
   initialState = emptyState();
@@ -28,12 +30,28 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
     return result;
   }
 
+  private async syncPublicBrandAssets() {
+    const slug = this.state.basics.slug;
+    if (!slug) return;
+    await Promise.all(this.state.assets.map(async (asset) => {
+      const original = await this.env.CHURCH_ASSETS.get(asset.r2Key);
+      if (!original) return;
+      await this.env.RESOURCE_ASSETS.put(publicAssetKey(slug, asset.kind), original.body, {
+        httpMetadata: { contentType: asset.contentType },
+        customMetadata: { church: slug, kind: asset.kind, sourceKey: asset.r2Key },
+      });
+    }));
+  }
+
   @callable()
   async resetOnboarding() {
     if (this.state.github) {
       throw new Error("Completed repository handoffs cannot be erased. Start a new church draft instead.");
     }
-    await Promise.all(this.state.assets.map((asset) => this.env.CHURCH_ASSETS.delete(asset.r2Key)));
+    await Promise.all(this.state.assets.flatMap((asset) => [
+      this.env.CHURCH_ASSETS.delete(asset.r2Key),
+      this.state.basics.slug ? this.env.RESOURCE_ASSETS.delete(publicAssetKey(this.state.basics.slug, asset.kind)) : Promise.resolve(),
+    ]));
     const reset = emptyState();
     this.setState(reset);
     return reset;
@@ -43,7 +61,10 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
   async removeLogo(kind: "primary" | "reverse" | "mark" | "favicon") {
     const asset = this.state.assets.find((item) => item.kind === kind);
     if (!asset) return this.state;
-    await this.env.CHURCH_ASSETS.delete(asset.r2Key);
+    await Promise.all([
+      this.env.CHURCH_ASSETS.delete(asset.r2Key),
+      this.state.basics.slug ? this.env.RESOURCE_ASSETS.delete(publicAssetKey(this.state.basics.slug, kind)) : Promise.resolve(),
+    ]);
     const assets = this.state.assets.filter((item) => item.kind !== kind);
     this.save({
       assets,
@@ -133,10 +154,16 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
     if (!bytes.byteLength || bytes.byteLength > 5_000_000) return new Response("Logo must be smaller than 5 MB.", { status: 413 });
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-120);
     const r2Key = `churches/${this.state.basics.slug}/brand/${kind}-${safeName}`;
-    await this.env.CHURCH_ASSETS.put(r2Key, bytes, {
-      httpMetadata: { contentType },
-      customMetadata: { church: this.state.basics.slug, kind },
-    });
+    await Promise.all([
+      this.env.CHURCH_ASSETS.put(r2Key, bytes, {
+        httpMetadata: { contentType },
+        customMetadata: { church: this.state.basics.slug, kind },
+      }),
+      this.env.RESOURCE_ASSETS.put(publicAssetKey(this.state.basics.slug, kind), bytes, {
+        httpMetadata: { contentType },
+        customMetadata: { church: this.state.basics.slug, kind, sourceKey: r2Key },
+      }),
+    ]);
     const asset = {
       kind: kind as "primary" | "reverse" | "mark" | "favicon",
       filename: safeName,
@@ -164,6 +191,7 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       throw new Error("Confirm identity, brand, and reviewer settings first.");
     }
     if (!this.env.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not configured.");
+    await this.syncPublicBrandAssets();
     const result = await createOnboardingPullRequest(
       {
         owner: this.env.GITHUB_OWNER,
