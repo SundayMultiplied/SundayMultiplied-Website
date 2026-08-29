@@ -1,0 +1,258 @@
+:root {
+  --sm-color-text: #1f2933;
+  --sm-color-muted: #667085;
+  --sm-color-accent: #2f6f73;
+  --sm-color-accent-dark: #24565a;
+  --sm-color-border: #d7e2e3;
+  --sm-color-background: #ffffff;
+  --sm-color-section-background: #f4f8f8;
+  --sm-color-prayer-background: #eef5f5;
+
+  --sm-font-heading: "Montserrat", "Arial", sans-serif;
+  --sm-font-body: "Open Sans", "Arial", sans-serif;
+
+  --sm-page-width: 780px;
+  --sm-page-padding: 52px;
+  --sm-section-spacing: 30px;
+  --sm-radius: 10px;
+}
+
+body {
+  background: #ffffff;
+  color: var(--sm-color-text);
+  font-family: var(--sm-font-body);
+}
+
+.sm-document {
+  border-top: 8px solid var(--sm-color-accent);
+}
+
+/* Header + Logo */
+
+.sm-header {
+  border-bottom: 1px solid var(--sm-color-border);
+  padding-bottom: 24px;
+  margin-bottom: 40px;
+}
+
+.sm-header--with-logo {
+  border-bottom: 1px solid var(--sm-color-border);
+}
+
+.sm-header-content {
+  align-items: center;
+  gap: 28px;
+}
+
+.sm-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.sm-header-logo-wrap {
+  flex: 0 0 auto;
+}
+
+.sm-church-logo {
+  width: 104px;
+  height: 104px;
+  object-fit: contain;
+}
+
+.sm-eyebrow {
+  color: var(--sm-color-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sm-title {
+  color: var(--sm-color-text);
+  font-family: var(--sm-font-heading);
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.sm-meta {
+  color: var(--sm-color-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Typography */
+
+.sm-section h2 {
+  color: var(--sm-color-accent-dark);
+  font-family: var(--sm-font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sm-section h3 {
+  color: var(--sm-color-text);
+  font-family: var(--sm-font-heading);
+  font-size: 17px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sm-section p,
+.sm-section li {
+  font-size: 16px;
+}
+
+.sm-section strong {
+  color: var(--sm-color-accent-dark);
+}
+
+/* Highlight Sections */
+
+.sm-section--big-idea,
+.sm-section--reflection {
+  background: var(--sm-color-section-background);
+  border-left: 6px solid var(--sm-color-accent);
+  border-radius: var(--sm-radius);
+}
+
+.sm-section--prayer {
+  background: var(--sm-color-prayer-background);
+  border: 1px solid var(--sm-color-border);
+  border-radius: var(--sm-radius);
+}
+
+/* Scripture Section */
+
+.sm-section--scripture {
+  padding: 22px;
+  border-radius: var(--sm-radius);
+  background: var(--sm-color-section-background);
+  border: 1px solid var(--sm-color-border);
+}
+
+.sm-scripture-reference {
+  margin-bottom: 14px;
+  color: var(--sm-color-accent-dark);
+  font-family: var(--sm-font-heading);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sm-scripture-text {
+  color: var(--sm-color-text);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.sm-scripture-text p {
+  margin-bottom: 12px;
+}
+
+.sm-scripture-attribution {
+  margin-top: 16px;
+  margin-bottom: 0;
+  color: var(--sm-color-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Question Groups */
+
+.sm-question-group {
+  background: #ffffff;
+  border: 1px solid var(--sm-color-border);
+  border-top: 4px solid var(--sm-color-accent);
+  border-radius: var(--sm-radius);
+}
+
+.sm-question-group h3 {
+  color: var(--sm-color-accent-dark);
+}
+
+/* Custom Bullet Styling */
+
+.sm-section--application ul,
+.sm-section--takeaways ul,
+.sm-section--key-moments ul {
+  list-style: none;
+  margin-left: 0;
+}
+
+.sm-section--application li,
+.sm-section--takeaways li,
+.sm-section--key-moments li {
+  position: relative;
+  padding-left: 24px;
+}
+
+.sm-section--application li::before,
+.sm-section--takeaways li::before,
+.sm-section--key-moments li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.7em;
+  width: 8px;
+  height: 8px;
+  background: var(--sm-color-accent);
+  border-radius: 50%;
+}
+
+/* Responsive */
+
+@media (max-width: 640px) {
+  .sm-document {
+    border-top: 6px solid var(--sm-color-accent);
+  }
+
+  .sm-header-content {
+    gap: 18px;
+  }
+
+  .sm-title {
+    font-size: 30px;
+  }
+
+  .sm-church-logo {
+    width: 78px;
+    height: 78px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sm-title {
+    font-size: 28px;
+  }
+
+  .sm-church-logo {
+    width: 84px;
+    height: 84px;
+  }
+}
+
+/* Print */
+
+@media print {
+  .sm-document {
+    border-top: 6px solid var(--sm-color-accent);
+  }
+
+  .sm-church-logo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .sm-section--big-idea,
+  .sm-section--reflection,
+  .sm-section--prayer,
+  .sm-section--scripture,
+  .sm-question-group {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
