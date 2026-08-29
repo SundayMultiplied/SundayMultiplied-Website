@@ -1,6 +1,6 @@
 import { Agent, callable, routeAgentRequest } from "agents";
-import { createOnboardingPullRequest } from "./services/github";
-import { buildRepositoryFiles } from "./services/repo-files";
+import { createOnboardingPullRequest, type BinaryRepositoryFile } from "./services/github";
+import { buildRepositoryFiles, primaryLogoPublicPath } from "./services/repo-files";
 import { syncOnboardingCrm, type CrmUpdate } from "./services/crm";
 import { inspectChurchWebsite, validatePublicUrl } from "./services/site-inspector";
 import { emptyState, type BrandProfile, type ChurchBasics, type ChurchLink, type OnboardingState, type Reviewer, type ResourceType } from "./types";
@@ -14,6 +14,16 @@ type AppEnv = Cloudflare.Env & {
 
 const now = () => new Date().toISOString();
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, Math.min(index + chunkSize, bytes.length)));
+  }
+  return btoa(binary);
+}
 
 export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
   initialState = emptyState();
@@ -164,6 +174,16 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       throw new Error("Confirm identity, brand, and reviewer settings first.");
     }
     if (!this.env.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not configured.");
+
+    const files: Array<ReturnType<typeof buildRepositoryFiles>[number] | BinaryRepositoryFile> = buildRepositoryFiles(this.state);
+    const primary = this.state.assets.find((asset) => asset.kind === "primary");
+    const publicLogo = primaryLogoPublicPath(this.state);
+    if (primary && publicLogo) {
+      const stored = await this.env.CHURCH_ASSETS.get(primary.r2Key);
+      if (!stored) throw new Error("The uploaded primary logo could not be read from church asset storage.");
+      files.push({ path: `public${publicLogo}`, base64: arrayBufferToBase64(await stored.arrayBuffer()) });
+    }
+
     const result = await createOnboardingPullRequest(
       {
         owner: this.env.GITHUB_OWNER,
@@ -173,7 +193,7 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
       },
       this.state.basics.slug,
       this.state.basics.name,
-      buildRepositoryFiles(this.state),
+      files,
     );
     this.save({
       phase: "repo_ready",
