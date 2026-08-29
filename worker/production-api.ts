@@ -1,4 +1,5 @@
 type ProductionEnv = {
+  ASSETS?: Fetcher;
   BUCKET?: R2Bucket;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
@@ -226,9 +227,8 @@ async function serveChurchLogo(request: Request, env: ProductionEnv, slug: strin
   }
 
   const fallback = LEGACY_LOGO_FALLBACKS[slug];
-  if (!fallback) return new Response("Logo not found.", { status: 404 });
-  const fallbackUrl = new URL(fallback, request.url);
-  const response = await fetch(fallbackUrl, { headers: { accept: "image/*" } });
+  if (!fallback || !env.ASSETS) return new Response("Logo not found.", { status: 404 });
+  const response = await env.ASSETS.fetch(new Request(new URL(fallback, request.url), { headers: { accept: "image/*" } }));
   if (!response.ok) return new Response("Logo not found.", { status: 404 });
   const headers = new Headers(response.headers);
   headers.set("cache-control", "public, max-age=3600, stale-while-revalidate=86400");
