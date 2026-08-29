@@ -35,16 +35,11 @@ const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Sample Church is a legacy test church with a known static logo already
-    // deployed from public/. Serve the stable resource URL directly from the
-    // static asset binding before production routing so existing generated
-    // previews keep working without regeneration.
+    // Sample Church is a legacy test church with a known public logo. Redirect
+    // the stable resource URL to the deployed static asset instead of proxying
+    // it through the Worker or R2. This keeps existing generated previews valid.
     if (url.pathname === "/api/resource-assets/sample-church/logo" && request.method === "GET") {
-      const assetRequest = new Request(new URL("/sample-church-logo.webp", request.url), {
-        method: "GET",
-        headers: { accept: "image/*" },
-      });
-      return env.ASSETS.fetch(assetRequest);
+      return Response.redirect(new URL("/sample-church-logo.webp", request.url).toString(), 302);
     }
 
     const productionResponse = await handleProductionApi(request, env);
