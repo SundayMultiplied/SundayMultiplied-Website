@@ -3,10 +3,17 @@ import { buildRepositoryFiles } from "../src/services/repo-files";
 import { emptyState } from "../src/types";
 
 describe("repository structure", () => {
-  it("uses stable church paths, shared approval, and public resource styles", () => {
+  it("uses stable church paths, shared approval, and public resource assets", () => {
     const state = emptyState();
     state.basics = { ...state.basics, name: "Southside Church", slug: "southside", website: "https://example.com" };
     state.reviewers = [{ name: "Reviewer", email: "reviewer@example.com", role: "Communications" }];
+    state.assets = [{
+      kind: "primary",
+      filename: "logo.png",
+      r2Key: "churches/southside/brand/primary-logo.png",
+      contentType: "image/png",
+      uploadedAt: "2026-08-29T00:00:00.000Z",
+    }];
     state.brand = {
       ...state.brand,
       primaryColor: "#3f6e82",
@@ -28,6 +35,8 @@ describe("repository structure", () => {
     expect(files[0].content).toContain('"reviewerConfigured": true');
     expect(files[0].content).toContain('"publicStylesheet": "/resources/southside/church.css"');
     expect(files[0].content).toContain('"sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css"');
+    expect(files[0].content).toContain('"logoUrl": "/resources/southside/logo"');
+    expect(files[0].content).toContain('"publicUrl": "/resources/southside/logo"');
     expect(files[0].content).not.toContain("reviewer@example.com");
     expect(files[0].content).not.toContain('"reviewers"');
     expect(files[1].content).not.toContain("@import");
