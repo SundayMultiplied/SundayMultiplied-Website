@@ -1,0 +1,63 @@
+/* Sample Church brand layer. Shared layout lives at /resources/_shared/sunday-multiplied-base.css. */
+:root {
+  --sm-color-primary: #600203;
+  --sm-color-secondary: #e0bd78;
+  --sm-color-accent: #153f35;
+  --sm-color-background: #ffffff;
+  --sm-color-text: #173028;
+  --sm-color-label: #600203;
+  --sm-font-heading: Georgia, Arial, sans-serif;
+  --sm-font-body: "Geist Mono", Arial, sans-serif;
+  --sm-corner-radius: 2%;
+}
+
+.sm-resource,
+.sm-document {
+  color: var(--sm-color-text);
+  background: var(--sm-color-background);
+  font-family: var(--sm-font-body);
+}
+
+.sm-resource h1, .sm-resource h2, .sm-resource h3,
+.sm-document h1, .sm-document h2, .sm-document h3 {
+  font-family: var(--sm-font-heading);
+}
+
+.sm-resource__eyebrow, .sm-resource__section-label,
+.sm-eyebrow {
+  color: var(--sm-color-label);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.sm-resource__card,
+.sm-resource__scripture,
+.sm-resource__practice {
+  border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent);
+  border-radius: var(--sm-corner-radius);
+  background: color-mix(in srgb, var(--sm-color-background) 94%, var(--sm-color-secondary));
+}
+
+.sm-resource a,
+.sm-resource__button {
+  color: var(--sm-color-primary);
+  font-weight: 700;
+}
+
+.sm-resource__button { border-radius: 999px; }
+
+.sm-resource__header-logo,
+.sm-church-logo {
+  display: block;
+  max-height: 4rem;
+  max-width: min(16rem, 70vw);
+}
+
+@media print {
+  .sm-resource { color: #111; background: #fff; }
+  .sm-resource__card,
+  .sm-resource__scripture,
+  .sm-resource__practice { border-color: #bbb; background: #fff; }
+  .sm-no-print { display: none !important; }
+}
