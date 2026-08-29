@@ -3,6 +3,10 @@ type ProductionJobAdminEnv = {
   APPROVAL_ADMIN_EMAIL?: string;
 };
 
+type ProductionManifestSummary = {
+  status?: "ready_for_internal_review" | "sent_for_approval";
+};
+
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 
 export async function handleProductionJobAdminApi(request: Request, env: ProductionJobAdminEnv): Promise<Response | null> {
@@ -18,8 +22,14 @@ export async function handleProductionJobAdminApi(request: Request, env: Product
   if (!/^[a-zA-Z0-9-]{20,80}$/.test(jobId)) return json({ error: "Invalid production job ID." }, 400);
 
   const manifestKey = `production/manifests/${jobId}.json`;
-  const manifest = await env.BUCKET.get(manifestKey);
-  if (!manifest) return json({ error: "Production job not found." }, 404);
+  const manifestObject = await env.BUCKET.get(manifestKey);
+  if (!manifestObject) return json({ error: "Production job not found." }, 404);
+
+  let manifest: ProductionManifestSummary = {};
+  try { manifest = await manifestObject.json<ProductionManifestSummary>(); } catch { /* malformed manifests can still be cleaned up */ }
+  if (manifest.status === "sent_for_approval") {
+    return json({ error: "This production job is linked to an approval package and cannot be deleted yet." }, 409);
+  }
 
   const prefix = `production/jobs/${jobId}/`;
   let cursor: string | undefined;
