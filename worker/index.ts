@@ -2,6 +2,7 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { handleApprovalApi } from "./approval-api";
+import { handleProductionApi } from "./production-api";
 
 interface Env {
   ASSETS: Fetcher;
@@ -10,6 +11,11 @@ interface Env {
   BREVO_API_KEY?: string;
   APPROVAL_ADMIN_EMAIL?: string;
   APPROVAL_NOTIFICATION_EMAIL?: string;
+  APPROVAL_REVIEWER_EMAIL?: string;
+  APPROVAL_FAILURE_EMAIL?: string;
+  PUBLIC_SITE_ORIGIN?: string;
+  OPENAI_API_KEY?: string;
+  OPENAI_MODEL?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -28,6 +34,9 @@ interface Env {
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
+
+    const productionResponse = await handleProductionApi(request, env);
+    if (productionResponse) return productionResponse;
 
     const approvalResponse = await handleApprovalApi(request, env, ctx);
     if (approvalResponse) return approvalResponse;
