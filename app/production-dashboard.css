@@ -1,0 +1,82 @@
+.production-create .approval-create-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.production-create .approval-field-label {
+  display: block;
+  color: #40554b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.production-create .approval-create-grid input,
+.production-create .approval-create-grid select {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 0;
+  padding: 12px 14px;
+  border: 2px solid rgba(23,48,40,.28);
+  border-radius: 0;
+  background: #fff;
+  color: #173028;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+  outline: none;
+}
+
+.production-create .approval-create-grid select {
+  cursor: pointer;
+}
+
+.production-create .approval-create-grid input:focus,
+.production-create .approval-create-grid select:focus {
+  border-color: #2f5b47;
+  box-shadow: 0 0 0 3px rgba(47,91,71,.12);
+}
+
+.production-create .approval-create-grid select:hover {
+  border-color: rgba(23,48,40,.55);
+}
+
+.production-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-left: 4px solid #385643;
+  background: #fff;
+  color: #385643;
+}
+
+.production-progress strong {
+  font-size: 13px;
+}
+
+.production-progress span {
+  color: #59685f;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.approval-metadata {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.approval-metadata strong,
+.approval-metadata small {
+  display: block;
+}
+
+.production-queue .approval-notification a {
+  width: fit-content;
+}

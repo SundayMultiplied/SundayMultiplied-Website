@@ -157,29 +157,36 @@ export function ApprovalDashboard() {
         <div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Sermon production</h1><p>Upload the sermon transcript. The church configuration, branding, resource URLs, and approval package are handled automatically.</p></div>
       </div>
 
-      <form className="approval-create" action={(formData) => void createSermonResources(formData)}>
+      <form
+        className="approval-create production-create"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (saving) return;
+          void createSermonResources(new FormData(event.currentTarget));
+        }}
+      >
         <div className="approval-create-heading"><h2>Create sermon resources</h2><p>TXT and VTT transcripts are supported. Generated resources stop for your internal review before the church is notified.</p></div>
         <div className="approval-create-grid">
-          <label>Church<select name="churchSlug" required defaultValue=""><option value="" disabled>Select a church</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
-          <label>Sermon date<input name="weekOf" type="date" required /></label>
-          <label className="wide">Sermon transcript<input name="transcript" type="file" accept=".txt,.vtt,text/plain,text/vtt" required /></label>
+          <label><span className="approval-field-label">Church</span><select name="churchSlug" required defaultValue=""><option value="" disabled>Select a church…</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
+          <label><span className="approval-field-label">Sermon date</span><input name="weekOf" type="date" required /></label>
+          <label className="wide"><span className="approval-field-label">Sermon transcript</span><input name="transcript" type="file" accept=".txt,.vtt,text/plain,text/vtt" required /></label>
         </div>
         <button className="approval-approve" disabled={saving}>{saving ? "Creating resources…" : "Create sermon resources"}</button>
-        <small>The transcript is normalized, analyzed, converted into the church&apos;s configured resources, and stored as an internal review package.</small>
+        {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Generating sermon resources</strong><span>Your selections are still active. The transcript is being analyzed and the resource package is being built.</span></div> : <small>The transcript is normalized, analyzed, converted into the church&apos;s configured resources, and stored as an internal review package.</small>}
       </form>
 
       {error && <div className="approval-admin-error"><strong>Production unavailable</strong><p>{error}</p></div>}
       {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
       {createdLink && <div className="approval-created-link"><strong>Secure review link</strong><input readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} /><small>The church notification uses this secure review page.</small></div>}
 
-      <section className="approval-create">
+      <section className="approval-create production-queue">
         <div className="approval-create-heading"><h2>Production queue</h2><p>Preview generated resources before releasing them into the existing approval workflow.</p></div>
         {jobs.length === 0 ? <p>No sermon production jobs yet.</p> : <div className="approval-table">
           <div className="approval-table-row approval-table-labels"><span>Church / Sermon</span><span>Date</span><span>Metadata</span><span>Resources</span><span>Action</span></div>
           {jobs.map((job) => <div className="approval-table-row" key={job.id}>
             <span><strong>{job.churchName}</strong><small>{job.metadata.sermonTitle || "Title not detected"}</small>{job.metadata.seriesTitle && <small>{job.metadata.seriesTitle}</small>}</span>
             <span>{job.weekOf}</span>
-            <span><strong>{job.metadata.scripture || "Passage not detected"}</strong><small>Confidence: {job.metadata.confidence}</small>{job.metadata.speaker && <small>{job.metadata.speaker}</small>}</span>
+            <span className="approval-metadata"><strong>{job.metadata.scripture || "Passage not detected"}</strong><small>Confidence: {job.metadata.confidence}</small>{job.metadata.speaker && <small>{job.metadata.speaker}</small>}</span>
             <span className="approval-notification">{job.resources.map((resource) => <a key={resource.kind} href={resource.previewUrl} target="_blank" rel="noreferrer">Preview {resource.kind}</a>)}</span>
             <span>{job.status === "sent_for_approval" ? <><strong className="notification-sent">sent for approval</strong>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : <button type="button" className="approval-approve" onClick={() => void sendForApproval(job)} disabled={sendingId === job.id}>{sendingId === job.id ? "Sending…" : "Send for approval"}</button>}</span>
           </div>)}
