@@ -10,6 +10,7 @@ type ChurchConfig = {
   slug: string;
   name: string;
   resources: Array<"monday" | "group" | "family">;
+  baseCssUrl: string;
   cssUrl: string;
   logoUrl?: string;
   reviewerEmail?: string;
@@ -44,20 +45,25 @@ type ProductionManifest = {
 };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
+const SHARED_RESOURCE_CSS = "/resources/_shared/sunday-multiplied-base.css";
 
 const CHURCHES: ChurchConfig[] = [
   {
     slug: "sample-church",
     name: "Sample Church",
     resources: ["monday", "group", "family"],
-    cssUrl: "/resources/sample-church/sample-church.css",
+    baseCssUrl: SHARED_RESOURCE_CSS,
+    cssUrl: "/resources/sample-church/church.css",
     logoUrl: "/sample-church-logo.webp",
   },
   {
     slug: "southside-baptist",
     name: "Southside Baptist Church",
     resources: ["monday", "group", "family"],
-    cssUrl: "/resources/southside-baptist/2026-08-09/southside-baptist-contemporary.css",
+    baseCssUrl: SHARED_RESOURCE_CSS,
+    cssUrl: "/resources/southside-baptist/church.css",
+    // Southside has not been run through the current onboarding agent yet, so its
+    // existing logo remains a legacy asset until that onboarding record is created.
     logoUrl: "/resources/southside-baptist/2026-08-09/southside-baptist-logo.png",
   },
 ];
@@ -124,8 +130,9 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     const resources: ProductionManifest["resources"] = [];
 
     for (const kind of church.resources) {
-      const html = generated.resources[kind];
-      if (!html) continue;
+      const generatedHtml = generated.resources[kind];
+      if (!generatedHtml) continue;
+      const html = enforceResourceStyling(generatedHtml, church, kind);
       const storageKey = `production/jobs/${id}/${kind}.html`;
       await env.BUCKET.put(storageKey, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
       resources.push({
@@ -202,7 +209,39 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
 
 async function generateResources(env: ProductionEnv, church: ChurchConfig, weekOf: string, transcript: string): Promise<GeneratedPackage> {
   const resourceList = church.resources.join(", ");
-  const prompt = `You are the production engine for Sunday Multiplied. Analyze the attached sermon transcript and create production-ready sermon-based discipleship resources for ${church.name}.\n\nGenerate these resources: ${resourceList}.\nSermon date: ${weekOf}.\nChurch CSS URL: ${church.cssUrl}.\nChurch logo URL: ${church.logoUrl || "none"}.\n\nRules:\n- Stay faithful to the pastor's actual message. Do not create generic devotional content.\n- Extract sermon title, series title, speaker, main Scripture passage, and an overall metadata confidence level. Use an empty string when title/series/speaker cannot be established.\n- Every resource must be a complete standalone HTML document.\n- Link the stylesheet with <link rel="stylesheet" href="${church.cssUrl}">.\n- If a logo URL is present, use <img class="sm-church-logo" src="${church.logoUrl || ""}" alt="${church.name} logo">.\n- Use Sunday Multiplied semantic classes beginning with sm-. No inline styles.\n- Monday Multiplied: sermon recap, 3 key takeaways, reflection question, short prayer.\n- Group Multiplied: Big Idea, The Tension, Sermon Snapshot, 3-5 Key Moments, 5-7 questions grouped Understand/Reflect/Apply, Practice This Week, Midweek Reinforcement, Leader Tip, Closing Prayer. Include the Scripture reference, but DO NOT fabricate full Bible passage text when exact licensed passage text was not supplied.\n- Family Multiplied: a short family dinner-table resource rooted in the sermon with a simple big idea, read/talk section, age-flexible discussion questions, one practical family activity, and a short prayer.\n- Return only the requested JSON structure.`;
+  const prompt = `You are the production engine for Sunday Multiplied. Analyze the attached sermon transcript and create production-ready sermon-based discipleship resources for ${church.name}.
+
+Generate these resources: ${resourceList}.
+Sermon date: ${weekOf}.
+Shared Sunday Multiplied CSS URL: ${church.baseCssUrl}.
+Church brand CSS URL: ${church.cssUrl}.
+Church logo URL: ${church.logoUrl || "none"}.
+
+CONTENT RULES:
+- Stay faithful to the pastor's actual message. Do not create generic devotional content.
+- Extract sermon title, series title, speaker, main Scripture passage, and an overall metadata confidence level. Use an empty string when title/series/speaker cannot be established.
+- Monday Multiplied: sermon recap, 3 key takeaways, reflection question, short prayer.
+- Group Multiplied: Big Idea, The Tension, Sermon Snapshot, 3-5 Key Moments, 5-7 questions grouped Understand/Reflect/Apply, Practice This Week, Midweek Reinforcement, Leader Tip, Closing Prayer. Include the Scripture reference, but DO NOT fabricate full Bible passage text when exact licensed passage text was not supplied.
+- Family Multiplied: a short family dinner-table resource rooted in the sermon with a simple big idea, read/talk section, age-flexible discussion questions, one practical family activity, and a short prayer.
+
+HTML AND STYLING CONTRACT — FOLLOW THIS EXACTLY FOR EVERY RESOURCE:
+- Return a complete standalone HTML document with <!doctype html>, <html>, <head>, and <body>.
+- Include these two stylesheet links, in this order:
+  <link rel="stylesheet" href="${church.baseCssUrl}">
+  <link rel="stylesheet" href="${church.cssUrl}">
+- Never use inline styles and never invent a separate layout system.
+- Body class must be "sm-resource sm-monday", "sm-resource sm-group", or "sm-resource sm-family" as appropriate.
+- The page wrapper must be <main class="sm-document">.
+- Header must use <header class="sm-header sm-header--with-logo"> containing <div class="sm-header-content">, <div class="sm-header-text">, <p class="sm-eyebrow sm-resource-label">, <h1 class="sm-title">, and <p class="sm-meta">.
+- If a logo URL is present, place it inside <div class="sm-header-logo-wrap"> as <img class="sm-church-logo sm-logo" src="${church.logoUrl || ""}" alt="${church.name} logo">.
+- Every content section must include class "sm-section" plus an appropriate modifier when one exists.
+- Use these established section modifiers where applicable: sm-section--scripture, sm-section--summary, sm-section--takeaways, sm-section--reflection, sm-section--big-idea, sm-section--tension, sm-section--key-moments, sm-section--questions, sm-section--application, sm-section--practice, sm-section--leader-tip, sm-section--parent-note, sm-section--family-remember, sm-section--prayer.
+- Scripture references must use class "sm-scripture-reference".
+- Group discussion clusters must use <div class="sm-question-group"> with <h3>Understand</h3>, <h3>Reflect</h3>, or <h3>Apply</h3> as appropriate.
+- Practice components may use sm-practice-scenario, sm-practice-task, sm-practice-share, and sm-practice-debrief.
+- End with <footer class="sm-footer"><p>Sunday Multiplied</p></footer> inside sm-document.
+- Do not create alternative classes for the header, document wrapper, sections, question groups, Scripture reference, or footer. The CSS depends on this contract.
+- Return only the requested JSON structure.`;
 
   const schema = {
     type: "object",
@@ -243,6 +282,29 @@ async function generateResources(env: ProductionEnv, church: ChurchConfig, weekO
   const outputText = data.output_text || extractOutputText(data.output);
   if (!outputText) throw new Error("Resource generation returned no output.");
   return JSON.parse(outputText) as GeneratedPackage;
+}
+
+function enforceResourceStyling(input: string, church: ChurchConfig, kind: "monday" | "group" | "family") {
+  let html = input.trim();
+  const stylesheetLinks = `<link rel="stylesheet" href="${church.baseCssUrl}">\n<link rel="stylesheet" href="${church.cssUrl}">`;
+
+  // The renderer owns stylesheet selection. Strip any model-selected stylesheets and
+  // inject the canonical shared layout followed by the church brand layer.
+  html = html.replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>\s*/gi, "");
+  if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, `${stylesheetLinks}\n</head>`);
+
+  // Keep the body hooked into the shared layout even if the model drops one of these classes.
+  html = html.replace(/<body\b([^>]*)>/i, (match, attrs: string) => {
+    const classMatch = attrs.match(/class=["']([^"']*)["']/i);
+    const classes = new Set((classMatch?.[1] || "").split(/\s+/).filter(Boolean));
+    classes.add("sm-resource");
+    classes.add(`sm-${kind}`);
+    const nextClass = `class="${[...classes].join(" ")}"`;
+    if (classMatch) return `<body${attrs.replace(classMatch[0], nextClass)}>`;
+    return `<body${attrs} ${nextClass}>`;
+  });
+
+  return html;
 }
 
 function extractOutputText(output: Array<{ type?: string; content?: Array<{ type?: string; text?: string }> }> | undefined) {
