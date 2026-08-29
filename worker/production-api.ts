@@ -3,6 +3,7 @@ type ProductionEnv = {
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
   PUBLIC_SITE_ORIGIN?: string;
+  APPROVAL_ADMIN_EMAIL?: string;
 };
 
 type ChurchConfig = {
@@ -63,6 +64,15 @@ const CHURCHES: ChurchConfig[] = [
 
 export async function handleProductionApi(request: Request, env: ProductionEnv): Promise<Response | null> {
   const url = new URL(request.url);
+  const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
+
+  // Generated previews are deliberately unlisted so they can be rendered from secure
+  // church review pages. Every production-control route requires the same Cloudflare
+  // Access identity as the approval dashboard before it can list jobs or spend API tokens.
+  if (url.pathname.startsWith("/api/production/") && !previewMatch) {
+    const authError = adminAuthorizationError(request, env);
+    if (authError) return json({ error: authError }, 401);
+  }
 
   if (url.pathname === "/api/production/churches" && request.method === "GET") {
     return json({ churches: CHURCHES });
@@ -101,7 +111,14 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     const transcript = normalizeTranscript(rawTranscript, file.name);
     if (transcript.length < 500) return json({ error: "The transcript is too short to generate reliable resources." }, 400);
 
-    const generated = await generateResources(env, church, weekOf, transcript);
+    let generated: GeneratedPackage;
+    try {
+      generated = await generateResources(env, church, weekOf, transcript);
+    } catch (error) {
+      console.error("sermon_resource_generation_failed", error);
+      return json({ error: error instanceof Error ? clean(error.message, 500) : "Resource generation failed." }, 502);
+    }
+
     const id = crypto.randomUUID();
     const origin = env.PUBLIC_SITE_ORIGIN || new URL(request.url).origin;
     const resources: ProductionManifest["resources"] = [];
@@ -137,12 +154,19 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     return json({ ok: true, job: manifest }, 201);
   }
 
-  const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
   if (previewMatch && request.method === "GET") {
     if (!env.BUCKET) return new Response("Production storage is not configured.", { status: 503 });
     const object = await env.BUCKET.get(`production/jobs/${previewMatch[1]}/${previewMatch[2]}.html`);
     if (!object) return new Response("Resource not found.", { status: 404 });
-    return new Response(object.body, { headers: { "content-type": "text/html; charset=utf-8", "x-robots-tag": "noindex, nofollow" } });
+    return new Response(object.body, {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "private, no-store",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "x-content-type-options": "nosniff",
+        "content-security-policy": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; base-uri 'none'; frame-ancestors 'self'",
+      },
+    });
   }
 
   const sendMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/send$/);
@@ -210,10 +234,23 @@ async function generateResources(env: ProductionEnv, church: ChurchConfig, weekO
       text: { format: { type: "json_schema", name: "sunday_multiplied_package", strict: true, schema } },
     }),
   });
-  const data = await response.json() as { output_text?: string; error?: { message?: string } };
+  const data = await response.json() as {
+    output_text?: string;
+    output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string }> }>;
+    error?: { message?: string };
+  };
   if (!response.ok) throw new Error(data.error?.message || "Resource generation failed.");
-  if (!data.output_text) throw new Error("Resource generation returned no output.");
-  return JSON.parse(data.output_text) as GeneratedPackage;
+  const outputText = data.output_text || extractOutputText(data.output);
+  if (!outputText) throw new Error("Resource generation returned no output.");
+  return JSON.parse(outputText) as GeneratedPackage;
+}
+
+function extractOutputText(output: Array<{ type?: string; content?: Array<{ type?: string; text?: string }> }> | undefined) {
+  if (!output) return "";
+  return output.flatMap((item) => item.content || [])
+    .filter((item) => item.type === "output_text" && typeof item.text === "string")
+    .map((item) => item.text || "")
+    .join("");
 }
 
 function normalizeTranscript(input: string, filename: string) {
@@ -239,11 +276,37 @@ async function loadManifest(bucket: R2Bucket, id: string) {
 }
 function forwardAdminHeaders(headers: Headers) {
   const next = new Headers({ "content-type": "application/json" });
-  for (const name of ["cf-access-authenticated-user-email", "cf-access-jwt-assertion", "authorization", "cookie"]) {
+  for (const name of ["cf-access-authenticated-user-email", "oai-authenticated-user-email", "cf-access-jwt-assertion", "authorization", "cookie"]) {
     const value = headers.get(name); if (value) next.set(name, value);
   }
   return next;
 }
+function adminAuthorizationError(request: Request, env: ProductionEnv) {
+  const email = accessIdentityEmail(request);
+  const adminEmail = env.APPROVAL_ADMIN_EMAIL?.trim() || "brian@sundaymultiplied.com";
+  if (!email || email.toLowerCase() !== adminEmail.toLowerCase()) return "Unauthorized.";
+  return "";
+}
+function accessIdentityEmail(request: Request) {
+  const headerEmail = request.headers.get("cf-access-authenticated-user-email")
+    ?? request.headers.get("oai-authenticated-user-email");
+  if (headerEmail) return headerEmail.trim();
+  const assertion = request.headers.get("cf-access-jwt-assertion");
+  const payload = assertion?.split(".")[1];
+  if (!payload) return "";
+  try {
+    const base64 = payload.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const claims = JSON.parse(atob(base64)) as { email?: unknown };
+    return typeof claims.email === "string" ? claims.email.trim() : "";
+  } catch {
+    return "";
+  }
+}
 function titleCase(value: string) { return value.charAt(0).toUpperCase() + value.slice(1); }
 function clean(value: string, max: number) { return value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, max); }
-function json(body: unknown, status = 200) { return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS }); }
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, "cache-control": "no-store", "x-content-type-options": "nosniff" },
+  });
+}
