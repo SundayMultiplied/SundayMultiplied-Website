@@ -80,3 +80,106 @@
 .production-queue .approval-notification a {
   width: fit-content;
 }
+
+.production-queue-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.production-delete {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 1px solid #8c2d2d;
+  background: #fff;
+  color: #8c2d2d;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.production-delete:disabled {
+  border-color: rgba(23,48,40,.18);
+  color: rgba(23,48,40,.38);
+  cursor: default;
+}
+
+.production-job-table .approval-table-row {
+  grid-template-columns: 54px minmax(190px,1.4fr) 110px minmax(170px,1fr) minmax(145px,.9fr) minmax(170px,.9fr);
+}
+
+.production-job-select {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.production-job-select input {
+  width: 18px;
+  height: 18px;
+  accent-color: #385643;
+  cursor: pointer;
+}
+
+.production-job-select input:disabled {
+  cursor: not-allowed;
+}
+
+.production-job-id {
+  color: #7a877f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+}
+
+.approval-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 14px 0;
+  color: #40554b;
+  font-size: 12px;
+}
+
+.approval-pagination button,
+.approval-pagination select {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid rgba(23,48,40,.28);
+  background: #fff;
+  color: #173028;
+  font: inherit;
+}
+
+.approval-pagination button:not(:disabled) {
+  cursor: pointer;
+}
+
+.approval-pagination button:disabled {
+  color: rgba(23,48,40,.38);
+}
+
+.approval-pagination label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+@media (max-width: 900px) {
+  .production-queue-heading,
+  .approval-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .production-job-table {
+    overflow-x: auto;
+  }
+
+  .production-job-table .approval-table-row {
+    min-width: 980px;
+  }
+}
