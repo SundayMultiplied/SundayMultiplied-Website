@@ -59,7 +59,7 @@ const CHURCHES: ChurchConfig[] = [
     resources: ["monday", "group", "family"],
     baseCssUrl: SHARED_RESOURCE_CSS,
     cssUrl: "/resources/sample-church/church.css",
-    logoUrl: "/resources/sample-church/logo",
+    logoUrl: "/api/resource-assets/sample-church/logo",
   },
   {
     slug: "southside-baptist",
@@ -67,22 +67,19 @@ const CHURCHES: ChurchConfig[] = [
     resources: ["monday", "group", "family"],
     baseCssUrl: SHARED_RESOURCE_CSS,
     cssUrl: "/resources/southside-baptist/church.css",
-    logoUrl: "/resources/southside-baptist/logo",
+    logoUrl: "/api/resource-assets/southside-baptist/logo",
   },
 ];
 
 export async function handleProductionApi(request: Request, env: ProductionEnv): Promise<Response | null> {
   const url = new URL(request.url);
   const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
-  const logoMatch = url.pathname.match(/^\/resources\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
+  const logoMatch = url.pathname.match(/^\/api\/resource-assets\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
 
   if (logoMatch && request.method === "GET") {
     return serveChurchLogo(request, env, logoMatch[1]);
   }
 
-  // Generated previews are deliberately unlisted so they can be rendered from secure
-  // church review pages. Every production-control route requires the same Cloudflare
-  // Access identity as the approval dashboard before it can list jobs or spend API tokens.
   if (url.pathname.startsWith("/api/production/") && !previewMatch) {
     const authError = adminAuthorizationError(request, env);
     if (authError) return json({ error: authError }, 401);
@@ -319,13 +316,8 @@ HTML AND STYLING CONTRACT — FOLLOW THIS EXACTLY FOR EVERY RESOURCE:
 function enforceResourceStyling(input: string, church: ChurchConfig, kind: "monday" | "group" | "family") {
   let html = input.trim();
   const stylesheetLinks = `<link rel="stylesheet" href="${church.baseCssUrl}">\n<link rel="stylesheet" href="${church.cssUrl}">`;
-
-  // The renderer owns stylesheet selection. Strip any model-selected stylesheets and
-  // inject the canonical shared layout followed by the church brand layer.
   html = html.replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>\s*/gi, "");
   if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, `${stylesheetLinks}\n</head>`);
-
-  // Keep the body hooked into the shared layout even if the model drops one of these classes.
   html = html.replace(/<body\b([^>]*)>/i, (match, attrs: string) => {
     const classMatch = attrs.match(/class=["']([^"']*)["']/i);
     const classes = new Set((classMatch?.[1] || "").split(/\s+/).filter(Boolean));
@@ -335,7 +327,6 @@ function enforceResourceStyling(input: string, church: ChurchConfig, kind: "mond
     if (classMatch) return `<body${attrs.replace(classMatch[0], nextClass)}>`;
     return `<body${attrs} ${nextClass}>`;
   });
-
   return html;
 }
 

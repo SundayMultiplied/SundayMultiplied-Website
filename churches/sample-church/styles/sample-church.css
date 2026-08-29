@@ -1,16 +1,14 @@
-@import url("../../../styles/sunday-multiplied-base.css");
-
-/* Generated for Sample Church. Keep the shared sm-* schema intact. */
+/* Sample Church brand layer. Shared resource layout is loaded separately. */
 :root {
   --sm-color-primary: #600203;
   --sm-color-secondary: #e0bd78;
   --sm-color-accent: #153f35;
-  --sm-color-background: #ffffff;
-  --sm-color-text: #173028;
+  --sm-color-background: #fffdf9;
+  --sm-color-text: #26332e;
   --sm-color-label: #600203;
-  --sm-font-heading: Georgia, Arial, sans-serif;
-  --sm-font-body: "Geist Mono", Arial, sans-serif;
-  --sm-corner-radius: 2%;
+  --sm-font-heading: Georgia, "Times New Roman", serif;
+  --sm-font-body: Arial, Helvetica, sans-serif;
+  --sm-corner-radius: 14px;
 }
 
 .sm-resource,
@@ -20,49 +18,88 @@
   font-family: var(--sm-font-body);
 }
 
-.sm-resource h1, .sm-resource h2, .sm-resource h3,
-.sm-document h1, .sm-document h2, .sm-document h3 {
-  color: var(--sm-color-primary);
+.sm-header {
+  background: linear-gradient(135deg, #600203 0%, #7d1718 68%, #153f35 100%);
+  border-bottom-color: var(--sm-color-secondary);
+}
+
+.sm-header-logo-wrap {
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.14);
+}
+
+.sm-church-logo {
+  max-height: 88px;
+}
+
+.sm-title {
+  font-family: var(--sm-font-heading);
+  font-weight: 400;
+}
+
+.sm-eyebrow {
+  color: #f1d99f;
+  font-weight: 800;
+  letter-spacing: .15em;
+}
+
+.sm-section h2,
+.sm-section h3 {
   font-family: var(--sm-font-heading);
 }
 
-.sm-resource__eyebrow, .sm-resource__section-label,
-.sm-eyebrow {
-  color: var(--sm-color-label);
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.sm-resource__card,
-.sm-resource__scripture,
-.sm-resource__practice {
-  border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent);
-  border-radius: var(--sm-corner-radius);
-  background: color-mix(in srgb, var(--sm-color-background) 94%, var(--sm-color-secondary));
-}
-
-.sm-resource a,
-.sm-resource__button {
+.sm-section h2 {
   color: var(--sm-color-primary);
-  font-weight: 700;
 }
 
-.sm-resource__button {
-  border-radius: 999px;
+.sm-section h3 {
+  color: var(--sm-color-accent);
 }
 
-.sm-resource__header-logo,
-.sm-church-logo {
-  display: block;
-  max-height: 4rem;
-  max-width: min(16rem, 70vw);
+.sm-section--big-idea,
+.sm-section--summary,
+.sm-section--family-remember {
+  background: #f7efe4;
+}
+
+.sm-section--scripture,
+.sm-section--prayer {
+  background: #f1f6f3;
+  border-left-color: var(--sm-color-accent);
+}
+
+.sm-question-group,
+.sm-practice-scenario,
+.sm-practice-task,
+.sm-practice-share,
+.sm-practice-debrief {
+  border-color: #dfd3c0;
+  background: #fffdfa;
+  box-shadow: 0 8px 24px rgba(96,2,3,.045);
+}
+
+.sm-question-group h3 {
+  margin-bottom: 12px;
+  color: var(--sm-color-primary);
+}
+
+.sm-section--leader-tip,
+.sm-section--parent-note {
+  background: #fbf6ed;
+  border-left-color: var(--sm-color-secondary);
+}
+
+.sm-scripture-reference {
+  color: var(--sm-color-primary);
+}
+
+.sm-footer {
+  border-top: 1px solid #eadfce;
+  background: #fbf7ef;
 }
 
 @media print {
-  .sm-resource { color: #111; background: #fff; }
-  .sm-resource__card,
-  .sm-resource__scripture,
-  .sm-resource__practice { border-color: #bbb; background: #fff; }
-  .sm-no-print { display: none !important; }
+  .sm-resource,
+  .sm-document { background: #fff; }
 }

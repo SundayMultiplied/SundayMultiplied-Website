@@ -35,8 +35,8 @@ describe("repository structure", () => {
     expect(files[0].content).toContain('"reviewerConfigured": true');
     expect(files[0].content).toContain('"publicStylesheet": "/resources/southside/church.css"');
     expect(files[0].content).toContain('"sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css"');
-    expect(files[0].content).toContain('"logoUrl": "/resources/southside/logo"');
-    expect(files[0].content).toContain('"publicUrl": "/resources/southside/logo"');
+    expect(files[0].content).toContain('"logoUrl": "/api/resource-assets/southside/logo"');
+    expect(files[0].content).toContain('"publicUrl": "/api/resource-assets/southside/logo"');
     expect(files[0].content).not.toContain("reviewer@example.com");
     expect(files[0].content).not.toContain('"reviewers"');
     expect(files[1].content).not.toContain("@import");
