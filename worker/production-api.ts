@@ -47,6 +47,11 @@ type ProductionManifest = {
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const SHARED_RESOURCE_CSS = "/resources/_shared/sunday-multiplied-base.css";
 
+const LEGACY_LOGO_FALLBACKS: Record<string, string> = {
+  "sample-church": "/sample-church-logo.webp",
+  "southside-baptist": "/resources/southside-baptist/2026-08-09/southside-baptist-logo.png",
+};
+
 const CHURCHES: ChurchConfig[] = [
   {
     slug: "sample-church",
@@ -54,7 +59,7 @@ const CHURCHES: ChurchConfig[] = [
     resources: ["monday", "group", "family"],
     baseCssUrl: SHARED_RESOURCE_CSS,
     cssUrl: "/resources/sample-church/church.css",
-    logoUrl: "/sample-church-logo.webp",
+    logoUrl: "/resources/sample-church/logo",
   },
   {
     slug: "southside-baptist",
@@ -62,15 +67,18 @@ const CHURCHES: ChurchConfig[] = [
     resources: ["monday", "group", "family"],
     baseCssUrl: SHARED_RESOURCE_CSS,
     cssUrl: "/resources/southside-baptist/church.css",
-    // Southside has not been run through the current onboarding agent yet, so its
-    // existing logo remains a legacy asset until that onboarding record is created.
-    logoUrl: "/resources/southside-baptist/2026-08-09/southside-baptist-logo.png",
+    logoUrl: "/resources/southside-baptist/logo",
   },
 ];
 
 export async function handleProductionApi(request: Request, env: ProductionEnv): Promise<Response | null> {
   const url = new URL(request.url);
   const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
+  const logoMatch = url.pathname.match(/^\/resources\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
+
+  if (logoMatch && request.method === "GET") {
+    return serveChurchLogo(request, env, logoMatch[1]);
+  }
 
   // Generated previews are deliberately unlisted so they can be rendered from secure
   // church review pages. Every production-control route requires the same Cloudflare
@@ -205,6 +213,30 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
   }
 
   return null;
+}
+
+async function serveChurchLogo(request: Request, env: ProductionEnv, slug: string) {
+  if (env.BUCKET) {
+    const object = await env.BUCKET.get(`resource-assets/${slug}/primary`);
+    if (object) {
+      const headers = new Headers();
+      object.writeHttpMetadata(headers);
+      if (!headers.get("content-type")) headers.set("content-type", "application/octet-stream");
+      headers.set("cache-control", "public, max-age=3600, stale-while-revalidate=86400");
+      headers.set("x-content-type-options", "nosniff");
+      return new Response(object.body, { headers });
+    }
+  }
+
+  const fallback = LEGACY_LOGO_FALLBACKS[slug];
+  if (!fallback) return new Response("Logo not found.", { status: 404 });
+  const fallbackUrl = new URL(fallback, request.url);
+  const response = await fetch(fallbackUrl, { headers: { accept: "image/*" } });
+  if (!response.ok) return new Response("Logo not found.", { status: 404 });
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", "public, max-age=3600, stale-while-revalidate=86400");
+  headers.set("x-content-type-options", "nosniff");
+  return new Response(response.body, { status: response.status, headers });
 }
 
 async function generateResources(env: ProductionEnv, church: ChurchConfig, weekOf: string, transcript: string): Promise<GeneratedPackage> {

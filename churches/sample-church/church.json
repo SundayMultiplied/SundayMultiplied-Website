@@ -38,11 +38,13 @@
     "stylesheet": "churches/sample-church/styles/sample-church.css",
     "publicStylesheet": "/resources/sample-church/church.css",
     "sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css",
+    "logoUrl": "/resources/sample-church/logo",
     "assets": [
       {
         "kind": "primary",
         "filename": "Gemini_Generated_Image_82u22g82u22g82u2.jfif",
-        "r2Key": "churches/sample-church/brand/primary-Gemini_Generated_Image_82u22g82u22g82u2.jfif"
+        "r2Key": "churches/sample-church/brand/primary-Gemini_Generated_Image_82u22g82u22g82u2.jfif",
+        "publicUrl": "/resources/sample-church/logo"
       }
     ]
   },

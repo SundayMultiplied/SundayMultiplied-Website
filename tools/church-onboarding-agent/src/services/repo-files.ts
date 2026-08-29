@@ -98,6 +98,7 @@ function css(state: OnboardingState): string {
 export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
   const root = `churches/${state.basics.slug}`;
   const publicStylesheet = `/resources/${state.basics.slug}/church.css`;
+  const publicLogo = `/resources/${state.basics.slug}/logo`;
   const churchStyles = css(state);
   const church = {
     schemaVersion: 1,
@@ -115,7 +116,13 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
       stylesheet: `${root}/styles/${state.basics.slug}.css`,
       publicStylesheet,
       sharedStylesheet: SHARED_RESOURCE_STYLESHEET,
-      assets: state.assets.map(({ kind, filename, r2Key }) => ({ kind, filename, r2Key })),
+      logoUrl: state.assets.some((asset) => asset.kind === "primary") ? publicLogo : "",
+      assets: state.assets.map(({ kind, filename, r2Key }) => ({
+        kind,
+        filename,
+        r2Key,
+        publicUrl: kind === "primary" ? publicLogo : undefined,
+      })),
     },
     sources: `${root}/sources/streaming.json`,
   };

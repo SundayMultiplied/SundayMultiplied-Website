@@ -27,6 +27,10 @@
     {
       "binding": "CHURCH_ASSETS",
       "bucket_name": "sunday-multiplied-church-assets"
+    },
+    {
+      "binding": "RESOURCE_ASSETS",
+      "bucket_name": "site-creator-r2"
     }
   ],
   "vars": {
