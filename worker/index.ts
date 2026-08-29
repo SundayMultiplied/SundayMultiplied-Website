@@ -2,7 +2,9 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { handleApprovalApi } from "./approval-api";
+import { handleApprovalListApi } from "./approval-list-api";
 import { handleProductionApi } from "./production-api";
+import { handleProductionJobAdminApi } from "./production-job-admin-api";
 
 interface Env {
   ASSETS: Fetcher;
@@ -42,8 +44,14 @@ const worker = {
       return Response.redirect(new URL("/sample-church-logo.webp", request.url).toString(), 302);
     }
 
+    const productionJobAdminResponse = await handleProductionJobAdminApi(request, env);
+    if (productionJobAdminResponse) return productionJobAdminResponse;
+
     const productionResponse = await handleProductionApi(request, env);
     if (productionResponse) return productionResponse;
+
+    const approvalListResponse = await handleApprovalListApi(request, env);
+    if (approvalListResponse) return approvalListResponse;
 
     const approvalResponse = await handleApprovalApi(request, env, ctx);
     if (approvalResponse) return approvalResponse;
