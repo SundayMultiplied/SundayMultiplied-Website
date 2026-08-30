@@ -54,22 +54,6 @@ type ProductionJob = {
 
 type RevisionRequest = {
   id: string;
-  packageId: string;
-  resourceId: string;
-  sourceVersion: number;
-  sections: string[];
-  action: string;
-  message: string | null;
-  reviewerName: string;
-  reviewerEmail: string | null;
-  status: "pending";
-  createdAt: string;
-  packageTitle: string;
-  weekOf: string;
-  scripture: string | null;
-  churchName: string;
-  resourceKind: string;
-  resourceTitle: string;
   previewUrl: string | null;
 };
 
@@ -118,15 +102,15 @@ export function ApprovalDashboard() {
     setSelectedJobIds((current) => current.filter((id) => (jobsData.jobs || []).some((job) => job.id === id && job.status === "ready_for_internal_review")));
   }
 
-  async function loadRevisions() {
+  async function loadRevisionStatus() {
     const response = await fetch("/api/revision-requests", { cache: "no-store" });
     const data = await response.json() as { error?: string; revisions?: RevisionRequest[] };
-    if (!response.ok) throw new Error(data.error || "Unable to load revision requests.");
+    if (!response.ok) throw new Error(data.error || "Unable to load revision status.");
     setRevisions(data.revisions || []);
   }
 
   useEffect(() => {
-    Promise.all([loadPackages(1, 10), loadProduction(), loadRevisions()]).catch((failure: Error) => setError(failure.message));
+    Promise.all([loadPackages(1, 10), loadProduction(), loadRevisionStatus()]).catch((failure: Error) => setError(failure.message));
   }, []);
 
   async function createSermonResources(formData: FormData) {
@@ -158,7 +142,7 @@ export function ApprovalDashboard() {
       setCreatedLink(data.reviewUrl || "");
       setActionMessage("Approval request sent. The package is now in the approval workflow.");
       setSelectedJobIds((current) => current.filter((id) => id !== job.id));
-      await Promise.all([loadProduction(), loadPackages(1, packagePageSize)]);
+      await Promise.all([loadProduction(), loadPackages(1, packagePageSize), loadRevisionStatus()]);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to send this package for approval.");
     } finally {
@@ -232,10 +216,18 @@ export function ApprovalDashboard() {
     await loadPackages(packagePage, packagePageSize);
   }
 
+  function hasPendingRevision(jobId: string) {
+    const marker = `/api/production/preview/${jobId}/`;
+    return revisions.some((revision) => revision.previewUrl?.includes(marker));
+  }
+
   return (
     <main className="approval-dashboard">
       <div className="approval-dashboard-head">
         <div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Sermon production</h1><p>Upload the sermon transcript. The church configuration, branding, resource URLs, and approval package are handled automatically.</p></div>
+        <div className="approval-dashboard-actions">
+          <a className="approval-approve" href="/revisions">Revisions{revisions.length ? ` (${revisions.length})` : ""}</a>
+        </div>
       </div>
 
       <form
@@ -267,46 +259,18 @@ export function ApprovalDashboard() {
         </div>
         {jobs.length === 0 ? <p>No sermon production jobs yet.</p> : <div className="approval-table production-job-table">
           <div className="approval-table-row approval-table-labels"><span>Select</span><span>Church / Sermon</span><span>Date</span><span>Metadata</span><span>Resources</span><span>Action</span></div>
-          {jobs.map((job) => <div className="approval-table-row" key={job.id}>
-            <span className="production-job-select"><input type="checkbox" aria-label={`Select ${job.churchName} ${job.metadata.sermonTitle || job.weekOf}`} checked={selectedJobIds.includes(job.id)} disabled={job.status !== "ready_for_internal_review" || deletingJobs} onChange={() => toggleJobSelection(job)} title={job.status === "sent_for_approval" ? "Sent jobs remain available because approval previews depend on them." : "Select this internal production job for deletion."} /></span>
-            <span><strong>{job.churchName}</strong><small>{job.metadata.sermonTitle || "Title not detected"}</small>{job.metadata.seriesTitle && <small>{job.metadata.seriesTitle}</small>}<small className="production-job-id" title={job.id}>Job {job.id.slice(0, 8)}</small></span>
-            <span>{job.weekOf}</span>
-            <span className="approval-metadata"><strong>{job.metadata.scripture || "Passage not detected"}</strong><small>Confidence: {job.metadata.confidence}</small>{job.metadata.speaker && <small>{job.metadata.speaker}</small>}</span>
-            <span className="approval-notification">{job.resources.map((resource) => <a key={resource.kind} href={resource.previewUrl} target="_blank" rel="noreferrer">Preview {resource.kind}</a>)}</span>
-            <span>{job.status === "sent_for_approval" ? <><strong className="notification-sent">sent for approval</strong>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}<small>Deletion locked while review links depend on this job.</small></> : <button type="button" className="approval-approve" onClick={() => void sendForApproval(job)} disabled={sendingId === job.id}>{sendingId === job.id ? "Sending…" : "Send for approval"}</button>}</span>
-          </div>)}
+          {jobs.map((job) => {
+            const revisionRequested = hasPendingRevision(job.id);
+            return <div className="approval-table-row" key={job.id}>
+              <span className="production-job-select"><input type="checkbox" aria-label={`Select ${job.churchName} ${job.metadata.sermonTitle || job.weekOf}`} checked={selectedJobIds.includes(job.id)} disabled={job.status !== "ready_for_internal_review" || deletingJobs} onChange={() => toggleJobSelection(job)} title={job.status === "sent_for_approval" ? "Sent jobs remain available because approval previews depend on them." : "Select this internal production job for deletion."} /></span>
+              <span><strong>{job.churchName}</strong><small>{job.metadata.sermonTitle || "Title not detected"}</small>{job.metadata.seriesTitle && <small>{job.metadata.seriesTitle}</small>}<small className="production-job-id" title={job.id}>Job {job.id.slice(0, 8)}</small></span>
+              <span>{job.weekOf}</span>
+              <span className="approval-metadata"><strong>{job.metadata.scripture || "Passage not detected"}</strong><small>Confidence: {job.metadata.confidence}</small>{job.metadata.speaker && <small>{job.metadata.speaker}</small>}</span>
+              <span className="approval-notification">{job.resources.map((resource) => <a key={resource.kind} href={resource.previewUrl} target="_blank" rel="noreferrer">Preview {resource.kind}</a>)}</span>
+              <span>{revisionRequested ? <><strong className="approval-status status-revision_requested">revision requested</strong><a href="/revisions">Open revisions</a>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : job.status === "sent_for_approval" ? <><strong className="notification-sent">sent for approval</strong>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}<small>Deletion locked while review links depend on this job.</small></> : <button type="button" className="approval-approve" onClick={() => void sendForApproval(job)} disabled={sendingId === job.id}>{sendingId === job.id ? "Sending…" : "Send for approval"}</button>}</span>
+            </div>;
+          })}
         </div>}
-      </section>
-
-      <section className="approval-create revision-queue">
-        <div className="approval-create-heading revision-queue-heading">
-          <div><p className="approval-kicker">Pastoral feedback</p><h2>Needs revision</h2><p>Structured requests submitted by church approvers. These stay pending until the revision-generation stage processes them.</p></div>
-          <button type="button" className="revision-refresh" onClick={() => void loadRevisions()}>Refresh</button>
-        </div>
-        {revisions.length === 0 ? (
-          <div className="revision-empty"><strong>No pending revision requests.</strong><span>When an approver requests changes, the resource and exact pastoral direction will appear here.</span></div>
-        ) : (
-          <div className="revision-request-list">
-            {revisions.map((revision) => <article className="revision-request-card" key={revision.id}>
-              <div className="revision-request-head">
-                <div><strong>{revision.churchName}</strong><span>{revision.packageTitle} · {revision.weekOf}</span></div>
-                <span className="revision-badge">Needs revision</span>
-              </div>
-              <div className="revision-resource-line">
-                <div><small>{revision.resourceKind}</small><h3>{revision.resourceTitle}</h3><span>Source version {revision.sourceVersion}</span></div>
-                {revision.previewUrl && <a href={revision.previewUrl} target="_blank" rel="noreferrer">Open reviewed resource ↗</a>}
-              </div>
-              <div className="revision-detail-grid">
-                <div><small>Sections</small><div className="revision-tags">{revision.sections.map((section) => <span key={section}>{revisionSectionLabel(section)}</span>)}</div></div>
-                <div><small>Requested direction</small><strong>{revisionActionLabel(revision.action)}</strong></div>
-                {revision.scripture && <div><small>Scripture</small><strong>{revision.scripture}</strong></div>}
-                <div><small>Reviewer</small><strong>{revision.reviewerName}</strong>{revision.reviewerEmail && <span>{revision.reviewerEmail}</span>}</div>
-              </div>
-              {revision.message && <div className="revision-pastoral-note"><small>Pastoral notes</small><p>{revision.message}</p></div>}
-              <footer><span>Received {formatAdminDate(revision.createdAt)}</span><span className="revision-stage-note">Ready for targeted revision generation</span></footer>
-            </article>)}
-          </div>
-        )}
       </section>
 
       <div className="approval-dashboard-head"><div><p className="approval-kicker">Church review</p><h2>Approval packages</h2><p>{packagePagination.total} total packages</p></div><button type="button" className="approval-approve" onClick={() => setShowManualCreate((value) => !value)}>{showManualCreate ? "Close manual form" : "Manual package"}</button></div>
@@ -341,28 +305,4 @@ export function ApprovalDashboard() {
       </>}
     </main>
   );
-}
-
-function revisionActionLabel(action: string) {
-  const labels: Record<string, string> = {
-    revise_existing: "Revise the existing content",
-    new_set: "Create a completely new set",
-    new_scenario: "Create a different scenario / activity",
-    more_practical: "Make it more practical / application-focused",
-    more_discussion_oriented: "Make it more discussion-oriented",
-    simplify: "Make it clearer / more accessible",
-    tone_wording: "Adjust tone or wording",
-    other: "Other request",
-  };
-  return labels[action] || action.replaceAll("_", " ");
-}
-
-function revisionSectionLabel(section: string) {
-  return section.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function formatAdminDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
 }
