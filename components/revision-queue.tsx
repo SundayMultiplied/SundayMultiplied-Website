@@ -21,6 +21,10 @@ type RevisionRequest = {
   resourceKind: string;
   resourceTitle: string;
   previewUrl: string | null;
+  generatedVersion?: number | null;
+  generatedPreviewUrl?: string | null;
+  generationStatus?: string | null;
+  generatedAt?: string | null;
 };
 
 type Props = { standalone?: boolean };
@@ -29,6 +33,8 @@ export function RevisionQueue({ standalone = false }: Props) {
   const [revisions, setRevisions] = useState<RevisionRequest[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [generatingId, setGeneratingId] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
 
   async function loadRevisions() {
     setLoading(true);
@@ -45,6 +51,25 @@ export function RevisionQueue({ standalone = false }: Props) {
     }
   }
 
+  async function generateRevision(item: RevisionRequest) {
+    const verb = item.generatedVersion ? "Regenerate" : "Generate";
+    if (!window.confirm(`${verb} the requested changes for ${item.resourceTitle}? The original reviewed version will remain unchanged.`)) return;
+    setGeneratingId(item.id);
+    setError("");
+    setActionMessage("");
+    try {
+      const response = await fetch(`/api/revision-requests/${encodeURIComponent(item.id)}/generate`, { method: "POST" });
+      const data = await response.json() as { error?: string; version?: number };
+      if (!response.ok) throw new Error(data.error || "Unable to generate this revision.");
+      setActionMessage(`${item.resourceTitle} version ${data.version || item.sourceVersion + 1} is ready for internal review.`);
+      await loadRevisions();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to generate this revision.");
+    } finally {
+      setGeneratingId("");
+    }
+  }
+
   useEffect(() => { void loadRevisions(); }, []);
 
   return (
@@ -53,7 +78,7 @@ export function RevisionQueue({ standalone = false }: Props) {
         <div>
           <p className="approval-kicker">Pastoral feedback</p>
           <h1>Revision workspace</h1>
-          <p>Review requested changes here without crowding the sermon-production queue. Stage 2 will add targeted regeneration and versioning actions to this workspace.</p>
+          <p>Generate only the sections the pastor requested. Original approved/reviewed content stays intact while revised versions wait for your internal review.</p>
         </div>
         <div className="revision-workspace-actions">
           {standalone && <a className="approval-approve" href="/approvals">← Production dashboard</a>}
@@ -61,7 +86,8 @@ export function RevisionQueue({ standalone = false }: Props) {
         </div>
       </div>
 
-      {error && <div className="approval-admin-error"><strong>Revision queue unavailable</strong><p>{error}</p></div>}
+      {error && <div className="approval-admin-error"><strong>Revision workflow unavailable</strong><p>{error}</p></div>}
+      {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
 
       {!error && loading && <div className="revision-empty"><strong>Loading revision requests…</strong></div>}
 
@@ -73,27 +99,43 @@ export function RevisionQueue({ standalone = false }: Props) {
         <>
           <div className="revision-summary-bar">
             <strong>{revisions.length} pending resource {revisions.length === 1 ? "revision" : "revisions"}</strong>
-            <span>Each request remains tied to the exact resource version the pastor reviewed.</span>
+            <span>Targeted regeneration changes only the requested sections and creates a new internal version.</span>
           </div>
           <div className="revision-request-list">
-            {revisions.map((item) => <article className="revision-request-card" key={item.id}>
-              <div className="revision-request-head">
-                <div><strong>{item.churchName}</strong><span>{item.packageTitle} · {item.weekOf}</span></div>
-                <span className="revision-badge">Needs revision</span>
-              </div>
-              <div className="revision-resource-line">
-                <div><small>{item.resourceKind}</small><h3>{item.resourceTitle}</h3><span>Source version {item.sourceVersion}</span></div>
-                {item.previewUrl && <a href={item.previewUrl} target="_blank" rel="noreferrer">Open reviewed resource ↗</a>}
-              </div>
-              <div className="revision-detail-grid">
-                <div><small>Sections</small><div className="revision-tags">{item.sections.map((section) => <span key={section}>{sectionLabel(section)}</span>)}</div></div>
-                <div><small>Requested direction</small><strong>{actionLabel(item.action)}</strong></div>
-                {item.scripture && <div><small>Scripture</small><strong>{item.scripture}</strong></div>}
-                <div><small>Reviewer</small><strong>{item.reviewerName}</strong>{item.reviewerEmail && <span>{item.reviewerEmail}</span>}</div>
-              </div>
-              {item.message && <div className="revision-pastoral-note"><small>Pastoral notes</small><p>{item.message}</p></div>}
-              <footer><span>Received {formatAdminDate(item.createdAt)}</span><span className="revision-stage-note">Ready for targeted revision generation</span></footer>
-            </article>)}
+            {revisions.map((item) => {
+              const generating = generatingId === item.id;
+              return <article className="revision-request-card" key={item.id}>
+                <div className="revision-request-head">
+                  <div><strong>{item.churchName}</strong><span>{item.packageTitle} · {item.weekOf}</span></div>
+                  <span className="revision-badge">Needs revision</span>
+                </div>
+                <div className="revision-resource-line">
+                  <div>
+                    <small>{item.resourceKind}</small>
+                    <h3>{item.resourceTitle}</h3>
+                    <span>Pastor reviewed version {item.sourceVersion}{item.generatedVersion ? ` · Proposed version ${item.generatedVersion}` : ""}</span>
+                  </div>
+                  <div className="revision-resource-actions">
+                    {item.previewUrl && <a href={item.previewUrl} target="_blank" rel="noreferrer">Open reviewed v{item.sourceVersion} ↗</a>}
+                    {item.generatedPreviewUrl && <a className="revision-preview-link" href={item.generatedPreviewUrl} target="_blank" rel="noreferrer">Preview proposed v{item.generatedVersion} ↗</a>}
+                  </div>
+                </div>
+                <div className="revision-detail-grid">
+                  <div><small>Sections</small><div className="revision-tags">{item.sections.map((section) => <span key={section}>{sectionLabel(section)}</span>)}</div></div>
+                  <div><small>Requested direction</small><strong>{actionLabel(item.action)}</strong></div>
+                  {item.scripture && <div><small>Scripture</small><strong>{item.scripture}</strong></div>}
+                  <div><small>Reviewer</small><strong>{item.reviewerName}</strong>{item.reviewerEmail && <span>{item.reviewerEmail}</span>}</div>
+                </div>
+                {item.message && <div className="revision-pastoral-note"><small>Pastoral notes</small><p>{item.message}</p></div>}
+                <div className="revision-generation-actions">
+                  <button type="button" className="approval-approve" disabled={generating} onClick={() => void generateRevision(item)}>
+                    {generating ? "Generating revision…" : item.generatedVersion ? "Regenerate proposed revision" : "Generate revision"}
+                  </button>
+                  {item.generatedVersion && <span className="revision-stage-note">Proposed v{item.generatedVersion} · ready for internal review</span>}
+                </div>
+                <footer><span>Received {formatAdminDate(item.createdAt)}</span><span>{item.generatedAt ? `Last generated ${formatAdminDate(item.generatedAt)}` : "No revised version generated yet"}</span></footer>
+              </article>;
+            })}
           </div>
         </>
       )}
