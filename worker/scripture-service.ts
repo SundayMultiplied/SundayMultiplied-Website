@@ -126,7 +126,6 @@ function flattenVerseContent(content: unknown[]): string {
     if (!item || typeof item !== "object") return "";
     const value = item as Record<string, unknown>;
     if (typeof value.text === "string") return value.text;
-    if (typeof value.heading === "string") return `${value.heading} `;
     if (value.lineBreak === true) return " ";
     return "";
   }).join("").replace(/\s+/g, " ").trim();
