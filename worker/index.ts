@@ -5,6 +5,7 @@ import { handleApprovalApi } from "./approval-api";
 import { handleApprovalListApi } from "./approval-list-api";
 import { handleChurchAssetApi } from "./church-asset-api";
 import { finalizeApprovedPackage } from "./package-finalization";
+import { handlePackageFinalizationApi } from "./package-finalization-api";
 import { handleProductionApi } from "./production-api";
 import { handleProductionJobAdminApi } from "./production-job-admin-api";
 import { handleRevisionApi } from "./revision-api";
@@ -121,6 +122,9 @@ const worker = {
 
     const productionResponse = await handleProductionApi(request, env);
     if (productionResponse) return productionResponse;
+
+    const packageFinalizationResponse = await handlePackageFinalizationApi(request, env);
+    if (packageFinalizationResponse) return packageFinalizationResponse;
 
     const approvalListResponse = await handleApprovalListApi(request, env);
     if (approvalListResponse) return approvalListResponse;
