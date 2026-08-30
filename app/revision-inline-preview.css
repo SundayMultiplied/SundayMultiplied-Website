@@ -62,13 +62,8 @@
   font-size: 13px;
 }
 
-.revision-preview-status {
-  color: #6e7c74;
-}
-
-.revision-preview-error {
-  color: #8c2d2d;
-}
+.revision-preview-status { color: #6e7c74; }
+.revision-preview-error { color: #8c2d2d; }
 
 .revision-commit-cta,
 .revision-ready-next-step {
@@ -83,15 +78,11 @@
 }
 
 .revision-commit-cta > div,
-.revision-ready-next-step {
-  color: #2b4036;
-}
-
-.revision-commit-cta > div {
+.revision-ready-next-step > div {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  max-width: 720px;
+  max-width: 760px;
 }
 
 .revision-commit-cta strong,
@@ -109,10 +100,38 @@
 }
 
 .revision-ready-next-step {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
   border-left: 4px solid #385643;
+}
+
+.revision-primary-action {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 11px 16px;
+  border: 2px solid #173028;
+  border-radius: 4px;
+  background: #173028;
+  color: #fff;
+  box-shadow: 0 2px 0 rgba(23,48,40,.18);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.revision-primary-action:hover:not(:disabled) {
+  background: #2f5b47;
+  border-color: #2f5b47;
+}
+
+.revision-primary-action:focus-visible {
+  outline: 3px solid rgba(47,91,71,.28);
+  outline-offset: 2px;
+}
+
+.revision-primary-action:disabled {
+  opacity: .55;
+  cursor: default;
 }
 
 .revision-secondary-action {
@@ -139,12 +158,13 @@
 
 @media (max-width: 700px) {
   .revision-final-style-head,
-  .revision-commit-cta {
+  .revision-commit-cta,
+  .revision-ready-next-step {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .revision-commit-cta .approval-approve {
+  .revision-primary-action {
     width: 100%;
   }
 }
