@@ -47,7 +47,8 @@ export async function handleRevisionApi(
              rr.action, rr.message, rr.reviewer_name AS reviewerName,
              rr.reviewer_email AS reviewerEmail, rr.status, rr.created_at AS createdAt,
              p.title AS packageTitle, p.week_of AS weekOf, p.scripture,
-             c.name AS churchName, r.kind AS resourceKind, r.title AS resourceTitle
+             c.name AS churchName, r.kind AS resourceKind, r.title AS resourceTitle,
+             r.preview_url AS previewUrl
       FROM review_revision_requests rr
       JOIN review_packages p ON p.id = rr.package_id
       JOIN churches c ON c.id = p.church_id
