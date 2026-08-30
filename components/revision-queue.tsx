@@ -27,7 +27,30 @@ type RevisionRequest = {
   generatedAt?: string | null;
 };
 
+type RevisedSectionPreview = {
+  section: string;
+  html: string;
+};
+
 type Props = { standalone?: boolean };
+
+const SECTION_SELECTORS: Record<string, string[]> = {
+  sermon_recap: [".sm-section--summary"],
+  key_takeaways: [".sm-section--takeaways"],
+  reflection: [".sm-section--reflection"],
+  prayer: [".sm-section--prayer"],
+  big_idea: [".sm-section--big-idea"],
+  tension: [".sm-section--tension"],
+  sermon_snapshot: [".sm-section--summary"],
+  key_moments: [".sm-section--key-moments"],
+  discussion_questions: [".sm-section--questions"],
+  practice: [".sm-section--practice"],
+  midweek: [".sm-section--application"],
+  leader_tip: [".sm-section--leader-tip"],
+  sermon_connection: [".sm-section--family-remember", ".sm-section--summary", ".sm-section--big-idea"],
+  scenario_activity: [".sm-section--practice", ".sm-section--application"],
+  application: [".sm-section--application", ".sm-section--practice"],
+};
 
 export function RevisionQueue({ standalone = false }: Props) {
   const [revisions, setRevisions] = useState<RevisionRequest[]>([]);
@@ -35,6 +58,9 @@ export function RevisionQueue({ standalone = false }: Props) {
   const [loading, setLoading] = useState(true);
   const [generatingId, setGeneratingId] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [sectionPreviews, setSectionPreviews] = useState<Record<string, RevisedSectionPreview[]>>({});
+  const [previewErrors, setPreviewErrors] = useState<Record<string, string>>({});
+  const [loadingPreviewIds, setLoadingPreviewIds] = useState<string[]>([]);
 
   async function loadRevisions() {
     setLoading(true);
@@ -43,11 +69,37 @@ export function RevisionQueue({ standalone = false }: Props) {
       const response = await fetch("/api/revision-requests", { cache: "no-store" });
       const data = await response.json() as { revisions?: RevisionRequest[]; error?: string };
       if (!response.ok) throw new Error(data.error || "Unable to load revision requests.");
-      setRevisions(data.revisions || []);
+      const next = data.revisions || [];
+      setRevisions(next);
+      await Promise.all(next.filter((item) => item.generatedPreviewUrl).map((item) => loadSectionPreview(item)));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to load revision requests.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadSectionPreview(item: RevisionRequest) {
+    if (!item.generatedPreviewUrl) return;
+    setLoadingPreviewIds((current) => current.includes(item.id) ? current : [...current, item.id]);
+    setPreviewErrors((current) => ({ ...current, [item.id]: "" }));
+    try {
+      const response = await fetch(item.generatedPreviewUrl, { cache: "no-store" });
+      if (!response.ok) throw new Error("Unable to load proposed revision preview.");
+      const html = await response.text();
+      const document = new DOMParser().parseFromString(html, "text/html");
+      const previews: RevisedSectionPreview[] = [];
+      for (const section of item.sections) {
+        const selectors = SECTION_SELECTORS[section] || [];
+        const element = selectors.map((selector) => document.querySelector(selector)).find(Boolean);
+        if (element) previews.push({ section, html: element.innerHTML });
+      }
+      if (!previews.length) throw new Error("The revised sections could not be located in the proposed resource.");
+      setSectionPreviews((current) => ({ ...current, [item.id]: previews }));
+    } catch (failure) {
+      setPreviewErrors((current) => ({ ...current, [item.id]: failure instanceof Error ? failure.message : "Unable to load proposed revision preview." }));
+    } finally {
+      setLoadingPreviewIds((current) => current.filter((id) => id !== item.id));
     }
   }
 
@@ -104,6 +156,8 @@ export function RevisionQueue({ standalone = false }: Props) {
           <div className="revision-request-list">
             {revisions.map((item) => {
               const generating = generatingId === item.id;
+              const previews = sectionPreviews[item.id] || [];
+              const loadingPreview = loadingPreviewIds.includes(item.id);
               return <article className="revision-request-card" key={item.id}>
                 <div className="revision-request-head">
                   <div><strong>{item.churchName}</strong><span>{item.packageTitle} · {item.weekOf}</span></div>
@@ -117,7 +171,7 @@ export function RevisionQueue({ standalone = false }: Props) {
                   </div>
                   <div className="revision-resource-actions">
                     {item.previewUrl && <a href={item.previewUrl} target="_blank" rel="noreferrer">Open reviewed v{item.sourceVersion} ↗</a>}
-                    {item.generatedPreviewUrl && <a className="revision-preview-link" href={item.generatedPreviewUrl} target="_blank" rel="noreferrer">Preview proposed v{item.generatedVersion} ↗</a>}
+                    {item.generatedPreviewUrl && <a href={item.generatedPreviewUrl} target="_blank" rel="noreferrer">Open full proposed v{item.generatedVersion} ↗</a>}
                   </div>
                 </div>
                 <div className="revision-detail-grid">
@@ -127,6 +181,24 @@ export function RevisionQueue({ standalone = false }: Props) {
                   <div><small>Reviewer</small><strong>{item.reviewerName}</strong>{item.reviewerEmail && <span>{item.reviewerEmail}</span>}</div>
                 </div>
                 {item.message && <div className="revision-pastoral-note"><small>Pastoral notes</small><p>{item.message}</p></div>}
+
+                {item.generatedVersion && (
+                  <section className="revision-inline-preview" aria-label={`Proposed version ${item.generatedVersion} revised sections`}>
+                    <div className="revision-inline-preview-head">
+                      <div><small>Proposed revision</small><strong>Only the changed content</strong></div>
+                      <span>v{item.generatedVersion}</span>
+                    </div>
+                    {loadingPreview && <p className="revision-inline-preview-status">Loading revised sections…</p>}
+                    {previewErrors[item.id] && <p className="revision-inline-preview-error">{previewErrors[item.id]}</p>}
+                    {!loadingPreview && !previewErrors[item.id] && previews.map((preview) => (
+                      <div className="revision-inline-section" key={preview.section}>
+                        <h4>{sectionLabel(preview.section)}</h4>
+                        <div className="revision-inline-section-content" dangerouslySetInnerHTML={{ __html: preview.html }} />
+                      </div>
+                    ))}
+                  </section>
+                )}
+
                 <div className="revision-generation-actions">
                   <button type="button" className="approval-approve" disabled={generating} onClick={() => void generateRevision(item)}>
                     {generating ? "Generating revision…" : item.generatedVersion ? "Regenerate proposed revision" : "Generate revision"}
