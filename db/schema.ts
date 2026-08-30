@@ -97,3 +97,14 @@ export const reviewRevisionVersions = sqliteTable("review_revision_versions", {
 }, (table) => [
   index("review_revision_versions_request_idx").on(table.revisionRequestId),
 ]);
+
+export const reviewPackageArchives = sqliteTable("review_package_archives", {
+  packageId: text("package_id").primaryKey().references(() => reviewPackages.id),
+  status: text("status").notNull(),
+  archivePrefix: text("archive_prefix"),
+  sourceJobId: text("source_job_id"),
+  error: text("error"),
+  archivedAt: text("archived_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("review_package_archives_status_idx").on(table.status)]);

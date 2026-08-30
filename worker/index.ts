@@ -4,6 +4,8 @@ import handler from "vinext/server/app-router-entry";
 import { handleApprovalApi } from "./approval-api";
 import { handleApprovalListApi } from "./approval-list-api";
 import { handleChurchAssetApi } from "./church-asset-api";
+import { finalizeApprovedPackage } from "./package-finalization";
+import { handlePackageFinalizationApi } from "./package-finalization-api";
 import { handleProductionApi } from "./production-api";
 import { handleProductionJobAdminApi } from "./production-job-admin-api";
 import { handleRevisionApi } from "./revision-api";
@@ -121,6 +123,9 @@ const worker = {
     const productionResponse = await handleProductionApi(request, env);
     if (productionResponse) return productionResponse;
 
+    const packageFinalizationResponse = await handlePackageFinalizationApi(request, env);
+    if (packageFinalizationResponse) return packageFinalizationResponse;
+
     const approvalListResponse = await handleApprovalListApi(request, env);
     if (approvalListResponse) return approvalListResponse;
 
@@ -133,10 +138,10 @@ const worker = {
     if (revisionRegenerationResponse) return revisionRegenerationResponse;
 
     const revisionResponse = await handleRevisionApi(request, env, ctx);
-    if (revisionResponse) return revisionResponse;
+    if (revisionResponse) return finalizeDecisionIfApproved(request, env, revisionResponse);
 
     const approvalResponse = await handleApprovalApi(request, env, ctx);
-    if (approvalResponse) return approvalResponse;
+    if (approvalResponse) return finalizeDecisionIfApproved(request, env, approvalResponse);
 
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
@@ -152,6 +157,42 @@ const worker = {
     return handler.fetch(request, env, ctx);
   },
 };
+
+async function finalizeDecisionIfApproved(request: Request, env: Env, response: Response) {
+  const url = new URL(request.url);
+  const reviewMatch = url.pathname.match(/^\/api\/reviews\/([^/]+)\/decision$/);
+  if (!reviewMatch || request.method !== "POST" || !response.ok) return response;
+
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) return response;
+
+  try {
+    const data = await response.clone().json() as { status?: string };
+    if (data.status !== "approved") return response;
+
+    const tokenHash = await sha256(decodeURIComponent(reviewMatch[1]));
+    const pkg = await env.DB.prepare("SELECT id FROM review_packages WHERE token_hash = ? LIMIT 1")
+      .bind(tokenHash).first<{ id: string }>();
+    if (!pkg?.id) {
+      console.error("package_finalization_lookup_failed", { tokenHash });
+      return response;
+    }
+
+    const archive = await finalizeApprovedPackage(env, pkg.id);
+    if (archive.status !== "archived") {
+      console.error("package_finalization_failed", { packageId: pkg.id, archive });
+    }
+  } catch (error) {
+    console.error("package_finalization_failed", error);
+  }
+  return response;
+}
+
+async function sha256(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
