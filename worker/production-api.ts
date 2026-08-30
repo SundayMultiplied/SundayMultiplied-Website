@@ -1,4 +1,5 @@
 import { PRODUCTION_CHURCHES } from "./generated/church-registry";
+import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
 
 type ProductionEnv = {
   ASSETS?: Fetcher;
@@ -115,6 +116,20 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
       return json({ error: error instanceof Error ? clean(error.message, 500) : "Resource generation failed." }, 502);
     }
 
+    const needsFullScripture = church.resources.some((kind) => kind === "group" || kind === "family");
+    let scripturePassage: Awaited<ReturnType<typeof resolveBsbPassage>> | undefined;
+    if (needsFullScripture) {
+      if (!generated.metadata.scripture) {
+        return json({ error: "The primary Scripture passage could not be detected. Group and Family resources require an exact BSB passage before production can continue." }, 422);
+      }
+      try {
+        scripturePassage = await resolveBsbPassage(generated.metadata.scripture);
+      } catch (error) {
+        console.error("bsb_scripture_lookup_failed", error);
+        return json({ error: error instanceof Error ? clean(error.message, 500) : "The BSB Scripture passage could not be loaded." }, 502);
+      }
+    }
+
     const id = crypto.randomUUID();
     const origin = env.PUBLIC_SITE_ORIGIN || new URL(request.url).origin;
     const resources: ProductionManifest["resources"] = [];
@@ -122,7 +137,15 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     for (const kind of church.resources) {
       const generatedHtml = generated.resources[kind];
       if (!generatedHtml) continue;
-      const html = enforceResourceStyling(generatedHtml, church, kind);
+      let html = enforceResourceStyling(generatedHtml, church, kind);
+      if (scripturePassage && (kind === "group" || kind === "family")) {
+        try {
+          html = injectBsbScripture(html, scripturePassage);
+        } catch (error) {
+          console.error("bsb_scripture_injection_failed", error);
+          return json({ error: error instanceof Error ? clean(error.message, 500) : "The exact BSB Scripture passage could not be inserted into the resource." }, 502);
+        }
+      }
       const storageKey = `production/jobs/${id}/${kind}.html`;
       await env.BUCKET.put(storageKey, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
       resources.push({
@@ -233,9 +256,10 @@ Church logo URL: ${church.logoUrl || "none"}.
 CONTENT RULES:
 - Stay faithful to the pastor's actual message. Do not create generic devotional content.
 - Extract sermon title, series title, speaker, main Scripture passage, and an overall metadata confidence level. Use an empty string when title/series/speaker cannot be established.
-- Monday Multiplied: sermon recap, 3 key takeaways, reflection question, short prayer.
-- Group Multiplied: Big Idea, The Tension, Sermon Snapshot, 3-5 Key Moments, 5-7 questions grouped Understand/Reflect/Apply, Practice This Week, Midweek Reinforcement, Leader Tip, Closing Prayer. Include the Scripture reference, but DO NOT fabricate full Bible passage text when exact licensed passage text was not supplied.
-- Family Multiplied: a short family dinner-table resource rooted in the sermon with a simple big idea, read/talk section, age-flexible discussion questions, one practical family activity, and a short prayer.
+- Return the primary Scripture as one normalized contiguous reference such as "Matthew 18:1-14" or "Genesis 1:1-2". Do not combine secondary references into this field.
+- Monday Multiplied: sermon recap, 3 key takeaways, reflection question, short prayer. Include the primary Scripture reference, not the full passage text.
+- Group Multiplied: Big Idea, The Tension, Sermon Snapshot, 3-5 Key Moments, 5-7 questions grouped Understand/Reflect/Apply, Practice This Week, Midweek Reinforcement, Leader Tip, Closing Prayer. Include a Scripture section and the primary Scripture reference. Do not generate or paraphrase the passage text; exact BSB text is inserted by the production system after generation.
+- Family Multiplied: a short family dinner-table resource rooted in the sermon with a simple big idea, a Scripture section/read-together area using the primary reference, age-flexible discussion questions, one practical family activity, and a short prayer. Do not generate or paraphrase the passage text; exact BSB text is inserted by the production system after generation.
 
 HTML AND STYLING CONTRACT — FOLLOW THIS EXACTLY FOR EVERY RESOURCE:
 - Return a complete standalone HTML document with <!doctype html>, <html>, <head>, and <body>.
@@ -249,6 +273,7 @@ HTML AND STYLING CONTRACT — FOLLOW THIS EXACTLY FOR EVERY RESOURCE:
 - If a logo URL is present, place it inside <div class="sm-header-logo-wrap"> as <img class="sm-church-logo sm-logo" src="${church.logoUrl || ""}" alt="${church.name} logo">.
 - Every content section must include class "sm-section" plus an appropriate modifier when one exists.
 - Use these established section modifiers where applicable: sm-section--scripture, sm-section--summary, sm-section--takeaways, sm-section--reflection, sm-section--big-idea, sm-section--tension, sm-section--key-moments, sm-section--questions, sm-section--application, sm-section--practice, sm-section--leader-tip, sm-section--parent-note, sm-section--family-remember, sm-section--prayer.
+- Group and Family must include exactly one section with class "sm-section sm-section--scripture". The production system replaces its contents with exact BSB text.
 - Scripture references must use class "sm-scripture-reference".
 - Group discussion clusters must use <div class="sm-question-group"> with <h3>Understand</h3>, <h3>Reflect</h3>, or <h3>Apply</h3> as appropriate.
 - Practice components may use sm-practice-scenario, sm-practice-task, sm-practice-share, and sm-practice-debrief.
