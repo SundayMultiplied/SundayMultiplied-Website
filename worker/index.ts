@@ -7,6 +7,7 @@ import { handleChurchAssetApi } from "./church-asset-api";
 import { handleProductionApi } from "./production-api";
 import { handleProductionJobAdminApi } from "./production-job-admin-api";
 import { handleRevisionApi } from "./revision-api";
+import { handleRevisionCommitApi } from "./revision-commit-api";
 import { handleRevisionRegenerationApi } from "./revision-regeneration-api";
 
 interface Env {
@@ -122,6 +123,9 @@ const worker = {
 
     const approvalListResponse = await handleApprovalListApi(request, env);
     if (approvalListResponse) return approvalListResponse;
+
+    const revisionCommitResponse = await handleRevisionCommitApi(request, env);
+    if (revisionCommitResponse) return revisionCommitResponse;
 
     // Stage 2 revision endpoints own the revision list, targeted generation,
     // and internal previews. Stage 1 decision capture remains in revision-api.
