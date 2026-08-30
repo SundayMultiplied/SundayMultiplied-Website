@@ -60,11 +60,24 @@ export async function resolveBsbPassage(reference: string): Promise<BsbPassage> 
   return { reference: parsed.reference, translation: "BSB", verses };
 }
 
+export function injectBsbScripture(html: string, passage: BsbPassage) {
+  const section = `<section class="sm-section sm-section--scripture" data-sm-scripture="primary">\n<h2>Scripture</h2>\n${scriptureHtml(passage)}\n</section>`;
+  const existing = /<section\b[^>]*class=["'][^"']*sm-section--scripture[^"']*["'][^>]*>[\s\S]*?<\/section>/i;
+  if (existing.test(html)) return html.replace(existing, section);
+
+  const headerEnd = /<\/header>/i;
+  if (headerEnd.test(html)) return html.replace(headerEnd, (match) => `${match}\n${section}`);
+
+  const mainStart = /<main\b[^>]*class=["'][^"']*sm-document[^"']*["'][^>]*>/i;
+  if (mainStart.test(html)) return html.replace(mainStart, (match) => `${match}\n${section}`);
+
+  throw new Error("Generated resource is missing the Sunday Multiplied document structure required for Scripture injection.");
+}
+
 export function scriptureHtml(passage: BsbPassage) {
+  const spansChapters = passage.verses.some((verse) => verse.chapter !== passage.verses[0]?.chapter);
   const body = passage.verses.map((item) => {
-    const label = passage.verses.some((verse) => verse.chapter !== item.chapter)
-      ? `${item.chapter}:${item.verse}`
-      : String(item.verse);
+    const label = spansChapters ? `${item.chapter}:${item.verse}` : String(item.verse);
     return `<p class="sm-scripture-verse"><sup class="sm-verse-number">${label}</sup> ${escapeHtml(item.text)}</p>`;
   }).join("\n");
   return `<p class="sm-scripture-reference">${escapeHtml(passage.reference)} · Berean Standard Bible (BSB)</p>\n<div class="sm-scripture-text">\n${body}\n</div>\n<p class="sm-scripture-attribution">Scripture quotations are from the Berean Standard Bible (BSB), dedicated to the public domain.</p>`;
