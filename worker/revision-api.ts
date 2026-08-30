@@ -28,7 +28,7 @@ type StructuredDecisionBody = {
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 const ACTIVE_REVIEW_STATUSES = new Set(["ready_for_review", "viewed", "revised"]);
-const REVISION_QUEUE_URL = "https://admin.sundaymultiplied.com/approvals#needs-revision";
+const REVISION_QUEUE_URL = "https://admin.sundaymultiplied.com/revisions";
 
 export async function handleRevisionApi(
   request: Request,
@@ -203,7 +203,7 @@ export async function handleRevisionApi(
       message: revisionSummary(item.sections, item.action, item.message),
     }));
   const notificationFeedback = packageDecision === "request_revision"
-    ? [overallFeedback, `Open the Needs Revision queue:\n${REVISION_QUEUE_URL}`].filter(Boolean).join("\n\n")
+    ? [overallFeedback, `Open the revision workspace:\n${REVISION_QUEUE_URL}`].filter(Boolean).join("\n\n")
     : overallFeedback;
   const legacyRequest = new Request(request.url, {
     method: "POST",

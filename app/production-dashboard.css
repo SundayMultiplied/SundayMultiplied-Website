@@ -143,6 +143,26 @@
   font-size: 10px;
 }
 
+.production-action-stack,
+.revision-resource-actions,
+.revision-generation-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.production-revision-link {
+  display: inline-block;
+  width: fit-content;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.production-revision-link:hover {
+  text-decoration: underline;
+}
+
 .revision-queue {
   border-top: 5px solid #b6772a;
 }
@@ -228,6 +248,13 @@
   font-weight: 800;
 }
 
+.revision-preview-link {
+  padding: 7px 10px;
+  border: 1px solid rgba(47,91,71,.25);
+  background: #f2f7f3;
+  text-decoration: none;
+}
+
 .revision-detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -270,6 +297,12 @@
   color: #33453c;
   font-size: 14px;
   line-height: 1.65;
+}
+
+.revision-generation-actions {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(23,48,40,.1);
 }
 
 .revision-request-card footer {
