@@ -25,16 +25,21 @@ for (const entry of entries) {
   const resources = Array.isArray(manifest?.resources)
     ? manifest.resources.filter((item) => allowedResources.has(item))
     : [];
-  if (!slug || !name || resources.length === 0) continue;
-
   const brand = manifest?.brand || {};
+  const baseCssUrl = String(brand.sharedStylesheet || "").trim();
+  const cssUrl = String(brand.publicStylesheet || "").trim();
+
+  // Older manifests may have brand source files but no stable public resource
+  // contract. Do not expose them in production until they are migrated.
+  if (!slug || !name || resources.length === 0 || !baseCssUrl || !cssUrl) continue;
+
   churches.push({
     slug,
     name,
     resources,
-    baseCssUrl: String(brand.sharedStylesheet || "/resources/_shared/sunday-multiplied-base.css"),
-    cssUrl: String(brand.publicStylesheet || `/resources/${slug}/church.css`),
-    logoUrl: String(brand.logoUrl || (Array.isArray(brand.assets) && brand.assets.some((asset) => asset?.kind === "primary") ? `/api/resource-assets/${slug}/logo` : "")),
+    baseCssUrl,
+    cssUrl,
+    logoUrl: String(brand.logoUrl || "").trim(),
   });
 }
 
