@@ -81,23 +81,33 @@
   width: fit-content;
 }
 
-.production-queue-heading {
+.production-queue-heading,
+.revision-queue-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
 }
 
-.production-delete {
+.production-delete,
+.revision-refresh {
   flex: 0 0 auto;
   padding: 10px 14px;
-  border: 1px solid #8c2d2d;
   background: #fff;
-  color: #8c2d2d;
   font: inherit;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+}
+
+.production-delete {
+  border: 1px solid #8c2d2d;
+  color: #8c2d2d;
+}
+
+.revision-refresh {
+  border: 1px solid rgba(23,48,40,.28);
+  color: #173028;
 }
 
 .production-delete:disabled {
@@ -131,6 +141,159 @@
   color: #7a877f;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 10px;
+}
+
+.revision-queue {
+  border-top: 5px solid #b6772a;
+}
+
+.revision-request-list {
+  display: grid;
+  gap: 18px;
+}
+
+.revision-request-card {
+  padding: 22px;
+  border: 1px solid rgba(23,48,40,.14);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(23,48,40,.06);
+}
+
+.revision-request-head,
+.revision-resource-line,
+.revision-request-card footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.revision-request-head > div,
+.revision-resource-line > div,
+.revision-detail-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.revision-request-head strong {
+  color: #173028;
+  font-size: 15px;
+}
+
+.revision-request-head span,
+.revision-resource-line span,
+.revision-request-card footer,
+.revision-detail-grid span {
+  color: #6e7c74;
+  font-size: 12px;
+}
+
+.revision-badge {
+  padding: 6px 9px;
+  background: #fff3df;
+  color: #8b5718 !important;
+  font-size: 10px !important;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.revision-resource-line {
+  align-items: center;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(23,48,40,.1);
+}
+
+.revision-resource-line small,
+.revision-detail-grid small,
+.revision-pastoral-note small {
+  color: #75827a;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.revision-resource-line h3 {
+  margin: 0;
+  color: #173028;
+  font-size: 20px;
+}
+
+.revision-resource-line a {
+  color: #2f5b47;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.revision-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 28px;
+  margin-top: 20px;
+  padding: 18px;
+  background: #f7f5ef;
+}
+
+.revision-detail-grid strong {
+  color: #273a31;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.revision-tags {
+  display: flex;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: 6px !important;
+}
+
+.revision-tags span {
+  padding: 5px 8px;
+  background: #e7eee9;
+  color: #385643;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.revision-pastoral-note {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-left: 4px solid #b6772a;
+  background: #fffaf1;
+}
+
+.revision-pastoral-note p {
+  margin: 6px 0 0;
+  color: #33453c;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.revision-request-card footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(23,48,40,.1);
+}
+
+.revision-stage-note {
+  color: #8b5718 !important;
+  font-weight: 800;
+}
+
+.revision-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 18px;
+  background: #f7f5ef;
+  color: #40554b;
+}
+
+.revision-empty span {
+  font-size: 12px;
 }
 
 .approval-pagination {
@@ -170,7 +333,11 @@
 
 @media (max-width: 900px) {
   .production-queue-heading,
-  .approval-pagination {
+  .revision-queue-heading,
+  .approval-pagination,
+  .revision-request-head,
+  .revision-resource-line,
+  .revision-request-card footer {
     align-items: stretch;
     flex-direction: column;
   }
@@ -181,5 +348,9 @@
 
   .production-job-table .approval-table-row {
     min-width: 980px;
+  }
+
+  .revision-detail-grid {
+    grid-template-columns: 1fr;
   }
 }
