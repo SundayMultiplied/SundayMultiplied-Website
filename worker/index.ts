@@ -6,6 +6,7 @@ import { handleApprovalListApi } from "./approval-list-api";
 import { handleChurchAssetApi } from "./church-asset-api";
 import { handleProductionApi } from "./production-api";
 import { handleProductionJobAdminApi } from "./production-job-admin-api";
+import { handleRevisionApi } from "./revision-api";
 
 interface Env {
   ASSETS: Fetcher;
@@ -28,19 +29,10 @@ interface Env {
   };
 }
 
-// Image security config. SVG sources with .svg extension auto-skip the
-// optimization endpoint on the client side (served directly, no proxy).
-// To route SVGs through the optimizer (with security headers), set
-// dangerouslyAllowSVG: true in next.config.js and uncomment below:
-// const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
-
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Sample Church is a legacy test church with a known public logo. Redirect
-    // the stable resource URL to the deployed static asset instead of proxying
-    // it through the Worker or R2. This keeps existing generated previews valid.
     if (url.pathname === "/api/resource-assets/sample-church/logo" && request.method === "GET") {
       return Response.redirect(new URL("/sample-church-logo.webp", request.url).toString(), 302);
     }
@@ -56,6 +48,13 @@ const worker = {
 
     const approvalListResponse = await handleApprovalListApi(request, env);
     if (approvalListResponse) return approvalListResponse;
+
+    // Structured resource-level revision plumbing gets first chance at the
+    // package GET and decision endpoints. Legacy review routes still fall
+    // through to approval-api.ts for view tracking, resource previews, and
+    // backward-compatible submissions.
+    const revisionResponse = await handleRevisionApi(request, env, ctx);
+    if (revisionResponse) return revisionResponse;
 
     const approvalResponse = await handleApprovalApi(request, env, ctx);
     if (approvalResponse) return approvalResponse;
