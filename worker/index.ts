@@ -29,6 +29,17 @@ interface Env {
   };
 }
 
+type ProductionManifest = {
+  id: string;
+  churchSlug: string;
+  churchName: string;
+  weekOf: string;
+  status: "ready_for_internal_review" | "sent_for_approval";
+  metadata: { sermonTitle: string; seriesTitle: string; scripture: string };
+  resources: Array<{ kind: string; title: string; previewUrl: string }>;
+  reviewUrl?: string;
+};
+
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -42,6 +53,68 @@ const worker = {
 
     const productionJobAdminResponse = await handleProductionJobAdminApi(request, env);
     if (productionJobAdminResponse) return productionJobAdminResponse;
+
+    // Keep the production-to-approval handoff inside this Worker. A same-origin
+    // fetch can be routed through the app shell / Access layer and return HTML,
+    // which breaks the dashboard's JSON contract.
+    const productionSendMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/send$/);
+    if (productionSendMatch && request.method === "POST") {
+      const manifestObject = await env.BUCKET.get(`production/manifests/${productionSendMatch[1]}.json`);
+      if (!manifestObject) return json({ error: "Production job not found." }, 404);
+
+      let manifest: ProductionManifest;
+      try {
+        manifest = await manifestObject.json<ProductionManifest>();
+      } catch {
+        return json({ error: "Production job manifest is invalid." }, 500);
+      }
+
+      if (manifest.status === "sent_for_approval" && manifest.reviewUrl) {
+        return json({ ok: true, reviewUrl: manifest.reviewUrl });
+      }
+
+      const headers = new Headers({ "content-type": "application/json" });
+      for (const name of ["cf-access-authenticated-user-email", "oai-authenticated-user-email", "cf-access-jwt-assertion", "authorization", "cookie"]) {
+        const value = request.headers.get(name);
+        if (value) headers.set(name, value);
+      }
+
+      const approvalRequest = new Request(new URL("/api/approvals", request.url), {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          churchName: manifest.churchName,
+          churchSlug: manifest.churchSlug,
+          title: manifest.metadata.sermonTitle || `${manifest.churchName} sermon resources`,
+          seriesTitle: manifest.metadata.seriesTitle,
+          weekOf: manifest.weekOf,
+          scripture: manifest.metadata.scripture,
+          resources: manifest.resources.map((item) => ({ kind: item.kind, title: item.title, previewUrl: item.previewUrl })),
+        }),
+      });
+
+      const approvalResponse = await handleApprovalApi(approvalRequest, env, ctx);
+      if (!approvalResponse) return json({ error: "Approval handler did not accept the generated package." }, 500);
+
+      const contentType = approvalResponse.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        const text = await approvalResponse.text();
+        console.error("production_approval_handoff_non_json", approvalResponse.status, text.slice(0, 300));
+        return json({ error: `Approval handoff returned an unexpected ${approvalResponse.status} response.` }, 502);
+      }
+
+      const data = await approvalResponse.json() as { error?: string; reviewUrl?: string };
+      if (!approvalResponse.ok) {
+        return json({ error: data.error || "Unable to send this package for approval." }, approvalResponse.status);
+      }
+
+      manifest.status = "sent_for_approval";
+      manifest.reviewUrl = data.reviewUrl;
+      await env.BUCKET.put(`production/manifests/${manifest.id}.json`, JSON.stringify(manifest, null, 2), {
+        httpMetadata: { contentType: "application/json" },
+      });
+      return json({ ok: true, reviewUrl: manifest.reviewUrl });
+    }
 
     const productionResponse = await handleProductionApi(request, env);
     if (productionResponse) return productionResponse;
@@ -73,5 +146,16 @@ const worker = {
     return handler.fetch(request, env, ctx);
   },
 };
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
 
 export default worker;
