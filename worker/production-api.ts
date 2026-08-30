@@ -1,3 +1,5 @@
+import { PRODUCTION_CHURCHES } from "./generated/church-registry";
+
 type ProductionEnv = {
   ASSETS?: Fetcher;
   BUCKET?: R2Bucket;
@@ -46,31 +48,13 @@ type ProductionManifest = {
 };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
-const SHARED_RESOURCE_CSS = "/resources/_shared/sunday-multiplied-base.css";
 
 const LEGACY_LOGO_FALLBACKS: Record<string, string> = {
   "sample-church": "/sample-church-logo.webp",
   "southside-baptist": "/resources/southside-baptist/2026-08-09/southside-baptist-logo.png",
 };
 
-const CHURCHES: ChurchConfig[] = [
-  {
-    slug: "sample-church",
-    name: "Sample Church",
-    resources: ["monday", "group", "family"],
-    baseCssUrl: SHARED_RESOURCE_CSS,
-    cssUrl: "/resources/sample-church/church.css",
-    logoUrl: "/api/resource-assets/sample-church/logo",
-  },
-  {
-    slug: "southside-baptist",
-    name: "Southside Baptist Church",
-    resources: ["monday", "group", "family"],
-    baseCssUrl: SHARED_RESOURCE_CSS,
-    cssUrl: "/resources/southside-baptist/church.css",
-    logoUrl: "/api/resource-assets/southside-baptist/logo",
-  },
-];
+const CHURCHES = PRODUCTION_CHURCHES as ChurchConfig[];
 
 export async function handleProductionApi(request: Request, env: ProductionEnv): Promise<Response | null> {
   const url = new URL(request.url);
@@ -207,7 +191,7 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     manifest.status = "sent_for_approval";
     manifest.reviewUrl = data.reviewUrl;
     await saveManifest(env.BUCKET, manifest);
-    return json({ ok: true, reviewUrl: data.reviewUrl });
+    return json({ ok: true, reviewUrl: manifest.reviewUrl });
   }
 
   return null;
