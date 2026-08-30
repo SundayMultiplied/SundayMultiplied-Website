@@ -40,7 +40,7 @@ export function RevisionQueue() {
   if (!revisions.length) return null;
 
   return (
-    <section className="approval-dashboard" aria-labelledby="revision-queue-title">
+    <section id="needs-revision" className="approval-dashboard" aria-labelledby="revision-queue-title">
       <div className="approval-dashboard-head">
         <div>
           <p className="approval-kicker">Pastoral feedback</p>
