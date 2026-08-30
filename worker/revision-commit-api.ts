@@ -1,6 +1,9 @@
 type RevisionCommitEnv = {
   DB?: D1Database;
+  BUCKET?: R2Bucket;
+  BREVO_API_KEY?: string;
   APPROVAL_ADMIN_EMAIL?: string;
+  APPROVAL_REVIEWER_EMAIL?: string;
 };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
@@ -8,16 +11,19 @@ const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 export async function handleRevisionCommitApi(request: Request, env: RevisionCommitEnv): Promise<Response | null> {
   const url = new URL(request.url);
   const isList = url.pathname === "/api/revision-requests" && request.method === "GET";
-  const match = url.pathname.match(/^\/api\/revision-requests\/([^/]+)\/commit$/);
-  if (!isList && (!match || request.method !== "POST")) return null;
+  const commitMatch = url.pathname.match(/^\/api\/revision-requests\/([^/]+)\/commit$/);
+  const sendMatch = url.pathname.match(/^\/api\/revision-requests\/([^/]+)\/send$/);
+  if (!isList && !commitMatch && !sendMatch) return null;
+  if ((commitMatch || sendMatch) && request.method !== "POST") return null;
 
   if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
   const authError = adminAuthorizationError(request, env);
   if (authError) return json({ error: authError }, 401);
 
   if (isList) return listRevisionRequests(env.DB);
+  if (sendMatch) return sendForReapproval(env, decodeURIComponent(sendMatch[1]));
 
-  const revisionId = decodeURIComponent(match![1]);
+  const revisionId = decodeURIComponent(commitMatch![1]);
   const revision = await env.DB.prepare(`
     SELECT rr.id, rr.package_id AS packageId, rr.resource_id AS resourceId,
            rr.status, r.title AS resourceTitle
@@ -33,7 +39,7 @@ export async function handleRevisionCommitApi(request: Request, env: RevisionCom
   }>();
 
   if (!revision) return json({ error: "Revision request not found." }, 404);
-  if (revision.status === "ready_for_reapproval") {
+  if (["ready_for_reapproval", "sent_for_reapproval"].includes(revision.status)) {
     return json({ ok: true, status: revision.status, resourceTitle: revision.resourceTitle });
   }
   if (revision.status !== "pending") {
@@ -96,6 +102,94 @@ export async function handleRevisionCommitApi(request: Request, env: RevisionCom
   });
 }
 
+async function sendForReapproval(env: RevisionCommitEnv, revisionId: string) {
+  if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
+  if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
+  if (!env.BREVO_API_KEY) return json({ error: "BREVO_API_KEY is not configured for final-approval notifications." }, 503);
+
+  const revision = await env.DB.prepare(`
+    SELECT rr.id, rr.package_id AS packageId, rr.resource_id AS resourceId, rr.status,
+           rr.reviewer_email AS reviewerEmail,
+           p.title AS packageTitle, p.week_of AS weekOf,
+           c.name AS churchName,
+           r.title AS resourceTitle, r.version, r.preview_url AS previewUrl
+    FROM review_revision_requests rr
+    JOIN review_packages p ON p.id = rr.package_id
+    JOIN churches c ON c.id = p.church_id
+    JOIN review_resources r ON r.id = rr.resource_id
+    WHERE rr.id = ? LIMIT 1
+  `).bind(revisionId).first<{
+    id: string;
+    packageId: string;
+    resourceId: string;
+    status: string;
+    reviewerEmail: string | null;
+    packageTitle: string;
+    weekOf: string;
+    churchName: string;
+    resourceTitle: string;
+    version: number;
+    previewUrl: string | null;
+  }>();
+
+  if (!revision) return json({ error: "Revision request not found." }, 404);
+  if (!["ready_for_reapproval", "sent_for_reapproval"].includes(revision.status)) {
+    return json({ error: "Create the revised resource before sending it for final approval." }, 409);
+  }
+
+  const reviewUrl = await reviewUrlForResource(env.BUCKET, revision.previewUrl);
+  if (!reviewUrl) {
+    return json({ error: "The original secure review link could not be recovered for this production package." }, 409);
+  }
+
+  const recipient = revision.reviewerEmail || await originalReviewerRecipient(env.DB, revision.packageId) || env.APPROVAL_REVIEWER_EMAIL || "brian@sundaymultiplied.com";
+  if (!/^\S+@\S+\.\S+$/.test(recipient)) return json({ error: "The pastoral reviewer email is unavailable or invalid." }, 409);
+
+  const subject = `Revised resource ready for final approval: ${revision.churchName} — ${revision.packageTitle}`;
+  const textContent = `A requested revision is ready for your final review.\n\nChurch: ${revision.churchName}\nWeek of: ${revision.weekOf}\nRevised resource: ${revision.resourceTitle} · Version ${revision.version}\n\nResources you previously approved remain approved. Please review the revised resource and submit your final response using the same secure review link:\n${reviewUrl}`;
+
+  let response: Response;
+  try {
+    response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": env.BREVO_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({
+        sender: { name: "Sunday Multiplied", email: "brian@sundaymultiplied.com" },
+        to: [{ email: recipient }],
+        subject,
+        textContent,
+      }),
+    });
+  } catch (error) {
+    return json({ error: `Final-approval email failed: ${error instanceof Error ? clean(error.message, 300) : "Unknown network error."}` }, 502);
+  }
+
+  if (!response.ok) {
+    const preview = clean(await response.text(), 500);
+    return json({ error: `Brevo rejected the final-approval email (${response.status})${preview ? `: ${preview}` : "."}` }, 502);
+  }
+
+  const now = new Date().toISOString();
+  await env.DB.batch([
+    env.DB.prepare(`
+      UPDATE review_revision_requests
+      SET status = 'sent_for_reapproval', updated_at = ?
+      WHERE id = ?
+    `).bind(now, revisionId),
+    env.DB.prepare(`
+      INSERT INTO review_activity (id, package_id, event_type, details, created_at)
+      VALUES (?, ?, 'revision_reapproval_sent', ?, ?)
+    `).bind(
+      crypto.randomUUID(),
+      revision.packageId,
+      JSON.stringify({ revisionRequestId: revisionId, resourceId: revision.resourceId, version: revision.version, recipient }),
+      now,
+    ),
+  ]);
+
+  return json({ ok: true, status: "sent_for_reapproval", recipient, reviewUrl });
+}
+
 async function listRevisionRequests(db: D1Database) {
   await ensureRevisionVersionSchema(db);
   const rows = await db.prepare(`
@@ -117,8 +211,8 @@ async function listRevisionRequests(db: D1Database) {
       WHERE revision_request_id = rr.id
       ORDER BY version DESC LIMIT 1
     )
-    WHERE rr.status IN ('pending', 'ready_for_reapproval')
-    ORDER BY CASE WHEN rr.status = 'pending' THEN 0 ELSE 1 END, rr.created_at DESC
+    WHERE rr.status IN ('pending', 'ready_for_reapproval', 'sent_for_reapproval')
+    ORDER BY CASE rr.status WHEN 'pending' THEN 0 WHEN 'ready_for_reapproval' THEN 1 ELSE 2 END, rr.created_at DESC
   `).all<Record<string, unknown>>();
 
   return json({
@@ -129,6 +223,34 @@ async function listRevisionRequests(db: D1Database) {
       generatedPreviewUrl: row.generatedVersion ? `/api/revision-requests/${encodeURIComponent(String(row.id))}/preview` : null,
     })),
   });
+}
+
+async function reviewUrlForResource(bucket: R2Bucket, previewUrl: string | null) {
+  const match = previewUrl?.match(/\/api\/production\/preview\/([^/]+)\//i);
+  if (!match) return "";
+  const manifestObject = await bucket.get(`production/manifests/${match[1]}.json`);
+  if (!manifestObject) return "";
+  try {
+    const manifest = await manifestObject.json<{ reviewUrl?: string }>();
+    return typeof manifest.reviewUrl === "string" ? manifest.reviewUrl : "";
+  } catch {
+    return "";
+  }
+}
+
+async function originalReviewerRecipient(db: D1Database, packageId: string) {
+  const row = await db.prepare(`
+    SELECT details FROM review_activity
+    WHERE package_id = ? AND event_type = 'review_ready_notification_sent'
+    ORDER BY created_at DESC LIMIT 1
+  `).bind(packageId).first<{ details: string | null }>();
+  if (!row?.details) return "";
+  try {
+    const details = JSON.parse(row.details) as { recipient?: unknown };
+    return typeof details.recipient === "string" ? details.recipient : "";
+  } catch {
+    return "";
+  }
 }
 
 async function ensureRevisionVersionSchema(db: D1Database) {
@@ -176,6 +298,10 @@ function accessIdentityEmail(request: Request) {
   } catch {
     return "";
   }
+}
+
+function clean(value: unknown, maxLength: number) {
+  return typeof value === "string" ? value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, maxLength) : "";
 }
 
 function json(body: unknown, status = 200) {
