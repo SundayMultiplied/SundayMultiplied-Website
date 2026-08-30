@@ -46,20 +46,12 @@ export async function ensurePackageArchiveSchema(db: D1Database) {
   ]);
 }
 
-export async function finalizeApprovedPackage(
-  env: PackageFinalizationEnv,
-  packageId: string,
-): Promise<FinalizationResult> {
-  if (!env.DB || !env.BUCKET) {
-    return { status: "skipped", message: "Archive storage is not configured." };
-  }
-
+export async function finalizeApprovedPackage(env: PackageFinalizationEnv, packageId: string): Promise<FinalizationResult> {
+  if (!env.DB || !env.BUCKET) return { status: "skipped", message: "Archive storage is not configured." };
   await ensurePackageArchiveSchema(env.DB);
 
   const existing = await env.DB.prepare(`
-    SELECT status, archive_prefix AS archivePrefix
-    FROM review_package_archives
-    WHERE package_id = ? LIMIT 1
+    SELECT status, archive_prefix AS archivePrefix FROM review_package_archives WHERE package_id = ? LIMIT 1
   `).bind(packageId).first<{ status: string; archivePrefix: string | null }>();
   if (existing?.status === "archived" && existing.archivePrefix) {
     return { status: "archived", message: "Package is already archived.", archivePrefix: existing.archivePrefix };
@@ -69,31 +61,21 @@ export async function finalizeApprovedPackage(
     SELECT p.id, p.title, p.series_title AS seriesTitle, p.week_of AS weekOf, p.scripture,
            p.reviewer_name AS reviewerName, p.reviewer_email AS reviewerEmail,
            c.name AS churchName, c.slug AS churchSlug
-    FROM review_packages p
-    JOIN churches c ON c.id = p.church_id
+    FROM review_packages p JOIN churches c ON c.id = p.church_id
     WHERE p.id = ? LIMIT 1
   `).bind(packageId).first<FinalizationPackage>();
   if (!pkg) return { status: "failed", message: "Approval package not found." };
 
   const resources = await env.DB.prepare(`
     SELECT id, kind, title, version, storage_key AS storageKey, preview_url AS previewUrl
-    FROM review_resources
-    WHERE package_id = ?
-    ORDER BY sort_order, title
+    FROM review_resources WHERE package_id = ? ORDER BY sort_order, title
   `).bind(packageId).all<FinalizationResource>();
   if (!resources.results.length) return failArchive(env.DB, packageId, "No resources were found to archive.");
 
   const year = /^\d{4}/.test(pkg.weekOf) ? pkg.weekOf.slice(0, 4) : "undated";
   const archivePrefix = `archives/${pkg.churchSlug}/${year}/${pkg.weekOf}/${pkg.id}`;
   const now = new Date().toISOString();
-  const archivedResources: Array<{
-    id: string;
-    kind: string;
-    title: string;
-    version: number;
-    storageKey: string;
-    sourceStorageKey: string;
-  }> = [];
+  const archivedResources: Array<{ id: string; kind: string; title: string; version: number; storageKey: string; sourceStorageKey: string }> = [];
   const sourceJobIds = new Set<string>();
 
   try {
@@ -102,36 +84,26 @@ export async function finalizeApprovedPackage(
       if (production?.jobId) sourceJobIds.add(production.jobId);
       const sourceStorageKey = resource.storageKey || (production ? `production/jobs/${production.jobId}/${production.kind}.html` : "");
       if (!sourceStorageKey) throw new Error(`${resource.title} does not have an archivable source file.`);
-
       const sourceObject = await env.BUCKET.get(sourceStorageKey);
       if (!sourceObject) throw new Error(`Source file for ${resource.title} is unavailable.`);
+
       const destinationKey = `${archivePrefix}/resources/${safeSegment(resource.kind)}.v${Number(resource.version || 1)}.html`;
-      const bytes = await sourceObject.arrayBuffer();
-      await env.BUCKET.put(destinationKey, bytes, {
+      await env.BUCKET.put(destinationKey, await sourceObject.arrayBuffer(), {
         httpMetadata: { contentType: sourceObject.httpMetadata?.contentType || "text/html; charset=utf-8" },
         customMetadata: {
-          packageId: pkg.id,
-          churchSlug: pkg.churchSlug,
-          weekOf: pkg.weekOf,
-          resourceId: resource.id,
-          resourceKind: resource.kind,
-          version: String(resource.version || 1),
-          finalizedAt: now,
+          packageId: pkg.id, churchSlug: pkg.churchSlug, weekOf: pkg.weekOf,
+          resourceId: resource.id, resourceKind: resource.kind,
+          version: String(resource.version || 1), finalizedAt: now,
         },
       });
-      archivedResources.push({
-        id: resource.id,
-        kind: resource.kind,
-        title: resource.title,
-        version: Number(resource.version || 1),
-        storageKey: destinationKey,
-        sourceStorageKey,
-      });
+      archivedResources.push({ id: resource.id, kind: resource.kind, title: resource.title, version: Number(resource.version || 1), storageKey: destinationKey, sourceStorageKey });
     }
 
     const sourceJobId = [...sourceJobIds][0] || null;
+    let analysisArchived = false;
     if (sourceJobId) {
       await copyOptional(env.BUCKET, `production/jobs/${sourceJobId}/transcript.txt`, `${archivePrefix}/transcript.txt`, "text/plain; charset=utf-8");
+      analysisArchived = await copyOptional(env.BUCKET, `production/jobs/${sourceJobId}/sermon-analysis.json`, `${archivePrefix}/sermon-analysis.json`, "application/json; charset=utf-8");
       await copyOptional(env.BUCKET, `production/manifests/${sourceJobId}.json`, `${archivePrefix}/source-production-manifest.json`, "application/json; charset=utf-8");
     }
 
@@ -145,6 +117,7 @@ export async function finalizeApprovedPackage(
       reviewer: { name: pkg.reviewerName, email: pkg.reviewerEmail },
       finalizedAt: now,
       sourceProductionJobIds: [...sourceJobIds],
+      canonicalSermonAnalysis: analysisArchived ? `${archivePrefix}/sermon-analysis.json` : null,
       resources: archivedResources.map(({ sourceStorageKey, ...resource }) => resource),
     };
     await env.BUCKET.put(`${archivePrefix}/package.json`, JSON.stringify(archiveManifest, null, 2), {
@@ -167,14 +140,13 @@ export async function finalizeApprovedPackage(
       env.DB.prepare(`
         INSERT INTO review_activity (id, package_id, event_type, details, created_at)
         VALUES (?, ?, 'package_archived', ?, ?)
-      `).bind(crypto.randomUUID(), pkg.id, JSON.stringify({ archivePrefix, sourceJobId, resources: archivedResources.length }), now),
+      `).bind(crypto.randomUUID(), pkg.id, JSON.stringify({ archivePrefix, sourceJobId, resources: archivedResources.length, analysisArchived }), now),
     );
     await env.DB.batch(statements);
 
-    return { status: "archived", message: `${archivedResources.length} final resources archived.`, archivePrefix };
+    return { status: "archived", message: `${archivedResources.length} final resources archived${analysisArchived ? " with canonical sermon analysis" : ""}.`, archivePrefix };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Package archive failed.";
-    return failArchive(env.DB, packageId, message, archivePrefix);
+    return failArchive(env.DB, packageId, error instanceof Error ? error.message : "Package archive failed.", archivePrefix);
   }
 }
 
@@ -182,25 +154,23 @@ async function failArchive(db: D1Database, packageId: string, message: string, a
   const now = new Date().toISOString();
   await db.batch([
     db.prepare(`
-      INSERT INTO review_package_archives
-        (package_id, status, archive_prefix, error, created_at, updated_at)
+      INSERT INTO review_package_archives (package_id, status, archive_prefix, error, created_at, updated_at)
       VALUES (?, 'failed', ?, ?, ?, ?)
-      ON CONFLICT(package_id) DO UPDATE SET
-        status = 'failed', archive_prefix = excluded.archive_prefix,
+      ON CONFLICT(package_id) DO UPDATE SET status = 'failed', archive_prefix = excluded.archive_prefix,
         error = excluded.error, updated_at = excluded.updated_at
     `).bind(packageId, archivePrefix || null, message.slice(0, 1000), now, now),
-    db.prepare(`
-      INSERT INTO review_activity (id, package_id, event_type, details, created_at)
-      VALUES (?, ?, 'package_archive_failed', ?, ?)
-    `).bind(crypto.randomUUID(), packageId, message.slice(0, 1000), now),
+    db.prepare(`INSERT INTO review_activity (id, package_id, event_type, details, created_at)
+      VALUES (?, ?, 'package_archive_failed', ?, ?)`)
+      .bind(crypto.randomUUID(), packageId, message.slice(0, 1000), now),
   ]);
   return { status: "failed", message, archivePrefix };
 }
 
 async function copyOptional(bucket: R2Bucket, sourceKey: string, destinationKey: string, contentType: string) {
   const source = await bucket.get(sourceKey);
-  if (!source) return;
+  if (!source) return false;
   await bucket.put(destinationKey, await source.arrayBuffer(), { httpMetadata: { contentType } });
+  return true;
 }
 
 function productionSource(previewUrl: string | null) {
