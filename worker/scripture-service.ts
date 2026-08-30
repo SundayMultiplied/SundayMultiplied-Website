@@ -1,7 +1,7 @@
 export type BsbPassage = {
   reference: string;
   translation: "BSB";
-  verses: Array<{ chapter: number; verse: number; text: string }>;
+  verses: Array<{ chapter: number; verse: number; text: string; paragraphBreakBefore: boolean }>;
 };
 
 const BOOK_IDS: Record<string, string> = {
@@ -33,6 +33,12 @@ type ParsedReference = {
   endVerse?: number;
 };
 
+type ChapterContentItem = {
+  type?: string;
+  number?: number;
+  content?: unknown[];
+};
+
 export async function resolveBsbPassage(reference: string): Promise<BsbPassage> {
   const parsed = parseReference(reference);
   if (!parsed) throw new Error(`Unable to resolve Scripture reference “${reference}”.`);
@@ -44,15 +50,31 @@ export async function resolveBsbPassage(reference: string): Promise<BsbPassage> 
       headers: { accept: "application/json" },
     });
     if (!response.ok) throw new Error(`BSB Scripture lookup failed for ${reference} (HTTP ${response.status}).`);
-    const data = await response.json() as {
-      chapter?: { content?: Array<{ type?: string; number?: number; content?: unknown[] }> };
-    };
-    const chapterVerses = (data.chapter?.content || []).filter((item) => item.type === "verse" && Number.isInteger(item.number));
-    for (const item of chapterVerses) {
+    const data = await response.json() as { chapter?: { content?: ChapterContentItem[] } };
+
+    let paragraphBreakPending = chapter > parsed.startChapter;
+    for (const item of data.chapter?.content || []) {
+      if (item.type === "line_break" || item.type === "heading" || item.type === "hebrew_subtitle") {
+        paragraphBreakPending = true;
+        continue;
+      }
+      if (item.type !== "verse" || !Number.isInteger(item.number)) continue;
+
       const verse = Number(item.number);
-      if (chapter === parsed.startChapter && parsed.startVerse && verse < parsed.startVerse) continue;
-      if (chapter === parsed.endChapter && parsed.endVerse && verse > parsed.endVerse) continue;
-      verses.push({ chapter, verse, text: flattenVerseContent(item.content || []) });
+      const inRange = !(
+        (chapter === parsed.startChapter && parsed.startVerse && verse < parsed.startVerse)
+        || (chapter === parsed.endChapter && parsed.endVerse && verse > parsed.endVerse)
+      );
+
+      if (inRange) {
+        verses.push({
+          chapter,
+          verse,
+          text: flattenVerseContent(item.content || []),
+          paragraphBreakBefore: verses.length > 0 && paragraphBreakPending,
+        });
+      }
+      paragraphBreakPending = false;
     }
   }
 
@@ -76,10 +98,21 @@ export function injectBsbScripture(html: string, passage: BsbPassage) {
 
 export function scriptureHtml(passage: BsbPassage) {
   const spansChapters = passage.verses.some((verse) => verse.chapter !== passage.verses[0]?.chapter);
-  const body = passage.verses.map((item) => {
+  const paragraphs: string[] = [];
+  let current = "";
+
+  for (const item of passage.verses) {
+    if (item.paragraphBreakBefore && current) {
+      paragraphs.push(current.trim());
+      current = "";
+    }
     const label = spansChapters ? `${item.chapter}:${item.verse}` : String(item.verse);
-    return `<p class="sm-scripture-verse"><sup class="sm-verse-number">${label}</sup> ${escapeHtml(item.text)}</p>`;
-  }).join("\n");
+    const verse = `<sup class="sm-verse-number">${label}</sup>${escapeHtml(item.text)}`;
+    current += `${current ? " " : ""}${verse}`;
+  }
+  if (current) paragraphs.push(current.trim());
+
+  const body = paragraphs.map((paragraph) => `<p class="sm-scripture-paragraph">${paragraph}</p>`).join("\n");
   return `<p class="sm-scripture-reference">${escapeHtml(passage.reference)} · Berean Standard Bible (BSB)</p>\n<div class="sm-scripture-text">\n${body}\n</div>\n<p class="sm-scripture-attribution">Scripture quotations are from the Berean Standard Bible (BSB), dedicated to the public domain.</p>`;
 }
 
