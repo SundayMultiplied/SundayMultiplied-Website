@@ -64,8 +64,9 @@ export async function handleRevisionApi(
     });
   }
 
-  const reviewMatch = url.pathname.match(/^\/api\/reviews\/([^/]+)$/);
+  const reviewMatch = url.pathname.match(/^\/api\/reviews\/([^/]+)(?:\/(decision))?$/);
   if (!reviewMatch || !env.DB) return null;
+  const action = reviewMatch[2] || "";
 
   const token = decodeURIComponent(reviewMatch[1]);
   const tokenHash = await sha256(token);
@@ -73,7 +74,7 @@ export async function handleRevisionApi(
   if (!reviewPackage) return json({ error: "This review link is invalid or has expired." }, 404);
   await ensureRevisionSchema(env.DB);
 
-  if (request.method === "GET") {
+  if (request.method === "GET" && !action) {
     const resources = await env.DB.prepare(`
       SELECT r.id, r.kind, r.title, r.version, r.preview_url AS previewUrl,
              COALESCE(d.decision,
@@ -99,7 +100,7 @@ export async function handleRevisionApi(
     });
   }
 
-  if (request.method !== "POST") return null;
+  if (request.method !== "POST" || action !== "decision") return null;
 
   let body: StructuredDecisionBody;
   try {
