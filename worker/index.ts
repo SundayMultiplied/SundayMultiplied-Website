@@ -7,6 +7,7 @@ import { handleChurchAssetApi } from "./church-asset-api";
 import { handleProductionApi } from "./production-api";
 import { handleProductionJobAdminApi } from "./production-job-admin-api";
 import { handleRevisionApi } from "./revision-api";
+import { handleRevisionRegenerationApi } from "./revision-regeneration-api";
 
 interface Env {
   ASSETS: Fetcher;
@@ -122,10 +123,11 @@ const worker = {
     const approvalListResponse = await handleApprovalListApi(request, env);
     if (approvalListResponse) return approvalListResponse;
 
-    // Structured resource-level revision plumbing gets first chance at the
-    // package GET and decision endpoints. Legacy review routes still fall
-    // through to approval-api.ts for view tracking, resource previews, and
-    // backward-compatible submissions.
+    // Stage 2 revision endpoints own the revision list, targeted generation,
+    // and internal previews. Stage 1 decision capture remains in revision-api.
+    const revisionRegenerationResponse = await handleRevisionRegenerationApi(request, env);
+    if (revisionRegenerationResponse) return revisionRegenerationResponse;
+
     const revisionResponse = await handleRevisionApi(request, env, ctx);
     if (revisionResponse) return revisionResponse;
 
