@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
@@ -14,6 +14,12 @@ function repositoryPath(value) {
   const normalized = String(value || "").trim().replaceAll("\\", "/");
   if (!normalized || normalized.startsWith("/") || normalized.includes("..")) return "";
   return normalized;
+}
+
+function publishedChurchCss(source) {
+  return source
+    .replace(/^\s*@import\s+url\([^\n]*sunday-multiplied-base\.css[^\n]*\);?\s*/gim, "")
+    .trimStart();
 }
 
 const entries = await readdir(churchesDir, { withFileTypes: true });
@@ -50,7 +56,8 @@ for (const entry of entries) {
   const publicStylesheetFile = path.join(publicChurchDir, "church.css");
   await mkdir(publicChurchDir, { recursive: true });
   try {
-    await copyFile(sourceStylesheet, publicStylesheetFile);
+    const sourceCss = await readFile(sourceStylesheet, "utf8");
+    await writeFile(publicStylesheetFile, publishedChurchCss(sourceCss), "utf8");
   } catch (error) {
     console.warn(`Skipping ${slug}: unable to publish stylesheet ${stylesheetPath}.`, error);
     continue;
