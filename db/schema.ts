@@ -86,3 +86,14 @@ export const reviewRevisionRequests = sqliteTable("review_revision_requests", {
   index("review_revision_requests_package_idx").on(table.packageId),
   index("review_revision_requests_status_idx").on(table.status),
 ]);
+
+export const reviewRevisionVersions = sqliteTable("review_revision_versions", {
+  id: text("id").primaryKey(),
+  revisionRequestId: text("revision_request_id").notNull().references(() => reviewRevisionRequests.id),
+  version: integer("version").notNull(),
+  storageKey: text("storage_key").notNull(),
+  status: text("status").notNull().default("ready_for_internal_review"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  index("review_revision_versions_request_idx").on(table.revisionRequestId),
+]);
