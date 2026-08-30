@@ -7,14 +7,17 @@ const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 
 export async function handleRevisionCommitApi(request: Request, env: RevisionCommitEnv): Promise<Response | null> {
   const url = new URL(request.url);
+  const isList = url.pathname === "/api/revision-requests" && request.method === "GET";
   const match = url.pathname.match(/^\/api\/revision-requests\/([^/]+)\/commit$/);
-  if (!match || request.method !== "POST") return null;
+  if (!isList && (!match || request.method !== "POST")) return null;
 
   if (!env.DB) return json({ error: "Approval database is not configured." }, 503);
   const authError = adminAuthorizationError(request, env);
   if (authError) return json({ error: authError }, 401);
 
-  const revisionId = decodeURIComponent(match[1]);
+  if (isList) return listRevisionRequests(env.DB);
+
+  const revisionId = decodeURIComponent(match![1]);
   const revision = await env.DB.prepare(`
     SELECT rr.id, rr.package_id AS packageId, rr.resource_id AS resourceId,
            rr.status, r.title AS resourceTitle
@@ -91,6 +94,65 @@ export async function handleRevisionCommitApi(request: Request, env: RevisionCom
     version: proposed.version,
     resourceTitle: revision.resourceTitle,
   });
+}
+
+async function listRevisionRequests(db: D1Database) {
+  await ensureRevisionVersionSchema(db);
+  const rows = await db.prepare(`
+    SELECT rr.id, rr.package_id AS packageId, rr.resource_id AS resourceId,
+           rr.source_version AS sourceVersion, rr.sections_json AS sectionsJson,
+           rr.action, rr.message, rr.reviewer_name AS reviewerName,
+           rr.reviewer_email AS reviewerEmail, rr.status, rr.created_at AS createdAt,
+           p.title AS packageTitle, p.week_of AS weekOf, p.scripture,
+           c.name AS churchName, r.kind AS resourceKind, r.title AS resourceTitle,
+           r.preview_url AS previewUrl,
+           rv.version AS generatedVersion, rv.storage_key AS generatedStorageKey,
+           rv.status AS generationStatus, rv.created_at AS generatedAt
+    FROM review_revision_requests rr
+    JOIN review_packages p ON p.id = rr.package_id
+    JOIN churches c ON c.id = p.church_id
+    JOIN review_resources r ON r.id = rr.resource_id
+    LEFT JOIN review_revision_versions rv ON rv.id = (
+      SELECT id FROM review_revision_versions
+      WHERE revision_request_id = rr.id
+      ORDER BY version DESC LIMIT 1
+    )
+    WHERE rr.status IN ('pending', 'ready_for_reapproval')
+    ORDER BY CASE WHEN rr.status = 'pending' THEN 0 ELSE 1 END, rr.created_at DESC
+  `).all<Record<string, unknown>>();
+
+  return json({
+    revisions: rows.results.map((row) => ({
+      ...row,
+      sections: parseSections(row.sectionsJson),
+      sectionsJson: undefined,
+      generatedPreviewUrl: row.generatedVersion ? `/api/revision-requests/${encodeURIComponent(String(row.id))}/preview` : null,
+    })),
+  });
+}
+
+async function ensureRevisionVersionSchema(db: D1Database) {
+  await db.batch([
+    db.prepare(`CREATE TABLE IF NOT EXISTS review_revision_versions (
+      id TEXT PRIMARY KEY NOT NULL,
+      revision_request_id TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      storage_key TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'ready_for_internal_review',
+      created_at TEXT NOT NULL
+    )`),
+    db.prepare("CREATE INDEX IF NOT EXISTS review_revision_versions_request_idx ON review_revision_versions(revision_request_id)"),
+  ]);
+}
+
+function parseSections(value: unknown): string[] {
+  if (typeof value !== "string") return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
 }
 
 function adminAuthorizationError(request: Request, env: RevisionCommitEnv) {
