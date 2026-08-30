@@ -54,6 +54,9 @@ body { margin: 0; color: var(--sm-color-text); background: #eee9df; font-family:
 }
 .sm-scripture-reference { color: var(--sm-color-label); font-size: 13px !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .sm-scripture-text { color: var(--sm-color-primary); font-family: var(--sm-font-heading); font-size: 19px; }
+.sm-scripture-verse { margin: 0 0 12px; color: inherit; font-family: inherit; font-size: 19px !important; line-height: 1.65 !important; }
+.sm-scripture-verse:last-child { margin-bottom: 0; }
+.sm-verse-number { margin-right: .28em; color: var(--sm-color-accent); font-family: var(--sm-font-body); font-size: .62em; font-weight: 800; vertical-align: super; }
 .sm-scripture-attribution { color: color-mix(in srgb, var(--sm-color-text) 65%, transparent); font-size: 12px !important; }
 .sm-question-group, .sm-practice-scenario, .sm-practice-task, .sm-practice-share, .sm-practice-debrief {
   margin-top: 18px; padding: 20px 24px; border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent); border-radius: var(--sm-corner-radius); background: color-mix(in srgb, var(--sm-color-background) 96%, var(--sm-color-secondary));
