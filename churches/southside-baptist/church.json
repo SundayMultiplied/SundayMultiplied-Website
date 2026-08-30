@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "church": {
+    "name": "Southside Baptist Church",
+    "slug": "southside-baptist",
+    "city": "Savannah",
+    "state": "GA",
+    "timezone": "America/New_York",
+    "website": "https://www.southsidebaptistchurch.org/"
+  },
+  "resources": ["monday", "group", "family"],
+  "schedule": {
+    "serviceDay": "sunday",
+    "deliveryDay": "Monday"
+  },
+  "approval": {
+    "reviewerConfigured": true,
+    "linkLifetimeDays": 30,
+    "draftRetentionDays": 90,
+    "dashboardMode": "shared"
+  },
+  "brand": {
+    "stylesheet": "churches/southside-baptist/styles/southside-baptist.css",
+    "publicStylesheet": "/resources/southside-baptist/church.css",
+    "sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css",
+    "logoUrl": "/api/resource-assets/southside-baptist/logo",
+    "assets": [
+      {
+        "kind": "primary",
+        "filename": "southside-baptist-logo.png",
+        "publicUrl": "/api/resource-assets/southside-baptist/logo"
+      }
+    ]
+  }
+}
