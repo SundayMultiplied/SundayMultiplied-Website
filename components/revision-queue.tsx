@@ -20,45 +20,84 @@ type RevisionRequest = {
   churchName: string;
   resourceKind: string;
   resourceTitle: string;
+  previewUrl: string | null;
 };
 
-export function RevisionQueue() {
+type Props = { standalone?: boolean };
+
+export function RevisionQueue({ standalone = false }: Props) {
   const [revisions, setRevisions] = useState<RevisionRequest[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("/api/revision-requests", { cache: "no-store" })
-      .then(async (response) => {
-        const data = await response.json() as { revisions?: RevisionRequest[]; error?: string };
-        if (!response.ok) throw new Error(data.error || "Unable to load revision requests.");
-        setRevisions(data.revisions || []);
-      })
-      .catch((failure: Error) => setError(failure.message));
-  }, []);
+  async function loadRevisions() {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/api/revision-requests", { cache: "no-store" });
+      const data = await response.json() as { revisions?: RevisionRequest[]; error?: string };
+      if (!response.ok) throw new Error(data.error || "Unable to load revision requests.");
+      setRevisions(data.revisions || []);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to load revision requests.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  if (error) return <section className="approval-dashboard"><div className="approval-admin-error"><strong>Revision queue unavailable</strong><p>{error}</p></div></section>;
-  if (!revisions.length) return null;
+  useEffect(() => { void loadRevisions(); }, []);
 
   return (
-    <section id="needs-revision" className="approval-dashboard" aria-labelledby="revision-queue-title">
-      <div className="approval-dashboard-head">
+    <main className="approval-dashboard revision-workspace">
+      <div className="approval-dashboard-head revision-workspace-head">
         <div>
           <p className="approval-kicker">Pastoral feedback</p>
-          <h2 id="revision-queue-title">Needs revision</h2>
-          <p>{revisions.length} pending resource {revisions.length === 1 ? "revision" : "revisions"}. Stage 2 will add targeted regeneration actions here.</p>
+          <h1>Revision workspace</h1>
+          <p>Review requested changes here without crowding the sermon-production queue. Stage 2 will add targeted regeneration and versioning actions to this workspace.</p>
+        </div>
+        <div className="revision-workspace-actions">
+          {standalone && <a className="approval-approve" href="/approvals">← Production dashboard</a>}
+          <button type="button" className="revision-refresh" onClick={() => void loadRevisions()} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
         </div>
       </div>
-      <div className="approval-table">
-        <div className="approval-table-row approval-table-labels"><span>Church / Sermon</span><span>Resource</span><span>Requested changes</span><span>Reviewer</span><span>Status</span></div>
-        {revisions.map((item) => <div className="approval-table-row" key={item.id}>
-          <span><strong>{item.churchName}</strong><small>{item.packageTitle}</small><small>{item.weekOf}{item.scripture ? ` · ${item.scripture}` : ""}</small></span>
-          <span><strong>{item.resourceTitle}</strong><small>{item.resourceKind} · Version {item.sourceVersion}</small></span>
-          <span className="approval-notification"><strong>{actionLabel(item.action)}</strong><small>{item.sections.map(sectionLabel).join(" · ")}</small>{item.message && <small>“{item.message}”</small>}</span>
-          <span><strong>{item.reviewerName}</strong>{item.reviewerEmail && <small>{item.reviewerEmail}</small>}</span>
-          <span className="approval-status status-revision_requested">needs revision</span>
-        </div>)}
-      </div>
-    </section>
+
+      {error && <div className="approval-admin-error"><strong>Revision queue unavailable</strong><p>{error}</p></div>}
+
+      {!error && loading && <div className="revision-empty"><strong>Loading revision requests…</strong></div>}
+
+      {!error && !loading && revisions.length === 0 && (
+        <div className="revision-empty"><strong>No pending revision requests.</strong><span>When an approver requests changes, the resource and exact pastoral direction will appear here.</span></div>
+      )}
+
+      {!error && !loading && revisions.length > 0 && (
+        <>
+          <div className="revision-summary-bar">
+            <strong>{revisions.length} pending resource {revisions.length === 1 ? "revision" : "revisions"}</strong>
+            <span>Each request remains tied to the exact resource version the pastor reviewed.</span>
+          </div>
+          <div className="revision-request-list">
+            {revisions.map((item) => <article className="revision-request-card" key={item.id}>
+              <div className="revision-request-head">
+                <div><strong>{item.churchName}</strong><span>{item.packageTitle} · {item.weekOf}</span></div>
+                <span className="revision-badge">Needs revision</span>
+              </div>
+              <div className="revision-resource-line">
+                <div><small>{item.resourceKind}</small><h3>{item.resourceTitle}</h3><span>Source version {item.sourceVersion}</span></div>
+                {item.previewUrl && <a href={item.previewUrl} target="_blank" rel="noreferrer">Open reviewed resource ↗</a>}
+              </div>
+              <div className="revision-detail-grid">
+                <div><small>Sections</small><div className="revision-tags">{item.sections.map((section) => <span key={section}>{sectionLabel(section)}</span>)}</div></div>
+                <div><small>Requested direction</small><strong>{actionLabel(item.action)}</strong></div>
+                {item.scripture && <div><small>Scripture</small><strong>{item.scripture}</strong></div>}
+                <div><small>Reviewer</small><strong>{item.reviewerName}</strong>{item.reviewerEmail && <span>{item.reviewerEmail}</span>}</div>
+              </div>
+              {item.message && <div className="revision-pastoral-note"><small>Pastoral notes</small><p>{item.message}</p></div>}
+              <footer><span>Received {formatAdminDate(item.createdAt)}</span><span className="revision-stage-note">Ready for targeted revision generation</span></footer>
+            </article>)}
+          </div>
+        </>
+      )}
+    </main>
   );
 }
 
@@ -78,4 +117,10 @@ function actionLabel(value: string) {
 
 function sectionLabel(value: string) {
   return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatAdminDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
 }
