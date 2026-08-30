@@ -54,10 +54,14 @@ export async function resolveBsbPassage(reference: string): Promise<BsbPassage> 
 
     let paragraphBreakPending = chapter > parsed.startChapter;
     for (const item of data.chapter?.content || []) {
-      if (item.type === "line_break" || item.type === "heading" || item.type === "hebrew_subtitle") {
+      // Top-level line_break markers in this source are formatting separators,
+      // not dependable prose paragraph boundaries. Preserve only stronger
+      // structure signals here; inline line breaks are handled within verses.
+      if (item.type === "heading" || item.type === "hebrew_subtitle") {
         paragraphBreakPending = true;
         continue;
       }
+      if (item.type === "line_break") continue;
       if (item.type !== "verse" || !Number.isInteger(item.number)) continue;
 
       const verse = Number(item.number);
