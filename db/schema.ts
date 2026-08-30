@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const churches = sqliteTable("churches", {
   id: text("id").primaryKey(),
@@ -54,3 +54,35 @@ export const reviewActivity = sqliteTable("review_activity", {
   details: text("details"),
   createdAt: text("created_at").notNull(),
 }, (table) => [index("review_activity_package_idx").on(table.packageId)]);
+
+export const reviewResourceDecisions = sqliteTable("review_resource_decisions", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => reviewPackages.id),
+  resourceId: text("resource_id").notNull().references(() => reviewResources.id),
+  decision: text("decision").notNull(),
+  reviewerName: text("reviewer_name").notNull(),
+  reviewerEmail: text("reviewer_email"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  index("review_resource_decisions_package_idx").on(table.packageId),
+  uniqueIndex("review_resource_decisions_package_resource_unique").on(table.packageId, table.resourceId),
+]);
+
+export const reviewRevisionRequests = sqliteTable("review_revision_requests", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => reviewPackages.id),
+  resourceId: text("resource_id").notNull().references(() => reviewResources.id),
+  sourceVersion: integer("source_version").notNull().default(1),
+  sectionsJson: text("sections_json").notNull(),
+  action: text("action").notNull(),
+  message: text("message"),
+  reviewerName: text("reviewer_name").notNull(),
+  reviewerEmail: text("reviewer_email"),
+  status: text("status").notNull().default("pending"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  index("review_revision_requests_package_idx").on(table.packageId),
+  index("review_revision_requests_status_idx").on(table.status),
+]);

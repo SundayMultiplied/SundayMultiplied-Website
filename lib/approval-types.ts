@@ -8,12 +8,15 @@ export type ReviewStatus =
   | "delivered"
   | "archived";
 
+export type ResourceReviewDecision = "pending" | "approved" | "revision_requested";
+
 export type ReviewResource = {
   id: string;
   kind: string;
   title: string;
   version: number;
   previewUrl: string | null;
+  reviewDecision: ResourceReviewDecision;
 };
 
 export type ReviewPackage = {
