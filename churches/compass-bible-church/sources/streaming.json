@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "church": "compass-bible-church",
+  "links": [
+    {
+      "kind": "facebook",
+      "url": "https://www.facebook.com/compasschurch",
+      "label": "Facebook",
+      "verifiedAt": "2026-08-30T03:01:14.297Z"
+    },
+    {
+      "kind": "instagram",
+      "url": "https://www.instagram.com/compassbiblechurch/",
+      "label": "Instagram",
+      "verifiedAt": "2026-08-30T03:01:14.297Z"
+    },
+    {
+      "kind": "youtube",
+      "url": "https://www.youtube.com/channel/UCzqIn5ENqZuTHpB2Arwdi_w?view_as=subscriber",
+      "label": "YouTube",
+      "verifiedAt": "2026-08-30T03:01:14.297Z"
+    },
+    {
+      "kind": "sermon_archive",
+      "url": "https://www.compasschurch.org/sermons/",
+      "label": "Sermons",
+      "verifiedAt": "2026-08-30T03:01:14.297Z"
+    },
+    {
+      "kind": "podcast",
+      "url": "https://www.compasschurch.org/podcasts/",
+      "label": "Podcasts",
+      "verifiedAt": "2026-08-30T03:01:14.297Z"
+    }
+  ]
+}
