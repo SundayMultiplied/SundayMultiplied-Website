@@ -58,6 +58,7 @@ export function RevisionQueue({ standalone = false }: Props) {
   const [loading, setLoading] = useState(true);
   const [generatingId, setGeneratingId] = useState("");
   const [committingId, setCommittingId] = useState("");
+  const [sendingId, setSendingId] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [sectionPreviews, setSectionPreviews] = useState<Record<string, RevisedSectionPreview[]>>({});
   const [previewErrors, setPreviewErrors] = useState<Record<string, string>>({});
@@ -98,10 +99,7 @@ export function RevisionQueue({ standalone = false }: Props) {
         const selectors = SECTION_SELECTORS[section] || [];
         const element = selectors.map((selector) => document.querySelector(selector)).find(Boolean);
         if (!element) continue;
-        previews.push({
-          section,
-          srcDoc: buildSectionPreviewDocument(stylesheetLinks, bodyClass, element.outerHTML),
-        });
+        previews.push({ section, srcDoc: buildSectionPreviewDocument(stylesheetLinks, bodyClass, element.outerHTML) });
       }
       if (!previews.length) throw new Error("The revised sections could not be located in the proposed resource.");
       setSectionPreviews((current) => ({ ...current, [item.id]: previews }));
@@ -140,12 +138,31 @@ export function RevisionQueue({ standalone = false }: Props) {
       const response = await fetch(`/api/revision-requests/${encodeURIComponent(item.id)}/commit`, { method: "POST" });
       const data = await response.json() as { error?: string; version?: number; resourceTitle?: string };
       if (!response.ok) throw new Error(data.error || "Unable to create the revised resource.");
-      setActionMessage(`${data.resourceTitle || item.resourceTitle} version ${data.version || item.generatedVersion} is now the working revised resource and is ready for the final-approval step.`);
+      setActionMessage(`${data.resourceTitle || item.resourceTitle} version ${data.version || item.generatedVersion} is now the working revised resource and is ready for final approval.`);
       await loadRevisions();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to create the revised resource.");
     } finally {
       setCommittingId("");
+    }
+  }
+
+  async function sendForFinalApproval(item: RevisionRequest) {
+    const resend = item.status === "sent_for_reapproval";
+    if (!window.confirm(`${resend ? "Resend" : "Send"} ${item.resourceTitle} version ${item.generatedVersion} to ${item.reviewerName} for final approval?`)) return;
+    setSendingId(item.id);
+    setError("");
+    setActionMessage("");
+    try {
+      const response = await fetch(`/api/revision-requests/${encodeURIComponent(item.id)}/send`, { method: "POST" });
+      const data = await response.json() as { error?: string; recipient?: string };
+      if (!response.ok) throw new Error(data.error || "Unable to send the revised resource for final approval.");
+      setActionMessage(`${item.resourceTitle} was sent to ${data.recipient || "the pastoral reviewer"} for final approval using the existing secure review link.`);
+      await loadRevisions();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to send the revised resource for final approval.");
+    } finally {
+      setSendingId("");
     }
   }
 
@@ -169,10 +186,7 @@ export function RevisionQueue({ standalone = false }: Props) {
       {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
 
       {!error && loading && <div className="revision-empty"><strong>Loading revision requests…</strong></div>}
-
-      {!error && !loading && revisions.length === 0 && (
-        <div className="revision-empty"><strong>No pending revision requests.</strong><span>When an approver requests changes, the resource and exact pastoral direction will appear here.</span></div>
-      )}
+      {!error && !loading && revisions.length === 0 && <div className="revision-empty"><strong>No active revision requests.</strong><span>When an approver requests changes, the resource and exact pastoral direction will appear here.</span></div>}
 
       {!error && !loading && revisions.length > 0 && (
         <>
@@ -184,20 +198,19 @@ export function RevisionQueue({ standalone = false }: Props) {
             {revisions.map((item) => {
               const generating = generatingId === item.id;
               const committing = committingId === item.id;
+              const sending = sendingId === item.id;
               const previews = sectionPreviews[item.id] || [];
               const loadingPreview = loadingPreviewIds.includes(item.id);
-              const committed = item.status === "ready_for_reapproval";
+              const readyForReapproval = item.status === "ready_for_reapproval";
+              const sentForReapproval = item.status === "sent_for_reapproval";
+              const committed = readyForReapproval || sentForReapproval;
               return <article className="revision-request-card" key={item.id}>
                 <div className="revision-request-head">
                   <div><strong>{item.churchName}</strong><span>{item.packageTitle} · {item.weekOf}</span></div>
-                  <span className={`revision-badge${committed ? " revision-badge--ready" : ""}`}>{committed ? "Revised resource ready" : "Needs revision"}</span>
+                  <span className={`revision-badge${committed ? " revision-badge--ready" : ""}`}>{sentForReapproval ? "Sent for final approval" : committed ? "Revised resource ready" : "Needs revision"}</span>
                 </div>
                 <div className="revision-resource-line">
-                  <div>
-                    <small>{item.resourceKind}</small>
-                    <h3>{item.resourceTitle}</h3>
-                    <span>Pastor reviewed version {item.sourceVersion}{item.generatedVersion ? ` · Proposed version ${item.generatedVersion}` : ""}</span>
-                  </div>
+                  <div><small>{item.resourceKind}</small><h3>{item.resourceTitle}</h3><span>Pastor reviewed version {item.sourceVersion}{item.generatedVersion ? ` · Revised version ${item.generatedVersion}` : ""}</span></div>
                   <div className="revision-resource-actions">
                     {item.previewUrl && <a href={item.previewUrl} target="_blank" rel="noreferrer">Open reviewed v{item.sourceVersion} ↗</a>}
                     {item.generatedPreviewUrl && <a href={item.generatedPreviewUrl} target="_blank" rel="noreferrer">Open full revised v{item.generatedVersion} ↗</a>}
@@ -212,44 +225,29 @@ export function RevisionQueue({ standalone = false }: Props) {
                 {item.message && <div className="revision-pastoral-note"><small>Pastoral notes</small><p>{item.message}</p></div>}
 
                 {item.generatedVersion && (
-                  <section className="revision-final-style-preview" aria-label={`Proposed version ${item.generatedVersion} revised sections`}>
-                    <div className="revision-final-style-head">
-                      <div><small>Revised copy</small><strong>Previewed with the resource&apos;s final styling</strong></div>
-                      <span>v{item.generatedVersion}</span>
-                    </div>
+                  <section className="revision-final-style-preview" aria-label={`Version ${item.generatedVersion} revised sections`}>
+                    <div className="revision-final-style-head"><div><small>Revised copy</small><strong>Previewed with the resource&apos;s final styling</strong></div><span>v{item.generatedVersion}</span></div>
                     {loadingPreview && <p className="revision-preview-status">Loading revised sections…</p>}
                     {previewErrors[item.id] && <p className="revision-preview-error">{previewErrors[item.id]}</p>}
-                    {!loadingPreview && !previewErrors[item.id] && previews.map((preview) => (
-                      <div className="revision-styled-section" key={preview.section}>
-                        <p className="revision-styled-section-label">{sectionLabel(preview.section)}</p>
-                        <StyledSectionPreview title={sectionLabel(preview.section)} srcDoc={preview.srcDoc} />
-                      </div>
-                    ))}
+                    {!loadingPreview && !previewErrors[item.id] && previews.map((preview) => <div className="revision-styled-section" key={preview.section}><p className="revision-styled-section-label">{sectionLabel(preview.section)}</p><StyledSectionPreview title={sectionLabel(preview.section)} srcDoc={preview.srcDoc} /></div>)}
                   </section>
                 )}
 
                 {!committed && item.generatedVersion && (
                   <div className="revision-commit-cta">
-                    <div>
-                      <strong>{replacementPrompt(item)}</strong>
-                      <span>This keeps the rest of the original resource unchanged and promotes this proposed copy into the working revised version.</span>
-                    </div>
-                    <button type="button" className="approval-approve" disabled={committing || generating} onClick={() => void commitRevision(item)}>
-                      {committing ? `Generating Revised ${item.resourceTitle}…` : `Generate Revised ${item.resourceTitle}`}
-                    </button>
+                    <div><strong>{replacementPrompt(item)}</strong><span>This keeps the rest of the original resource unchanged and promotes this proposed copy into the working revised version.</span></div>
+                    <button type="button" className="revision-primary-action" disabled={committing || generating} onClick={() => void commitRevision(item)}>{committing ? `Generating Revised ${item.resourceTitle}…` : `Generate Revised ${item.resourceTitle}`}</button>
                   </div>
                 )}
 
                 {committed ? (
                   <div className="revision-ready-next-step">
-                    <strong>Revised {item.resourceTitle} generated.</strong>
-                    <span>Version {item.generatedVersion} is now the working resource. It is ready for the final-approval notification step.</span>
+                    <div><strong>{sentForReapproval ? `${item.resourceTitle} is awaiting final pastoral approval.` : `Revised ${item.resourceTitle} generated.`}</strong><span>{sentForReapproval ? "The reviewer received the same secure approval link. Previously approved resources remain approved." : `Version ${item.generatedVersion} is now the working resource. Send it back to the pastor for final approval.`}</span></div>
+                    <button type="button" className="revision-primary-action" disabled={sending} onClick={() => void sendForFinalApproval(item)}>{sending ? "Sending…" : sentForReapproval ? "Resend Final Approval Email" : `Send Revised ${item.resourceTitle} for Final Approval`}</button>
                   </div>
                 ) : (
                   <div className="revision-generation-actions">
-                    <button type="button" className="revision-secondary-action" disabled={generating || committing} onClick={() => void generateRevision(item)}>
-                      {generating ? "Generating revision…" : item.generatedVersion ? "Regenerate proposed revision" : "Generate revision"}
-                    </button>
+                    <button type="button" className="revision-secondary-action" disabled={generating || committing} onClick={() => void generateRevision(item)}>{generating ? "Generating revision…" : item.generatedVersion ? "Regenerate proposed revision" : "Generate revision"}</button>
                     {item.generatedVersion && <span className="revision-stage-note">Proposed v{item.generatedVersion} · ready for internal review</span>}
                   </div>
                 )}
@@ -265,19 +263,7 @@ export function RevisionQueue({ standalone = false }: Props) {
 
 function StyledSectionPreview({ title, srcDoc }: { title: string; srcDoc: string }) {
   const [height, setHeight] = useState(180);
-  return (
-    <iframe
-      className="revision-styled-section-frame"
-      title={`${title} revised section preview`}
-      srcDoc={srcDoc}
-      sandbox="allow-same-origin"
-      style={{ height }}
-      onLoad={(event) => {
-        const nextHeight = event.currentTarget.contentDocument?.documentElement.scrollHeight;
-        if (nextHeight) setHeight(Math.max(120, nextHeight + 2));
-      }}
-    />
-  );
+  return <iframe className="revision-styled-section-frame" title={`${title} revised section preview`} srcDoc={srcDoc} sandbox="allow-same-origin" style={{ height }} onLoad={(event) => { const nextHeight = event.currentTarget.contentDocument?.documentElement.scrollHeight; if (nextHeight) setHeight(Math.max(120, nextHeight + 2)); }} />;
 }
 
 function buildSectionPreviewDocument(stylesheetLinks: string, bodyClass: string, sectionHtml: string) {
@@ -285,36 +271,15 @@ function buildSectionPreviewDocument(stylesheetLinks: string, bodyClass: string,
 }
 
 function replacementPrompt(item: RevisionRequest) {
-  if (item.sections.length === 1) {
-    return `Do you want to replace the ${sectionLabel(item.sections[0]).toLowerCase()} from the original version with this revised copy?`;
-  }
+  if (item.sections.length === 1) return `Do you want to replace the ${sectionLabel(item.sections[0]).toLowerCase()} from the original version with this revised copy?`;
   return "Do you want to replace the selected sections from the original version with this revised copy?";
 }
 
 function actionLabel(value: string) {
-  const labels: Record<string, string> = {
-    revise_existing: "Revise existing content",
-    new_set: "Create a completely new set",
-    new_scenario: "Create a different scenario / activity",
-    more_practical: "Make it more practical",
-    more_discussion_oriented: "Make it more discussion-oriented",
-    simplify: "Make it clearer / more accessible",
-    tone_wording: "Adjust tone or wording",
-    other: "Other request",
-  };
+  const labels: Record<string, string> = { revise_existing: "Revise existing content", new_set: "Create a completely new set", new_scenario: "Create a different scenario / activity", more_practical: "Make it more practical", more_discussion_oriented: "Make it more discussion-oriented", simplify: "Make it clearer / more accessible", tone_wording: "Adjust tone or wording", other: "Other request" };
   return labels[value] || value.replaceAll("_", " ");
 }
 
-function sectionLabel(value: string) {
-  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
-function formatAdminDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
-}
-
-function escapeHtml(value: string) {
-  return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-}
+function sectionLabel(value: string) { return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); }
+function formatAdminDate(value: string) { const date = new Date(value); if (Number.isNaN(date.getTime())) return value; return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date); }
+function escapeHtml(value: string) { return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"); }
