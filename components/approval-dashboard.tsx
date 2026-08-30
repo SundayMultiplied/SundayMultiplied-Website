@@ -52,6 +52,27 @@ type ProductionJob = {
   reviewUrl?: string;
 };
 
+type RevisionRequest = {
+  id: string;
+  packageId: string;
+  resourceId: string;
+  sourceVersion: number;
+  sections: string[];
+  action: string;
+  message: string | null;
+  reviewerName: string;
+  reviewerEmail: string | null;
+  status: "pending";
+  createdAt: string;
+  packageTitle: string;
+  weekOf: string;
+  scripture: string | null;
+  churchName: string;
+  resourceKind: string;
+  resourceTitle: string;
+  previewUrl: string | null;
+};
+
 export function ApprovalDashboard() {
   const [packages, setPackages] = useState<PackageSummary[]>([]);
   const [packagePage, setPackagePage] = useState(1);
@@ -59,6 +80,7 @@ export function ApprovalDashboard() {
   const [packagePagination, setPackagePagination] = useState<PackagePagination>({ page: 1, pageSize: 10, total: 0, totalPages: 1 });
   const [churches, setChurches] = useState<ChurchConfig[]>([]);
   const [jobs, setJobs] = useState<ProductionJob[]>([]);
+  const [revisions, setRevisions] = useState<RevisionRequest[]>([]);
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [showManualCreate, setShowManualCreate] = useState(false);
@@ -96,8 +118,15 @@ export function ApprovalDashboard() {
     setSelectedJobIds((current) => current.filter((id) => (jobsData.jobs || []).some((job) => job.id === id && job.status === "ready_for_internal_review")));
   }
 
+  async function loadRevisions() {
+    const response = await fetch("/api/revision-requests", { cache: "no-store" });
+    const data = await response.json() as { error?: string; revisions?: RevisionRequest[] };
+    if (!response.ok) throw new Error(data.error || "Unable to load revision requests.");
+    setRevisions(data.revisions || []);
+  }
+
   useEffect(() => {
-    Promise.all([loadPackages(1, 10), loadProduction()]).catch((failure: Error) => setError(failure.message));
+    Promise.all([loadPackages(1, 10), loadProduction(), loadRevisions()]).catch((failure: Error) => setError(failure.message));
   }, []);
 
   async function createSermonResources(formData: FormData) {
@@ -249,6 +278,37 @@ export function ApprovalDashboard() {
         </div>}
       </section>
 
+      <section className="approval-create revision-queue">
+        <div className="approval-create-heading revision-queue-heading">
+          <div><p className="approval-kicker">Pastoral feedback</p><h2>Needs revision</h2><p>Structured requests submitted by church approvers. These stay pending until the revision-generation stage processes them.</p></div>
+          <button type="button" className="revision-refresh" onClick={() => void loadRevisions()}>Refresh</button>
+        </div>
+        {revisions.length === 0 ? (
+          <div className="revision-empty"><strong>No pending revision requests.</strong><span>When an approver requests changes, the resource and exact pastoral direction will appear here.</span></div>
+        ) : (
+          <div className="revision-request-list">
+            {revisions.map((revision) => <article className="revision-request-card" key={revision.id}>
+              <div className="revision-request-head">
+                <div><strong>{revision.churchName}</strong><span>{revision.packageTitle} · {revision.weekOf}</span></div>
+                <span className="revision-badge">Needs revision</span>
+              </div>
+              <div className="revision-resource-line">
+                <div><small>{revision.resourceKind}</small><h3>{revision.resourceTitle}</h3><span>Source version {revision.sourceVersion}</span></div>
+                {revision.previewUrl && <a href={revision.previewUrl} target="_blank" rel="noreferrer">Open reviewed resource ↗</a>}
+              </div>
+              <div className="revision-detail-grid">
+                <div><small>Sections</small><div className="revision-tags">{revision.sections.map((section) => <span key={section}>{revisionSectionLabel(section)}</span>)}</div></div>
+                <div><small>Requested direction</small><strong>{revisionActionLabel(revision.action)}</strong></div>
+                {revision.scripture && <div><small>Scripture</small><strong>{revision.scripture}</strong></div>}
+                <div><small>Reviewer</small><strong>{revision.reviewerName}</strong>{revision.reviewerEmail && <span>{revision.reviewerEmail}</span>}</div>
+              </div>
+              {revision.message && <div className="revision-pastoral-note"><small>Pastoral notes</small><p>{revision.message}</p></div>}
+              <footer><span>Received {formatAdminDate(revision.createdAt)}</span><span className="revision-stage-note">Ready for targeted revision generation</span></footer>
+            </article>)}
+          </div>
+        )}
+      </section>
+
       <div className="approval-dashboard-head"><div><p className="approval-kicker">Church review</p><h2>Approval packages</h2><p>{packagePagination.total} total packages</p></div><button type="button" className="approval-approve" onClick={() => setShowManualCreate((value) => !value)}>{showManualCreate ? "Close manual form" : "Manual package"}</button></div>
       {showManualCreate && <form className="approval-create" action={(formData) => void createPackage(formData)}>
         <div className="approval-create-heading"><h2>Manual review package</h2><p>Fallback for resources created outside the production workflow.</p></div>
@@ -281,4 +341,28 @@ export function ApprovalDashboard() {
       </>}
     </main>
   );
+}
+
+function revisionActionLabel(action: string) {
+  const labels: Record<string, string> = {
+    revise_existing: "Revise the existing content",
+    new_set: "Create a completely new set",
+    new_scenario: "Create a different scenario / activity",
+    more_practical: "Make it more practical / application-focused",
+    more_discussion_oriented: "Make it more discussion-oriented",
+    simplify: "Make it clearer / more accessible",
+    tone_wording: "Adjust tone or wording",
+    other: "Other request",
+  };
+  return labels[action] || action.replaceAll("_", " ");
+}
+
+function revisionSectionLabel(section: string) {
+  return section.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatAdminDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date);
 }
