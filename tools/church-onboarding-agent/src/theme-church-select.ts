@@ -42,7 +42,7 @@ async function installChurchSelect() {
       const selected = churches.find((church) => church.slug === select.value);
       select.title = selected ? selected.slug : "";
     });
-    input.insertAdjacentElement("beforebegin", select);
+    label.insertBefore(select, input);
   };
 
   enhance();
