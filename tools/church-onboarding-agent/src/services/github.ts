@@ -54,6 +54,20 @@ async function readTextFile(config: GitHubConfig, path: string): Promise<string 
   } catch { return undefined; }
 }
 
+export async function listChurchThemes(config: GitHubConfig): Promise<Array<{ slug: string; name: string }>> {
+  const entries = await github<Array<{ name: string; type: string }>>(config, `/repos/${config.owner}/${config.repo}/contents/churches?ref=${encodeURIComponent(config.baseBranch)}`);
+  const churches = await Promise.all(entries.filter((entry) => entry.type === "dir").map(async (entry) => {
+    const rawManifest = await readTextFile(config, `churches/${entry.name}/church.json`);
+    if (!rawManifest) return undefined;
+    try {
+      const manifest = JSON.parse(rawManifest) as { church?: { name?: string; slug?: string } };
+      if (!manifest.church?.name) return undefined;
+      return { slug: manifest.church.slug || entry.name, name: manifest.church.name };
+    } catch { return undefined; }
+  }));
+  return churches.filter((church): church is { slug: string; name: string } => Boolean(church)).sort((a, b) => a.name.localeCompare(b.name));
+}
+
 function cssValue(css: string, property: string): string | undefined {
   const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return css.match(new RegExp(`${escaped}\\s*:\\s*([^;}{]+)`, "i"))?.[1]?.trim();

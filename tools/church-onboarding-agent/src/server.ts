@@ -1,5 +1,5 @@
 import { Agent, callable, routeAgentRequest } from "agents";
-import { createOnboardingPullRequest, createThemeUpdatePullRequest, loadChurchTheme } from "./services/github";
+import { createOnboardingPullRequest, createThemeUpdatePullRequest, listChurchThemes, loadChurchTheme } from "./services/github";
 import { buildRepositoryFiles } from "./services/repo-files";
 import { syncOnboardingCrm, type CrmUpdate } from "./services/crm";
 import { inspectChurchWebsite, validatePublicUrl } from "./services/site-inspector";
@@ -129,9 +129,19 @@ async function serveThemeAsset(request: Request, env: AppEnv, slug: string) {
   return new Response(object.body, { headers });
 }
 
+function githubConfig(env: AppEnv) {
+  if (!env.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not configured.");
+  return { owner: env.GITHUB_OWNER, repo: env.GITHUB_REPO, baseBranch: env.GITHUB_BASE_BRANCH, token: env.GITHUB_TOKEN };
+}
+
 export default {
   async fetch(request: Request, env: AppEnv) {
     const url = new URL(request.url);
+    if (url.pathname === "/theme-churches" && request.method === "GET") {
+      if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
+      try { return Response.json({ churches: await listChurchThemes(githubConfig(env)) }); }
+      catch (error) { return Response.json({ error: error instanceof Error ? error.message : "Unable to load churches." }, { status: 500 }); }
+    }
     const themeAsset = url.pathname.match(/^\/theme-assets\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
     if (themeAsset && request.method === "GET") {
       if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
