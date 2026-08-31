@@ -1,0 +1,19 @@
+/* Manual CBC Savannah refinements layered after the main church theme. */
+
+.sm-header.sm-header--with-logo {
+  background: #ffffff;
+  color: var(--sm-color-text);
+  border-bottom: 4px solid var(--sm-color-accent);
+}
+
+.sm-header.sm-header--with-logo .sm-title {
+  color: var(--sm-color-text);
+}
+
+.sm-header.sm-header--with-logo .sm-eyebrow {
+  color: var(--sm-color-accent);
+}
+
+.sm-header.sm-header--with-logo .sm-meta {
+  color: var(--sm-color-muted);
+}
