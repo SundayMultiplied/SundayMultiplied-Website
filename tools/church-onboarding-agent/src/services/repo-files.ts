@@ -64,7 +64,7 @@ body { background: ${b.backgroundColor}; color: ${b.textColor}; font-family: ${b
 .sm-header-text { flex: 1 1 auto; min-width: 0; }
 .sm-header-logo-wrap { flex: 0 0 auto; display: flex; align-items: center; order: ${logoOrder}; }
 .sm-church-logo, .sm-resource__header-logo { display: block; max-width: 190px; max-height: 72px; width: auto; height: auto; object-fit: contain; }
-.sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { color: ${b.headerStyle === "plain" ? label : b.headerTextColor}; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { color: ${b.headerStyle === "plain" ? "var(--sm-color-label)" : b.headerTextColor}; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .sm-title { color: ${headerText}; font-family: ${b.headingFont}; font-weight: ${b.headingWeight}; }
 .sm-meta { color: ${b.headerStyle === "plain" ? b.mutedColor : b.headerTextColor}; opacity: .82; }
 
