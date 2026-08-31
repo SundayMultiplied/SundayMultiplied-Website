@@ -241,6 +241,7 @@ function analysisSchema() {
     properties: { text: { type: "string" }, classification: { type: "string", enum: ["direct_statement", "faithful_synthesis"] }, confidence, evidence: evidenceArray },
     required: ["text", "classification", "confidence", "evidence"],
   };
+  const emptySupplementalSource = { type: "object", additionalProperties: false, properties: {} };
   return {
     type: "object", additionalProperties: false,
     properties: {
@@ -251,7 +252,7 @@ function analysisSchema() {
       }, required: ["sermon_id", "church_id", "church_name", "speaker", "sermon_date", "sermon_title", "series_title", "primary_passage", "metadata_evidence"] },
       source_bundle: { type: "object", additionalProperties: false, properties: {
         source_bundle_id: { type: "string" }, transcript: { type: "object", additionalProperties: false, properties: { source_id: { type: "string" }, name: { type: "string" }, sha256: nullableString, authorized_use: { type: "string" } }, required: ["source_id", "name", "sha256", "authorized_use"] },
-        church_notes: { type: "array", items: {} }, church_metadata: { type: "array", items: {} }, scripture_text: { type: "array", items: {} },
+        church_notes: { type: "array", items: emptySupplementalSource }, church_metadata: { type: "array", items: emptySupplementalSource }, scripture_text: { type: "array", items: emptySupplementalSource },
       }, required: ["source_bundle_id", "transcript", "church_notes", "church_metadata", "scripture_text"] },
       source_quality: { type: "object", additionalProperties: false, properties: { overall: confidence, transcript_complete: { type: "boolean" }, sermon_boundary_clear: { type: "boolean" }, speaker_clear: { type: "boolean" }, material_issues: stringArray, generation_disposition: { type: "string", enum: ["proceed", "proceed_with_warnings", "human_review_required", "blocked"] } }, required: ["overall", "transcript_complete", "sermon_boundary_clear", "speaker_clear", "material_issues", "generation_disposition"] },
       central_claim: claim, core_tension: claim,
