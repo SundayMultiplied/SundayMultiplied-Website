@@ -30,6 +30,10 @@ const localBindingConfig = {
           binding: r2,
           bucket_name: "site-creator-r2",
         },
+        {
+          binding: "CHURCH_ASSETS",
+          bucket_name: "sunday-multiplied-church-assets",
+        },
       ]
     : [],
 };
