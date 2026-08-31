@@ -20,10 +20,7 @@
   text-decoration: none;
 }
 
-.admin-nav-home strong {
-  font-size: 15px;
-}
-
+.admin-nav-home strong { font-size: 15px; }
 .admin-nav-home span {
   color: #8b5718;
   font-size: 10px;
@@ -71,10 +68,7 @@
   color: #fff;
 }
 
-.admin-home-hero > div {
-  max-width: 780px;
-}
-
+.admin-home-hero > div { max-width: 780px; }
 .admin-home-kicker {
   margin: 0 0 10px;
   color: #e0bd78;
@@ -106,6 +100,117 @@
   font-size: 12px;
   font-weight: 800;
   text-decoration: none;
+}
+
+.admin-health {
+  margin-top: 22px;
+  padding: 22px;
+  border: 1px solid rgba(23,48,40,.13);
+  background: #f7f5ef;
+}
+
+.admin-health-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-health-head > div > span {
+  color: #8b5718;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.admin-health-head h2 {
+  margin: 6px 0 4px;
+  color: #173028;
+  font-size: 22px;
+}
+
+.admin-health-head p {
+  margin: 0;
+  color: #64736b;
+  font-size: 13px;
+}
+
+.admin-health-head button {
+  padding: 8px 11px;
+  border: 1px solid rgba(23,48,40,.24);
+  background: #fff;
+  color: #173028;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-health-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.admin-health-card {
+  min-height: 155px;
+  padding: 16px;
+  border: 1px solid rgba(23,48,40,.12);
+  background: #fff;
+}
+
+.admin-health-card.health-operational { border-top: 4px solid #46715b; }
+.admin-health-card.health-degraded { border-top: 4px solid #b6772a; }
+.admin-health-card.health-not_configured { border-top: 4px solid #9ba49f; }
+
+.admin-health-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-health-title strong {
+  color: #173028;
+  font-size: 13px;
+}
+
+.admin-health-title span {
+  color: #64736b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.admin-health-card h3 {
+  margin: 18px 0 5px;
+  color: #29463a;
+  font-size: 14px;
+}
+
+.admin-health-card p {
+  margin: 0;
+  color: #67756e;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.admin-health-meta {
+  margin-top: 12px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-health-meta a,
+.admin-health-meta span { color: #2f5b47; text-decoration: none; }
+.admin-health > small {
+  display: block;
+  margin-top: 12px;
+  color: #7b8780;
+  font-size: 9px;
 }
 
 .admin-tool-grid {
@@ -142,24 +247,9 @@
   text-transform: uppercase;
 }
 
-.admin-tool-card h2 {
-  margin: 14px 0 8px;
-  font-size: 25px;
-}
-
-.admin-tool-card p {
-  margin: 0;
-  color: #5d6c64;
-  font-size: 14px;
-  line-height: 1.65;
-}
-
-.admin-tool-card strong {
-  margin-top: auto;
-  padding-top: 22px;
-  color: #2f5b47;
-  font-size: 12px;
-}
+.admin-tool-card h2 { margin: 14px 0 8px; font-size: 25px; }
+.admin-tool-card p { margin: 0; color: #5d6c64; font-size: 14px; line-height: 1.65; }
+.admin-tool-card strong { margin-top: auto; padding-top: 22px; color: #2f5b47; font-size: 12px; }
 
 .admin-workflow-strip {
   display: flex;
@@ -175,27 +265,22 @@
   font-weight: 700;
 }
 
-.admin-workflow-strip b {
-  color: #b6772a;
+.admin-workflow-strip b { color: #b6772a; }
+
+@media (max-width: 1000px) {
+  .admin-health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 800px) {
   .admin-nav-shell,
-  .admin-home-hero {
+  .admin-home-hero,
+  .admin-health-head {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .admin-nav-links {
-    width: 100%;
-  }
-
-  .admin-tool-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-home {
-    width: min(100% - 24px, 1180px);
-    padding-top: 24px;
-  }
+  .admin-nav-links { width: 100%; }
+  .admin-tool-grid,
+  .admin-health-grid { grid-template-columns: 1fr; }
+  .admin-home { width: min(100% - 24px, 1180px); padding-top: 24px; }
 }
