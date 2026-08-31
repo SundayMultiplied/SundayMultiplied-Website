@@ -11,6 +11,7 @@ import { handleProductionJobAdminApi } from "./production-job-admin-api";
 import { handleRevisionApi } from "./revision-api";
 import { handleRevisionCommitApi } from "./revision-commit-api";
 import { handleRevisionRegenerationApi } from "./revision-regeneration-api";
+import { handleSystemHealthApi } from "./system-health-api";
 
 interface Env {
   ASSETS: Fetcher;
@@ -25,6 +26,8 @@ interface Env {
   ONBOARDING_ORIGIN?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
+  CF_VERSION_METADATA?: { id?: string; tag?: string; timestamp?: string };
+  DEPLOYMENT_VERSION?: string;
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -52,19 +55,17 @@ const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Keep the admin hostname as an operations portal rather than allowing `/`
-    // to fall through to the public marketing homepage.
     if (url.hostname === ADMIN_HOST && url.pathname === "/" && request.method === "GET") {
       return Response.redirect(new URL("/admin", request.url).toString(), 302);
     }
 
-    // The onboarding agent is a separate Cloudflare Worker. Give the admin UI
-    // a stable same-origin launch path so its deployment URL can change without
-    // changing navigation components.
     if (url.hostname === ADMIN_HOST && url.pathname === "/onboarding" && request.method === "GET") {
       const onboardingOrigin = env.ONBOARDING_ORIGIN?.trim() || DEFAULT_ONBOARDING_ORIGIN;
       return Response.redirect(onboardingOrigin, 302);
     }
+
+    const systemHealthResponse = await handleSystemHealthApi(request, env);
+    if (systemHealthResponse) return systemHealthResponse;
 
     if (url.pathname === "/api/resource-assets/sample-church/logo" && request.method === "GET") {
       return Response.redirect(new URL("/sample-church-logo.webp", request.url).toString(), 302);
@@ -76,9 +77,6 @@ const worker = {
     const productionJobAdminResponse = await handleProductionJobAdminApi(request, env);
     if (productionJobAdminResponse) return productionJobAdminResponse;
 
-    // Keep the production-to-approval handoff inside this Worker. A same-origin
-    // fetch can be routed through the app shell / Access layer and return HTML,
-    // which breaks the dashboard's JSON contract.
     const productionSendMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/send$/);
     if (productionSendMatch && request.method === "POST") {
       const manifestObject = await env.BUCKET.get(`production/manifests/${productionSendMatch[1]}.json`);
@@ -150,8 +148,6 @@ const worker = {
     const revisionCommitResponse = await handleRevisionCommitApi(request, env);
     if (revisionCommitResponse) return revisionCommitResponse;
 
-    // Stage 2 revision endpoints own the revision list, targeted generation,
-    // and internal previews. Stage 1 decision capture remains in revision-api.
     const revisionRegenerationResponse = await handleRevisionRegenerationApi(request, env);
     if (revisionRegenerationResponse) return revisionRegenerationResponse;
 
