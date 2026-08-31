@@ -5,7 +5,7 @@ const tools = [
     href: "/approvals",
     eyebrow: "Weekly production",
     title: "Resource Production",
-    copy: "Upload a sermon transcript, generate Monday, Group, and Family resources, preview them, and send packages into pastoral review.",
+    copy: "Upload a sermon transcript, generate Monday, Group, and Family resources, preview them, and send packages into pastoral review. Approval package history remains on this operations page for now.",
     action: "Open production →",
   },
   {
@@ -14,13 +14,6 @@ const tools = [
     title: "Revision Workspace",
     copy: "Review requested changes, regenerate targeted sections, accept revised resources, and send them back for final approval.",
     action: "Open revisions →",
-  },
-  {
-    href: "/approvals#approval-packages",
-    eyebrow: "Review operations",
-    title: "Approval Packages",
-    copy: "See package status and notification history for resources already sent to church reviewers.",
-    action: "View approval packages →",
   },
   {
     href: "/onboarding",
