@@ -57,7 +57,17 @@ for (const entry of entries) {
   await mkdir(publicChurchDir, { recursive: true });
   try {
     const sourceCss = await readFile(sourceStylesheet, "utf8");
-    await writeFile(publicStylesheetFile, publishedChurchCss(sourceCss), "utf8");
+    const overridesPath = path.join(path.dirname(sourceStylesheet), "overrides.css");
+    let overridesCss = "";
+    try {
+      overridesCss = await readFile(overridesPath, "utf8");
+    } catch {
+      // Optional manual refinements are not required for every church.
+    }
+    const publishedCss = [publishedChurchCss(sourceCss), publishedChurchCss(overridesCss)]
+      .filter(Boolean)
+      .join("\n\n");
+    await writeFile(publicStylesheetFile, publishedCss, "utf8");
   } catch (error) {
     console.warn(`Skipping ${slug}: unable to publish stylesheet ${stylesheetPath}.`, error);
     continue;
