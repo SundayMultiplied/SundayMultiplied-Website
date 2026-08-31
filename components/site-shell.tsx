@@ -8,24 +8,13 @@ import { SiteFooter } from "./site-footer";
 export function SiteShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const isPastoralReview = pathname.startsWith("/review/");
-  const isAdminRoute = pathname === "/admin" || pathname === "/approvals" || pathname === "/revisions";
+  const isAdminRoute = ["/admin", "/production", "/approvals", "/revisions"].includes(pathname);
 
   if (isPastoralReview) return <>{children}</>;
 
   if (isAdminRoute) {
-    return (
-      <>
-        <AdminNav />
-        {children}
-      </>
-    );
+    return <><AdminNav />{children}</>;
   }
 
-  return (
-    <>
-      <SiteHeader />
-      {children}
-      <SiteFooter />
-    </>
-  );
+  return <><SiteHeader />{children}<SiteFooter /></>;
 }
