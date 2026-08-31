@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/admin", label: "Dashboard" },
-  { href: "/approvals", label: "Resource Production" },
+  { href: "/production", label: "Production" },
+  { href: "/approvals", label: "Approvals" },
   { href: "/revisions", label: "Revisions" },
-  { href: "/onboarding", label: "Church Onboarding" },
+  { href: "/onboarding", label: "Onboarding" },
 ];
 
 export function AdminNav() {
@@ -18,10 +19,7 @@ export function AdminNav() {
         <Link href="/admin" className="admin-nav-home"><strong>Sunday Multiplied</strong><span>Admin</span></Link>
       </div>
       <nav className="admin-nav-links" aria-label="Admin navigation">
-        {items.map((item) => {
-          const active = pathname === item.href;
-          return <Link key={item.href} href={item.href} className={active ? "is-active" : ""}>{item.label}</Link>;
-        })}
+        {items.map((item) => <Link key={item.href} href={item.href} className={pathname === item.href ? "is-active" : ""}>{item.label}</Link>)}
       </nav>
     </header>
   );
