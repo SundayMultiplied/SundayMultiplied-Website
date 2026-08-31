@@ -15,33 +15,35 @@ export type BrandProfile = {
   accentColor: string;
   backgroundColor: string;
   textColor: string;
-  mutedColor: string;
-  borderColor: string;
-  sectionBackgroundColor: string;
-  calloutBackgroundColor: string;
-  headerBackgroundColor: string;
-  headerTextColor: string;
-  scriptureBackgroundColor: string;
-  questionBackgroundColor: string;
-  prayerBackgroundColor: string;
-  prayerTextColor: string;
   headingFont: string;
   bodyFont: string;
-  headingWeight: "600" | "700" | "800";
-  headingTransform: "none" | "uppercase";
   cornerRadius: string;
-  pageWidth: string;
-  pagePadding: string;
-  sectionSpacing: string;
   buttonStyle: "square" | "soft" | "rounded";
-  headerStyle: "plain" | "filled" | "split";
-  logoPosition: "left" | "right";
-  cardStyle: "flat" | "bordered" | "soft";
   visualTone: string;
   visualNotes: string;
+  mutedColor?: string;
+  borderColor?: string;
+  sectionBackgroundColor?: string;
+  calloutBackgroundColor?: string;
+  headerBackgroundColor?: string;
+  headerTextColor?: string;
+  scriptureBackgroundColor?: string;
+  questionBackgroundColor?: string;
+  prayerBackgroundColor?: string;
+  prayerTextColor?: string;
+  headingWeight?: "600" | "700" | "800";
+  headingTransform?: "none" | "uppercase";
+  pageWidth?: string;
+  pagePadding?: string;
+  sectionSpacing?: string;
+  headerStyle?: "plain" | "filled" | "split";
+  logoPosition?: "left" | "right";
+  cardStyle?: "flat" | "bordered" | "soft";
 };
 
-export const defaultBrandProfile = (): BrandProfile => ({
+export type ResolvedBrandProfile = Required<BrandProfile>;
+
+export const defaultBrandProfile = (): ResolvedBrandProfile => ({
   primaryColor: "#153f35",
   secondaryColor: "#dfe9e1",
   accentColor: "#c69a4b",
@@ -73,7 +75,7 @@ export const defaultBrandProfile = (): BrandProfile => ({
   visualNotes: "",
 });
 
-export function normalizeBrandProfile(value?: Partial<BrandProfile> | null): BrandProfile {
+export function normalizeBrandProfile(value?: Partial<BrandProfile> | null): ResolvedBrandProfile {
   return { ...defaultBrandProfile(), ...(value || {}) };
 }
 
