@@ -114,7 +114,8 @@ export async function createThemeUpdatePullRequest(config: GitHubConfig, slug: s
   const files: RepositoryFile[] = [
     { path: `churches/${slug}/church.json`, content: `${JSON.stringify(manifest, null, 2)}\n` },
     { path: `churches/${slug}/styles/${slug}.css`, content: css },
+    { path: `churches/${slug}/styles/overrides.css`, content: "/* Managed by the Sunday Multiplied Theme Editor. Manual overrides retired. */\n" },
     { path: `public/resources/${slug}/church.css`, content: css },
   ];
-  return createFilesPullRequest(config, `theme/${slug}`, `theme(${slug}): update visual resource theme`, `Update ${churchName} resource theme`, `## Visual theme update\n\nGenerated from the Sunday Multiplied visual Theme Editor.\n\n- Updates structured brand/theme tokens in the church manifest\n- Regenerates the church resource stylesheet\n- Publishes the matching production stylesheet\n\nReview the rendered resource preview before merging.`, files);
+  return createFilesPullRequest(config, `theme/${slug}`, `theme(${slug}): update visual resource theme`, `Update ${churchName} resource theme`, `## Visual theme update\n\nGenerated from the Sunday Multiplied visual Theme Editor.\n\n- Updates structured brand/theme tokens in the church manifest\n- Regenerates the church resource stylesheet\n- Publishes the matching production stylesheet\n- Retires legacy manual overrides so the visual editor becomes the source of truth\n\nReview the rendered resource preview before merging.`, files);
 }
