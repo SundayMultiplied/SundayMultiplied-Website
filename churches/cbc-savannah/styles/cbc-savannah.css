@@ -1,67 +1,756 @@
-@import url("../../../styles/sunday-multiplied-base.css");
+@import url("sunday-multiplied-base.css");
 
-/* Generated for CBC Savannah. Keep the shared sm-* schema intact. */
+/*
+  CBC Savannah custom theme for Sunday Multiplied outputs
+  Designed to echo CBC Savannah's public site: deep navy branding,
+  clean white space, uppercase utility labels, and strong section structure.
+*/
+
 :root {
-  --sm-color-primary: #2b3e67;
-  --sm-color-secondary: #96b1b4;
-  --sm-color-accent: #96b1b4;
+  --sm-color-text: #17233f;
+  --sm-color-muted: #5e6675;
+  --sm-color-accent: #1f315f;
+  --sm-color-accent-dark: #14213f;
+  --sm-color-border: #d9dee8;
   --sm-color-background: #ffffff;
-  --sm-color-text: #000000;
-  --sm-color-label: #2b3e67;
-  --sm-font-heading: helvetica-w01-light, Arial, sans-serif;
-  --sm-font-body: proxima-n-w01-reg, Arial, sans-serif;
-  --sm-corner-radius: 0;
+  --sm-color-section-background: #f5f7fb;
+  --sm-color-callout-background: #eef2f8;
+
+  --sm-font-heading: "Montserrat", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --sm-font-body: "Open Sans", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+
+  --sm-page-width: 800px;
+  --sm-page-padding: 52px;
+  --sm-section-spacing: 30px;
+  --sm-radius: 4px;
 }
 
-.sm-resource {
+/* Page foundation */
+
+body {
+  background: #ffffff;
   color: var(--sm-color-text);
-  background: var(--sm-color-background);
   font-family: var(--sm-font-body);
+  font-size: 16px;
+  line-height: 1.65;
 }
 
-.sm-resource h1,
-.sm-resource h2,
-.sm-resource h3 {
-  color: var(--sm-color-primary);
-  font-family: var(--sm-font-heading);
+.sm-document--monday-timeline .sm-monday-print-grid {
+  display: grid;
 }
 
-.sm-resource__eyebrow,
-.sm-resource__section-label {
-  color: var(--sm-color-label);
-  font-weight: 700;
-  letter-spacing: .08em;
+.sm-document {
+  max-width: var(--sm-page-width);
+  padding: var(--sm-page-padding);
+}
+
+/* Header with logo */
+
+.sm-header {
+  margin-bottom: 38px;
+  padding-bottom: 24px;
+  border-bottom: 4px solid var(--sm-color-accent);
+}
+
+.sm-header--with-logo .sm-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.sm-header-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sm-header-logo-wrap {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.sm-church-logo {
+  display: block;
+  max-width: 190px;
+  max-height: 72px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.sm-eyebrow {
+  margin: 0 0 9px;
+  color: var(--sm-color-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
-.sm-resource__card,
-.sm-resource__scripture,
-.sm-resource__practice {
-  border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent);
-  border-radius: var(--sm-corner-radius);
-  background: color-mix(in srgb, var(--sm-color-background) 94%, var(--sm-color-secondary));
+.sm-title {
+  margin: 0;
+  color: var(--sm-color-text);
+  font-family: var(--sm-font-heading);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
-.sm-resource a,
-.sm-resource__button {
-  color: var(--sm-color-primary);
+.sm-meta {
+  margin: 11px 0 0;
+  color: var(--sm-color-muted);
+  font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.sm-resource__button {
-  border-radius: 999px;
+/* Core sections */
+
+.sm-section {
+  margin-bottom: var(--sm-section-spacing);
 }
 
-.sm-resource__header-logo {
+.sm-section h2 {
+  margin: 0 0 12px;
+  color: var(--sm-color-text);
+  font-family: var(--sm-font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sm-section h3 {
+  margin: 18px 0 9px;
+  color: var(--sm-color-accent);
+  font-family: var(--sm-font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.sm-section p {
+  margin: 0 0 13px;
+}
+
+.sm-section ul,
+.sm-section ol {
+  margin: 10px 0 0 22px;
+  padding: 0;
+}
+
+.sm-section li {
+  margin-bottom: 9px;
+}
+
+.sm-section li::marker {
+  color: var(--sm-color-accent);
+  font-weight: 800;
+}
+
+/* Emphasis blocks */
+
+.sm-section--big-idea,
+.sm-section--reflection {
+  padding: 22px 24px;
+  border-left: 6px solid var(--sm-color-accent);
+  border-radius: var(--sm-radius);
+  background: var(--sm-color-callout-background);
+}
+
+.sm-section--big-idea h2,
+.sm-section--reflection h2 {
+  color: var(--sm-color-accent-dark);
+}
+
+.sm-section--big-idea p,
+.sm-section--reflection p {
+  margin-bottom: 0;
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.sm-section--tension,
+.sm-section--summary,
+.sm-section--snapshot,
+.sm-section--key-moments,
+.sm-section--application,
+.sm-section--midweek,
+.sm-section--leader-tip,
+.sm-section--prayer,
+.sm-section--scripture,
+.sm-section--takeaways {
+  padding-bottom: 4px;
+}
+
+/* Scripture block */
+
+.sm-section--scripture {
+  padding: 24px;
+  border: 1px solid var(--sm-color-border);
+  border-radius: var(--sm-radius);
+  background: #ffffff;
+}
+
+.sm-scripture-reference {
+  margin-bottom: 14px;
+  color: var(--sm-color-accent);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sm-scripture-text {
+  padding: 18px 20px;
+  border-left: 4px solid var(--sm-color-accent);
+  background: var(--sm-color-section-background);
+}
+
+.sm-scripture-text p {
+  margin-bottom: 12px;
+}
+
+.sm-scripture-text p:last-child {
+  margin-bottom: 0;
+}
+
+.sm-scripture-attribution {
+  margin-top: 12px;
+  color: var(--sm-color-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Discussion groups */
+
+.sm-question-group {
+  margin-top: 18px;
+  padding: 20px 22px;
+  border: 1px solid var(--sm-color-border);
+  border-radius: var(--sm-radius);
+  background: var(--sm-color-section-background);
+}
+
+.sm-question-group h3 {
+  margin-top: 0;
+}
+
+.sm-question-group ol {
+  margin-top: 8px;
+}
+
+/* Prayer / closing block */
+
+.sm-section--prayer {
+  padding: 22px 24px;
+  border-radius: var(--sm-radius);
+  background: var(--sm-color-accent);
+  color: #ffffff;
+}
+
+.sm-section--prayer h2 {
+  color: #ffffff;
+}
+
+.sm-section--prayer p {
+  margin-bottom: 0;
+}
+
+/* Monday-specific polish */
+
+.sm-document--monday .sm-section--takeaways {
+  padding: 22px 24px;
+  border: 1px solid var(--sm-color-border);
+  border-radius: var(--sm-radius);
+  background: var(--sm-color-section-background);
+}
+
+.sm-document--monday .sm-section--takeaways h2 {
+  color: var(--sm-color-accent-dark);
+}
+
+/* Group-specific polish */
+
+.sm-document--group .sm-section--key-moments {
+  padding: 22px 24px;
+  border: 1px solid var(--sm-color-border);
+  border-radius: var(--sm-radius);
+  background: var(--sm-color-section-background);
+}
+
+.sm-document--group .sm-section--midweek,
+.sm-document--group .sm-section--leader-tip {
+  padding: 20px 22px;
+  border-radius: var(--sm-radius);
+  background: var(--sm-color-callout-background);
+}
+
+/* Links, if any appear in future outputs */
+
+a {
+  color: var(--sm-color-accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--sm-color-accent-dark);
+}
+
+/* Mobile */
+
+@media (max-width: 680px) {
+  .sm-document {
+    padding: 30px 22px;
+  }
+
+  .sm-header--with-logo .sm-header-content {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+    gap: 18px;
+  }
+
+  .sm-header-logo-wrap {
+    justify-content: flex-start;
+  }
+
+  .sm-church-logo {
+    max-width: 165px;
+    max-height: 62px;
+  }
+
+  .sm-title {
+    font-size: 28px;
+  }
+
+  .sm-meta {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .sm-section--big-idea,
+  .sm-section--reflection,
+  .sm-section--scripture,
+  .sm-question-group,
+  .sm-section--prayer,
+  .sm-document--monday .sm-section--takeaways,
+  .sm-document--group .sm-section--key-moments,
+  .sm-document--group .sm-section--midweek,
+  .sm-document--group .sm-section--leader-tip {
+    padding: 18px;
+  }
+}
+
+/* Print */
+
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.35in;
+  }
+
+  html,
+  body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  body {
+    font-size: 11px;
+    line-height: 1.35;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sm-document {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sm-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom-color: #000000;
+  }
+
+  .sm-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .sm-title {
+    font-size: 22px;
+    line-height: 1.1;
+  }
+
+  .sm-eyebrow {
+    font-size: 10px;
+    margin-bottom: 3px;
+  }
+
+  .sm-meta {
+    font-size: 10px;
+    margin-top: 3px;
+  }
+
+  .sm-church-logo {
+    max-width: 90px;
+    max-height: 45px;
+    object-fit: contain;
+  }
+
+  .sm-section {
+    margin-bottom: 8px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sm-section h2 {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .sm-section p {
+    margin-bottom: 5px;
+  }
+
+  .sm-section ul {
+    margin-top: 4px;
+    margin-left: 18px;
+  }
+
+  .sm-section li {
+    margin-bottom: 2px;
+  }
+
+  .sm-monday-print-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.4fr;
+    column-gap: 16px;
+    row-gap: 8px;
+    align-items: start;
+  }
+
+  .sm-section--reflection {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 8px 10px;
+  }
+
+  .sm-section--timeline {
+    grid-column: 2;
+    grid-row: 1;
+    margin-bottom: 0;
+  }
+
+  .sm-section--timeline h2,
+  .sm-section--timeline p {
+    display: block;
+  }
+
+  .sm-timeline-wrap {
+    margin: 4px 0 0;
+    padding: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sm-timeline-image {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    max-height: 3.85in;
+    margin: 0 auto;
+    object-fit: contain;
+  }
+
+  .sm-section--prayer {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 9px 12px;
+    border: 1px solid #000000;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .sm-section--prayer h2 {
+    color: #000000;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* =========================================================
+   Monday Multiplied timeline-sidebar layout fix
+   Applies only when the article has sm-document--monday-timeline.
+   The timeline sits beside the Monday content; prayer spans below.
+   ========================================================= */
+
+.sm-document--monday-timeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+  column-gap: 30px;
+  row-gap: 0;
+  align-items: start;
+}
+
+.sm-document--monday-timeline .sm-header {
+  grid-column: 1 / -1;
+}
+
+.sm-document--monday-timeline .sm-section--summary,
+.sm-document--monday-timeline .sm-section--context,
+.sm-document--monday-timeline .sm-section--takeaways {
+  grid-column: 1;
+}
+
+.sm-document--monday-timeline .sm-monday-print-grid {
+  display: contents;
+}
+
+.sm-document--monday-timeline .sm-section--reflection {
+  grid-column: 1;
+}
+
+.sm-document--monday-timeline .sm-section--timeline {
+  grid-column: 2;
+  grid-row: 2 / 6;
+  align-self: start;
+  margin-bottom: 0;
+  padding: 18px 18px 20px;
+  border: 1px solid var(--sm-color-border);
+  border-radius: var(--sm-radius);
+  background: #ffffff;
+}
+
+.sm-document--monday-timeline .sm-section--timeline h2 {
+  color: var(--sm-color-accent-dark);
+}
+
+.sm-document--monday-timeline .sm-section--timeline p {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sm-document--monday-timeline .sm-timeline-wrap {
+  margin-top: 12px;
+}
+
+.sm-document--monday-timeline .sm-timeline-image {
   display: block;
-  max-height: 4rem;
-  max-width: min(16rem, 70vw);
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--sm-color-border);
+  border-radius: var(--sm-radius);
+}
+
+.sm-document--monday-timeline .sm-section--prayer {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+
+@media (max-width: 820px) {
+  .sm-document--monday-timeline {
+    display: block;
+  }
+
+  .sm-document--monday-timeline .sm-monday-print-grid {
+    display: block;
+  }
+
+  .sm-document--monday-timeline .sm-section--timeline {
+    margin-bottom: var(--sm-section-spacing);
+  }
 }
 
 @media print {
-  .sm-resource { color: #111; background: #fff; }
-  .sm-resource__card,
-  .sm-resource__scripture,
-  .sm-resource__practice { border-color: #bbb; background: #fff; }
-  .sm-no-print { display: none !important; }
+  @page {
+    size: letter portrait;
+    margin: 0.3in;
+  }
+
+  .sm-document--monday-timeline {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+    column-gap: 14px;
+    row-gap: 0;
+    align-items: start;
+  }
+
+  .sm-document--monday-timeline .sm-header {
+    grid-column: 1 / -1;
+  }
+
+  .sm-document--monday-timeline .sm-section--summary,
+  .sm-document--monday-timeline .sm-section--context,
+  .sm-document--monday-timeline .sm-section--takeaways {
+    grid-column: 1;
+  }
+
+  .sm-document--monday-timeline .sm-monday-print-grid {
+    display: contents;
+  }
+
+  .sm-document--monday-timeline .sm-section--reflection {
+    grid-column: 1;
+    padding: 8px 10px;
+  }
+
+  .sm-document--monday-timeline .sm-section--timeline {
+    grid-column: 2;
+    grid-row: 2 / 6;
+    align-self: start;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid #d9dee8;
+    background: #ffffff;
+  }
+
+  .sm-document--monday-timeline .sm-section--timeline h2 {
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+
+  .sm-document--monday-timeline .sm-section--timeline p {
+    font-size: 9px;
+    line-height: 1.25;
+    margin-bottom: 4px;
+  }
+
+  .sm-document--monday-timeline .sm-timeline-wrap {
+    margin: 4px 0 0;
+  }
+
+  .sm-document--monday-timeline .sm-timeline-image {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    max-height: 6.7in;
+    height: auto;
+    object-fit: contain;
+    border: 1px solid #d9dee8;
+  }
+
+  .sm-document--monday-timeline .sm-section--prayer {
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    padding: 8px 10px;
+    border: 1px solid #000000;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .sm-document--monday-timeline .sm-section--prayer h2 {
+    color: #000000;
+  }
+}
+
+/* =========================================================
+   Last edit: make Reflection Question full width below the timeline/sidebar area.
+   Keeps the timeline beside the main Monday content and places both Reflection
+   and Prayer as full-width footer-style blocks.
+   ========================================================= */
+
+.sm-document--monday-timeline .sm-section--summary {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.sm-document--monday-timeline .sm-section--context {
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.sm-document--monday-timeline .sm-section--takeaways {
+  grid-column: 1;
+  grid-row: 4;
+}
+
+.sm-document--monday-timeline .sm-section--timeline {
+  grid-column: 2;
+  grid-row: 2 / 5;
+}
+
+.sm-document--monday-timeline .sm-section--reflection {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  margin-top: 2px;
+}
+
+.sm-document--monday-timeline .sm-section--prayer {
+  grid-column: 1 / -1;
+  grid-row: 6;
+}
+
+@media (max-width: 820px) {
+  .sm-document--monday-timeline .sm-section--summary,
+  .sm-document--monday-timeline .sm-section--context,
+  .sm-document--monday-timeline .sm-section--takeaways,
+  .sm-document--monday-timeline .sm-section--timeline,
+  .sm-document--monday-timeline .sm-section--reflection,
+  .sm-document--monday-timeline .sm-section--prayer {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+@media print {
+  .sm-document--monday-timeline .sm-section--summary {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .sm-document--monday-timeline .sm-section--context {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .sm-document--monday-timeline .sm-section--takeaways {
+    grid-column: 1;
+    grid-row: 4;
+  }
+
+  .sm-document--monday-timeline .sm-section--timeline {
+    grid-column: 2;
+    grid-row: 2 / 5;
+  }
+
+  .sm-document--monday-timeline .sm-section--reflection {
+    grid-column: 1 / -1;
+    grid-row: 5;
+    margin-top: 4px;
+    padding: 8px 10px;
+  }
+
+  .sm-document--monday-timeline .sm-section--reflection p {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .sm-document--monday-timeline .sm-section--prayer {
+    grid-column: 1 / -1;
+    grid-row: 6;
+    margin-top: 4px;
+  }
 }

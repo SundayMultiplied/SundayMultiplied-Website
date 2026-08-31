@@ -2,18 +2,26 @@ import { PRIMARY_LOGO_R2_KEYS } from "./generated/church-assets";
 
 type ChurchAssetEnv = {
   BUCKET?: R2Bucket;
+  CHURCH_ASSETS?: R2Bucket;
 };
 
 export async function handleChurchAssetApi(request: Request, env: ChurchAssetEnv): Promise<Response | null> {
   const url = new URL(request.url);
   const match = url.pathname.match(/^\/api\/resource-assets\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
   if (!match || request.method !== "GET") return null;
-  if (!env.BUCKET) return new Response("Logo storage is not configured.", { status: 503 });
+  if (!env.BUCKET && !env.CHURCH_ASSETS) return new Response("Logo storage is not configured.", { status: 503 });
 
   const slug = match[1];
-  const keys = [`resource-assets/${slug}/primary`, PRIMARY_LOGO_R2_KEYS[slug]].filter(Boolean) as string[];
-  for (const key of keys) {
-    const object = await env.BUCKET.get(key);
+  const originalKey = PRIMARY_LOGO_R2_KEYS[slug];
+  const candidates: Array<{ bucket?: R2Bucket; key?: string }> = [
+    { bucket: env.BUCKET, key: `resource-assets/${slug}/primary` },
+    { bucket: env.BUCKET, key: originalKey },
+    { bucket: env.CHURCH_ASSETS, key: originalKey },
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate.bucket || !candidate.key) continue;
+    const object = await candidate.bucket.get(candidate.key);
     if (!object) continue;
     const headers = new Headers();
     object.writeHttpMetadata(headers);
