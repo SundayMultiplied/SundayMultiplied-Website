@@ -120,8 +120,17 @@ function isAuthorized(request: Request): boolean {
   return Boolean(request.headers.get("cf-access-authenticated-user-email"));
 }
 
+async function findThemeLogo(env: AppEnv, slug: string) {
+  const current = await env.RESOURCE_ASSETS.get(publicAssetKey(slug, "primary"));
+  if (current) return current;
+
+  const legacy = await env.CHURCH_ASSETS.list({ prefix: `churches/${slug}/brand/primary-`, limit: 1 });
+  const legacyKey = legacy.objects[0]?.key;
+  return legacyKey ? env.CHURCH_ASSETS.get(legacyKey) : null;
+}
+
 async function serveThemeAsset(request: Request, env: AppEnv, slug: string) {
-  const object = await env.RESOURCE_ASSETS.get(publicAssetKey(slug, "primary"));
+  const object = await findThemeLogo(env, slug);
   if (!object) return new Response("Logo not found.", { status: 404 });
   const headers = new Headers(); object.writeHttpMetadata(headers);
   if (!headers.get("content-type")) headers.set("content-type", "application/octet-stream");
