@@ -1,25 +1,33 @@
 import Link from "next/link";
+import { SystemHealth } from "../../components/system-health";
 
 const tools = [
   {
-    href: "/approvals",
+    href: "/production",
     eyebrow: "Weekly production",
     title: "Resource Production",
-    copy: "Upload a sermon transcript, generate Monday, Group, and Family resources, preview them, and send packages into pastoral review. Approval package history remains on this operations page for now.",
+    copy: "Upload a sermon transcript, generate the canonical analysis and configured resources, preview them, and release them into pastoral review.",
     action: "Open production →",
   },
   {
+    href: "/approvals",
+    eyebrow: "Pastoral review",
+    title: "Approval Packages",
+    copy: "Track review packages, decisions, notification history, approvals, and revision requests without the production queue competing for space.",
+    action: "Open approvals →",
+  },
+  {
     href: "/revisions",
-    eyebrow: "Pastoral feedback",
+    eyebrow: "Requested changes",
     title: "Revision Workspace",
-    copy: "Review requested changes, regenerate targeted sections, accept revised resources, and send them back for final approval.",
+    copy: "Review pastoral feedback, regenerate targeted sections, accept revised resources, and send them back for final approval.",
     action: "Open revisions →",
   },
   {
     href: "/onboarding",
     eyebrow: "Church setup",
     title: "Church Onboarding",
-    copy: "Launch the onboarding agent to research a church, capture branding and sources, upload logos, and create its production configuration.",
+    copy: "Research a church, capture branding and sources, upload logos, and create the configuration that powers weekly production.",
     action: "Open onboarding →",
   },
 ];
@@ -35,6 +43,8 @@ export default function AdminHome() {
         </div>
         <Link className="admin-public-link" href="https://www.sundaymultiplied.com">View public site ↗</Link>
       </section>
+
+      <SystemHealth />
 
       <section className="admin-tool-grid" aria-label="Admin tools">
         {tools.map((tool) => (
