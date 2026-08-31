@@ -57,6 +57,10 @@ export default function AdminHome() {
         ))}
       </section>
 
+      <section className="admin-workflow-strip" aria-label="Theme management shortcut">
+        <span>Already onboarded?</span><b>→</b><Link href="/theme-editor"><strong>Edit a church resource theme →</strong></Link>
+      </section>
+
       <section className="admin-workflow-strip">
         <span>Onboard church</span><b>→</b><span>Produce resources</span><b>→</b><span>Pastoral review</span><b>→</b><span>Revise if needed</span><b>→</b><span>Approve + archive</span>
       </section>
