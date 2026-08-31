@@ -7,7 +7,6 @@ const items = [
   { href: "/admin", label: "Dashboard" },
   { href: "/approvals", label: "Resource Production" },
   { href: "/revisions", label: "Revisions" },
-  { href: "/approvals#approval-packages", label: "Approval Packages" },
   { href: "/onboarding", label: "Church Onboarding" },
 ];
 
@@ -20,8 +19,7 @@ export function AdminNav() {
       </div>
       <nav className="admin-nav-links" aria-label="Admin navigation">
         {items.map((item) => {
-          const pathOnly = item.href.split("#")[0];
-          const active = pathname === pathOnly && !item.href.includes("#");
+          const active = pathname === item.href;
           return <Link key={item.href} href={item.href} className={active ? "is-active" : ""}>{item.label}</Link>;
         })}
       </nav>
