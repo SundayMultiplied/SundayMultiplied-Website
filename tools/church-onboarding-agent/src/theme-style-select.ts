@@ -54,11 +54,11 @@ function setNativeValue(element: HTMLInputElement | HTMLSelectElement, value: st
 }
 
 function findControl(labelText: string): HTMLInputElement | HTMLSelectElement | undefined {
-  const labels = Array.from(document.querySelectorAll<HTMLLabelElement>(".theme-controls label"));
+  const labels = Array.from(document.querySelectorAll(".theme-controls label")) as HTMLLabelElement[];
   const label = labels.find((candidate) => candidate.querySelector(":scope > span")?.textContent?.trim() === labelText);
   if (!label) return undefined;
-  if (labelText === "Heading font" || labelText === "Body font") return label.querySelector<HTMLInputElement>("input") || undefined;
-  return label.querySelector<HTMLSelectElement>("select") || label.querySelector<HTMLInputElement>("input") || undefined;
+  if (labelText === "Heading font" || labelText === "Body font") return (label.querySelector("input") as HTMLInputElement | null) || undefined;
+  return (label.querySelector("select") as HTMLSelectElement | null) || (label.querySelector("input") as HTMLInputElement | null) || undefined;
 }
 
 function applyPreset(theme: StyleTheme) {
@@ -82,7 +82,7 @@ header{border-top:7px solid currentColor!important;border-bottom-width:2px!impor
 }
 
 function installPreviewTreatment(theme: StyleTheme) {
-  const iframe = document.querySelector<HTMLIFrameElement>("iframe.resource-canvas");
+  const iframe = document.querySelector("iframe.resource-canvas") as HTMLIFrameElement | null;
   if (!iframe) return;
   const apply = () => {
     const doc = iframe.contentDocument;
@@ -109,15 +109,15 @@ function inferTheme(): StyleTheme {
 }
 
 function installStyleSelector() {
-  const controls = document.querySelector<HTMLElement>(".theme-controls");
+  const controls = document.querySelector(".theme-controls") as HTMLElement | null;
   if (!controls || controls.querySelector("[data-style-theme-control]")) return;
   const group = document.createElement("section");
   group.className = "control-group";
   group.dataset.styleThemeControl = "true";
   group.innerHTML = `<h3>Style theme</h3><div class="control-grid"><label><span>Resource style</span><select aria-label="Resource style">${Object.entries(presets).map(([value, preset]) => `<option value="${value}">${preset.label}</option>`).join("")}</select><small data-style-description style="display:block;margin-top:8px;line-height:1.35;color:#68736e"></small></label></div>`;
   controls.insertBefore(group, controls.firstChild);
-  const select = group.querySelector<HTMLSelectElement>("select")!;
-  const description = group.querySelector<HTMLElement>("[data-style-description]")!;
+  const select = group.querySelector("select") as HTMLSelectElement;
+  const description = group.querySelector("[data-style-description]") as HTMLElement;
   const sync = (theme: StyleTheme, apply = false) => {
     select.value = theme;
     description.textContent = presets[theme].description;
