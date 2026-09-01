@@ -8,6 +8,7 @@ export type ChurchLink = { kind: LinkKind; url: string; label: string; verifiedA
 export type BrandAsset = { kind: "primary" | "reverse" | "mark" | "favicon"; filename: string; r2Key: string; contentType: string; uploadedAt: string };
 export type Reviewer = { name: string; email: string; role: string };
 export type ChurchBasics = { name: string; slug: string; city: string; state: string; timezone: string; website: string };
+export type StyleTheme = "contemporary" | "traditional" | "modern" | "editorial";
 
 export type BrandProfile = {
   primaryColor: string;
@@ -21,6 +22,7 @@ export type BrandProfile = {
   buttonStyle: "square" | "soft" | "rounded";
   visualTone: string;
   visualNotes: string;
+  styleTheme?: StyleTheme;
   mutedColor?: string;
   borderColor?: string;
   sectionBackgroundColor?: string;
@@ -71,6 +73,7 @@ export const defaultBrandProfile = (): ResolvedBrandProfile => ({
   headerStyle: "plain",
   logoPosition: "right",
   cardStyle: "soft",
+  styleTheme: "contemporary",
   visualTone: "",
   visualNotes: "",
 });
