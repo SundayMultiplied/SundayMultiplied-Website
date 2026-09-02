@@ -26,11 +26,15 @@ export type BrandProfile = {
   mutedColor?: string;
   borderColor?: string;
   sectionBackgroundColor?: string;
+  sectionTextColor?: string;
   calloutBackgroundColor?: string;
+  calloutTextColor?: string;
   headerBackgroundColor?: string;
   headerTextColor?: string;
   scriptureBackgroundColor?: string;
+  scriptureTextColor?: string;
   questionBackgroundColor?: string;
+  questionTextColor?: string;
   prayerBackgroundColor?: string;
   prayerTextColor?: string;
   headingWeight?: "600" | "700" | "800";
@@ -40,6 +44,7 @@ export type BrandProfile = {
   sectionSpacing?: string;
   headerStyle?: "plain" | "filled" | "split";
   logoPosition?: "left" | "right";
+  logoSize?: "small" | "medium" | "large";
   cardStyle?: "flat" | "bordered" | "soft";
 };
 
@@ -54,11 +59,15 @@ export const defaultBrandProfile = (): ResolvedBrandProfile => ({
   mutedColor: "#68736e",
   borderColor: "#d9dfdc",
   sectionBackgroundColor: "#f5f7f5",
+  sectionTextColor: "#14211d",
   calloutBackgroundColor: "#eef3ef",
+  calloutTextColor: "#14211d",
   headerBackgroundColor: "#ffffff",
   headerTextColor: "#14211d",
   scriptureBackgroundColor: "#f5f7f5",
+  scriptureTextColor: "#14211d",
   questionBackgroundColor: "#f5f7f5",
+  questionTextColor: "#14211d",
   prayerBackgroundColor: "#153f35",
   prayerTextColor: "#ffffff",
   headingFont: "Georgia, serif",
@@ -72,6 +81,7 @@ export const defaultBrandProfile = (): ResolvedBrandProfile => ({
   buttonStyle: "soft",
   headerStyle: "plain",
   logoPosition: "right",
+  logoSize: "medium",
   cardStyle: "soft",
   styleTheme: "contemporary",
   visualTone: "",
