@@ -46,7 +46,6 @@ function decodeBase64(value: string): string {
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
   return new TextDecoder().decode(bytes);
 }
-
 async function readTextFile(config: GitHubConfig, path: string): Promise<string | undefined> {
   try {
     const file = await github<{ content: string }>(config, `/repos/${config.owner}/${config.repo}/contents/${path}?ref=${encodeURIComponent(config.baseBranch)}`);
@@ -76,6 +75,7 @@ function blockValue(css: string, selectorPattern: string, property: string): str
   const block = css.match(new RegExp(`${selectorPattern}\\s*\\{([^}]*)\\}`, "i"))?.[1] || "";
   return cssValue(block, property);
 }
+function hexOnly(value?: string) { return value && /^#[0-9a-f]{6}$/i.test(value) ? value : undefined; }
 function hydrateBrandFromCss(profile: BrandProfile | undefined, css: string): BrandProfile {
   const current = normalizeBrandProfile(profile);
   const rootMap: Array<[keyof BrandProfile, string[]]> = [
@@ -91,16 +91,24 @@ function hydrateBrandFromCss(profile: BrandProfile | undefined, css: string): Br
     const value = properties.map((property) => cssValue(css, property)).find(Boolean);
     if (value) next[key] = value;
   }
-  const headerBackground = blockValue(css, "\\.sm-header(?:\\.sm-header--with-logo|\\s*,[^{}]*)?", "background");
-  const prayerBackground = blockValue(css, "\\.sm-section--prayer", "background");
-  const prayerText = blockValue(css, "\\.sm-section--prayer", "color");
-  const scriptureBackground = blockValue(css, "\\.sm-scripture-text", "background");
-  const questionBackground = blockValue(css, "\\.sm-question-group", "background");
-  if (headerBackground && /^#[0-9a-f]{6}$/i.test(headerBackground)) next.headerBackgroundColor = headerBackground;
-  if (prayerBackground && /^#[0-9a-f]{6}$/i.test(prayerBackground)) next.prayerBackgroundColor = prayerBackground;
-  if (prayerText && /^#[0-9a-f]{6}$/i.test(prayerText)) next.prayerTextColor = prayerText;
-  if (scriptureBackground && /^#[0-9a-f]{6}$/i.test(scriptureBackground)) next.scriptureBackgroundColor = scriptureBackground;
-  if (questionBackground && /^#[0-9a-f]{6}$/i.test(questionBackground)) next.questionBackgroundColor = questionBackground;
+  const headerBackground = hexOnly(blockValue(css, "\\.sm-header(?:\\.sm-header--with-logo|\\s*,[^{}]*)?", "background"));
+  const prayerBackground = hexOnly(blockValue(css, "\\.sm-section--prayer", "background"));
+  const prayerText = hexOnly(blockValue(css, "\\.sm-section--prayer", "color"));
+  const scriptureBackground = hexOnly(blockValue(css, "\\.sm-scripture-text", "background"));
+  const scriptureText = hexOnly(blockValue(css, "\\.sm-scripture-text", "color"));
+  const questionBackground = hexOnly(blockValue(css, "\\.sm-question-group", "background"));
+  const questionText = hexOnly(blockValue(css, "\\.sm-question-group", "color"));
+  const calloutText = hexOnly(blockValue(css, "\\.sm-section--big-idea", "color"));
+  const sectionText = hexOnly(blockValue(css, "\\.sm-resource__card", "color"));
+  if (headerBackground) next.headerBackgroundColor = headerBackground;
+  if (prayerBackground) next.prayerBackgroundColor = prayerBackground;
+  if (prayerText) next.prayerTextColor = prayerText;
+  if (scriptureBackground) next.scriptureBackgroundColor = scriptureBackground;
+  if (scriptureText) next.scriptureTextColor = scriptureText;
+  if (questionBackground) next.questionBackgroundColor = questionBackground;
+  if (questionText) next.questionTextColor = questionText;
+  if (calloutText) next.calloutTextColor = calloutText;
+  if (sectionText) next.sectionTextColor = sectionText;
   return normalizeBrandProfile(next as BrandProfile);
 }
 
@@ -108,10 +116,14 @@ export async function loadChurchTheme(config: GitHubConfig, slug: string): Promi
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error("Enter a valid church slug.");
   const rawManifest = await readTextFile(config, `churches/${slug}/church.json`);
   if (!rawManifest) throw new Error("That church configuration could not be found.");
-  const manifest = JSON.parse(rawManifest) as { church?: { name?: string; slug?: string }; brand?: BrandProfile & { logoUrl?: string; stylesheet?: string } };
+  const manifest = JSON.parse(rawManifest) as { church?: { name?: string; slug?: string }; brand?: BrandProfile & { logoUrl?: string; stylesheet?: string; publicStylesheet?: string } };
   if (!manifest.church?.name) throw new Error("That church manifest does not contain a church name.");
   const stylesheet = manifest.brand?.stylesheet || `churches/${slug}/styles/${slug}.css`;
-  const mainCss = await readTextFile(config, stylesheet) || "";
+  let mainCss = await readTextFile(config, stylesheet) || "";
+  if (!mainCss && manifest.brand?.publicStylesheet) {
+    const publicPath = `public/${manifest.brand.publicStylesheet.replace(/^\//, "")}`;
+    mainCss = await readTextFile(config, publicPath) || "";
+  }
   const overrideCss = await readTextFile(config, `churches/${slug}/styles/overrides.css`) || "";
   const brand = hydrateBrandFromCss(manifest.brand, `${mainCss}\n${overrideCss}`);
   return { slug, churchName: manifest.church.name, brand, logoUrl: manifest.brand?.logoUrl || `/api/resource-assets/${slug}/logo` };
