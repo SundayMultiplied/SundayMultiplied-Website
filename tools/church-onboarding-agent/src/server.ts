@@ -17,6 +17,19 @@ const now = () => new Date().toISOString();
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const publicAssetKey = (slug: string, kind: string) => `resource-assets/${slug}/${kind}`;
 
+function validateThemeColors(brand: BrandProfile) {
+  const resolved = normalizeBrandProfile(brand); const color = /^#[0-9a-f]{6}$/i;
+  const colors = [
+    resolved.primaryColor, resolved.secondaryColor, resolved.accentColor, resolved.backgroundColor, resolved.textColor,
+    resolved.mutedColor, resolved.borderColor, resolved.sectionBackgroundColor, resolved.sectionTextColor,
+    resolved.calloutBackgroundColor, resolved.calloutTextColor, resolved.headerBackgroundColor, resolved.headerTextColor,
+    resolved.scriptureBackgroundColor, resolved.scriptureTextColor, resolved.questionBackgroundColor, resolved.questionTextColor,
+    resolved.prayerBackgroundColor, resolved.prayerTextColor,
+  ];
+  if (colors.some((value) => !color.test(value))) throw new Error("Theme colors must use six-digit hex values.");
+  return resolved;
+}
+
 export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
   initialState = emptyState();
 
@@ -65,21 +78,14 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
   }
   @callable() saveLinks(links: ChurchLink[]) { for (const link of links) validatePublicUrl(link.url); this.save({ links, checklist: { ...this.state.checklist, sources: links.length > 0 } }); }
   @callable() async saveBrand(brand: BrandProfile) {
-    const resolved = normalizeBrandProfile(brand); const color = /^#[0-9a-f]{6}$/i;
-    const colors = [resolved.primaryColor, resolved.secondaryColor, resolved.accentColor, resolved.backgroundColor, resolved.textColor, resolved.mutedColor, resolved.borderColor, resolved.sectionBackgroundColor, resolved.calloutBackgroundColor, resolved.headerBackgroundColor, resolved.headerTextColor, resolved.scriptureBackgroundColor, resolved.questionBackgroundColor, resolved.prayerBackgroundColor, resolved.prayerTextColor];
-    if (colors.some((value) => !color.test(value))) throw new Error("Theme colors must use six-digit hex values.");
+    const resolved = validateThemeColors(brand);
     this.save({ brand: resolved, phase: "style_ready", checklist: { ...this.state.checklist, brand: true } });
     return this.syncCrm({ stage: "Approval Setup", brandProfile: "Approved" });
   }
   @callable() async loadExistingTheme(slug: string) { return loadChurchTheme(this.githubConfig(), slug); }
   @callable() async createThemePullRequest(slug: string, brand: BrandProfile) {
     if (!slugPattern.test(slug)) throw new Error("Enter a valid church slug.");
-    await this.validateThemeOnly(brand); return createThemeUpdatePullRequest(this.githubConfig(), slug, normalizeBrandProfile(brand));
-  }
-  private async validateThemeOnly(brand: BrandProfile) {
-    const resolved = normalizeBrandProfile(brand); const color = /^#[0-9a-f]{6}$/i;
-    const colors = [resolved.primaryColor, resolved.secondaryColor, resolved.accentColor, resolved.backgroundColor, resolved.textColor, resolved.mutedColor, resolved.borderColor, resolved.sectionBackgroundColor, resolved.calloutBackgroundColor, resolved.headerBackgroundColor, resolved.headerTextColor, resolved.scriptureBackgroundColor, resolved.questionBackgroundColor, resolved.prayerBackgroundColor, resolved.prayerTextColor];
-    if (colors.some((value) => !color.test(value))) throw new Error("Theme colors must use six-digit hex values.");
+    validateThemeColors(brand); return createThemeUpdatePullRequest(this.githubConfig(), slug, normalizeBrandProfile(brand));
   }
   @callable() async saveApproval(reviewers: Reviewer[], resources: ResourceType[], deliveryDay: string) {
     if (!reviewers.length || reviewers.some((reviewer) => !reviewer.email.includes("@"))) throw new Error("At least one valid reviewer is required.");
@@ -123,12 +129,10 @@ function isAuthorized(request: Request): boolean {
 async function findThemeLogo(env: AppEnv, slug: string) {
   const current = await env.RESOURCE_ASSETS.get(publicAssetKey(slug, "primary"));
   if (current) return current;
-
   const legacy = await env.CHURCH_ASSETS.list({ prefix: `churches/${slug}/brand/primary-`, limit: 1 });
   const legacyKey = legacy.objects[0]?.key;
   return legacyKey ? env.CHURCH_ASSETS.get(legacyKey) : null;
 }
-
 async function serveThemeAsset(request: Request, env: AppEnv, slug: string) {
   const object = await findThemeLogo(env, slug);
   if (!object) return new Response("Logo not found.", { status: 404 });
@@ -137,7 +141,6 @@ async function serveThemeAsset(request: Request, env: AppEnv, slug: string) {
   headers.set("cache-control", "private, max-age=60"); headers.set("x-content-type-options", "nosniff");
   return new Response(object.body, { headers });
 }
-
 function githubConfig(env: AppEnv) {
   if (!env.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not configured.");
   return { owner: env.GITHUB_OWNER, repo: env.GITHUB_REPO, baseBranch: env.GITHUB_BASE_BRANCH, token: env.GITHUB_TOKEN };
