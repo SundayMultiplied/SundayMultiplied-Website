@@ -1,0 +1,89 @@
+{
+  "analyzedAt": "2026-09-02T12:43:28.784Z",
+  "pagesAnalyzed": [
+    "https://www.oursbc.org/",
+    "https://www.oursbc.org/adults",
+    "https://www.oursbc.org/sermons",
+    "https://www.oursbc.org/events",
+    "https://www.oursbc.org/our-beliefs"
+  ],
+  "stylesheetsAnalyzed": [],
+  "colorCandidates": [
+    {
+      "value": "#112233",
+      "occurrences": 5,
+      "sources": [
+        "https://www.oursbc.org/"
+      ]
+    },
+    {
+      "value": "#112255",
+      "occurrences": 5,
+      "sources": [
+        "https://www.oursbc.org/"
+      ]
+    }
+  ],
+  "fontCandidates": [
+    {
+      "value": "'Nunito Sans'",
+      "occurrences": 100,
+      "sources": [
+        "https://www.oursbc.org/",
+        "https://www.oursbc.org/adults",
+        "https://www.oursbc.org/sermons",
+        "https://www.oursbc.org/events",
+        "https://www.oursbc.org/our-beliefs"
+      ]
+    },
+    {
+      "value": "'distinct-style-sans-bold-7y22wx'",
+      "occurrences": 5,
+      "sources": [
+        "https://www.oursbc.org/",
+        "https://www.oursbc.org/adults",
+        "https://www.oursbc.org/sermons",
+        "https://www.oursbc.org/events",
+        "https://www.oursbc.org/our-beliefs"
+      ]
+    }
+  ],
+  "radiusCandidates": [],
+  "suggestedProfile": {
+    "primaryColor": "#112233",
+    "secondaryColor": "#112255",
+    "accentColor": "#112255",
+    "backgroundColor": "#ffffff",
+    "textColor": "#112233",
+    "headingFont": "\"Nunito Sans\", Arial, sans-serif",
+    "bodyFont": "distinct-style-sans-bold-7y22wx, Arial, sans-serif",
+    "cornerRadius": "8px",
+    "buttonStyle": "soft",
+    "visualTone": "grounded, restrained, contemporary",
+    "visualNotes": "Automated review suggests a grounded, restrained, contemporary visual system. Confirm recommendations against current logo files and recent social graphics."
+  },
+  "contrastChecks": [
+    {
+      "label": "Body text",
+      "foreground": "#112233",
+      "background": "#ffffff",
+      "ratio": 16.15,
+      "level": "pass"
+    },
+    {
+      "label": "Primary text",
+      "foreground": "#112233",
+      "background": "#ffffff",
+      "ratio": 16.15,
+      "level": "pass"
+    },
+    {
+      "label": "Text on primary",
+      "foreground": "#ffffff",
+      "background": "#112233",
+      "ratio": 16.15,
+      "level": "pass"
+    }
+  ],
+  "warnings": []
+}

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "church": "southside-baptist-church",
+  "links": [
+    {
+      "kind": "sermon_archive",
+      "url": "https://www.oursbc.org/sermons",
+      "label": "Sermons",
+      "verifiedAt": "2026-09-02T12:43:27.697Z"
+    },
+    {
+      "kind": "youtube",
+      "url": "https://www.youtube.com/@SouthsideSavannah",
+      "label": "youtube",
+      "verifiedAt": "2026-09-02T12:43:27.697Z"
+    },
+    {
+      "kind": "facebook",
+      "url": "https://www.facebook.com/oursbc",
+      "label": "facebook",
+      "verifiedAt": "2026-09-02T12:43:27.697Z"
+    }
+  ]
+}
