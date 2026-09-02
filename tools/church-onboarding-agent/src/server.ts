@@ -126,6 +126,21 @@ function isAuthorized(request: Request): boolean {
   return Boolean(request.headers.get("cf-access-authenticated-user-email"));
 }
 
+async function replaceThemeLogo(request: Request, env: AppEnv, slug: string) {
+  if (!slugPattern.test(slug)) return new Response("Invalid church slug.", { status: 400 });
+  const contentType = request.headers.get("content-type") || "application/octet-stream";
+  if (![/^image\/png$/, /^image\/jpeg$/, /^image\/webp$/, /^image\/svg\+xml$/].some((rule) => rule.test(contentType))) return new Response("Use an SVG, PNG, JPEG, or WebP image.", { status: 415 });
+  const bytes = await request.arrayBuffer();
+  if (!bytes.byteLength || bytes.byteLength > 5_000_000) return new Response("Logo must be smaller than 5 MB.", { status: 413 });
+  const filename = (request.headers.get("x-file-name") || "logo").replace(/[^a-zA-Z0-9._-]/g, "-").slice(-120);
+  const r2Key = `churches/${slug}/brand/primary-${Date.now()}-${filename}`;
+  await Promise.all([
+    env.CHURCH_ASSETS.put(r2Key, bytes, { httpMetadata: { contentType }, customMetadata: { church: slug, kind: "primary", source: "theme-editor" } }),
+    env.RESOURCE_ASSETS.put(publicAssetKey(slug, "primary"), bytes, { httpMetadata: { contentType }, customMetadata: { church: slug, kind: "primary", sourceKey: r2Key, source: "theme-editor" } }),
+  ]);
+  return Response.json({ ok: true, slug, logoUrl: `/theme-assets/${slug}/logo`, replacedAt: now() });
+}
+
 async function findThemeLogo(env: AppEnv, slug: string) {
   const current = await env.RESOURCE_ASSETS.get(publicAssetKey(slug, "primary"));
   if (current) return current;
@@ -158,6 +173,10 @@ export default {
     if (themeAsset && request.method === "GET") {
       if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
       return serveThemeAsset(request, env, themeAsset[1]);
+    }
+    if (themeAsset && request.method === "POST") {
+      if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
+      return replaceThemeLogo(request, env, themeAsset[1]);
     }
     if (url.pathname.startsWith("/agents/") && !isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
     return (await routeAgentRequest(request, env)) ?? env.ASSETS.fetch(request);
