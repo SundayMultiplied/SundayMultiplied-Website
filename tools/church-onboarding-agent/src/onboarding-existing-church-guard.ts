@@ -1,3 +1,5 @@
+export {};
+
 type ChurchOption = { slug: string; name: string };
 
 const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
