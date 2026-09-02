@@ -6,12 +6,16 @@
     "city": "Savannah",
     "state": "GA",
     "timezone": "America/New_York",
-    "website": "https://www.southsidebaptistchurch.org/"
+    "website": "https://www.oursbc.org/"
   },
-  "resources": ["monday", "group", "family"],
+  "resources": [
+    "monday",
+    "group",
+    "family"
+  ],
   "schedule": {
     "serviceDay": "sunday",
-    "deliveryDay": "Monday"
+    "deliveryDay": "Sunday"
   },
   "approval": {
     "reviewerConfigured": true,
@@ -20,6 +24,41 @@
     "dashboardMode": "shared"
   },
   "brand": {
+    "primaryColor": "#406f87",
+    "secondaryColor": "#b1c5ce",
+    "accentColor": "#406f87",
+    "backgroundColor": "#ffffff",
+    "textColor": "#112233",
+    "mutedColor": "#68736e",
+    "borderColor": "#d9dfdc",
+    "sectionBackgroundColor": "#f5f7f5",
+    "sectionTextColor": "#112233",
+    "calloutBackgroundColor": "#d1e6f0",
+    "calloutTextColor": "#112233",
+    "headerBackgroundColor": "#406f87",
+    "headerTextColor": "#ffffff",
+    "scriptureBackgroundColor": "#f5f7f5",
+    "scriptureTextColor": "#112233",
+    "questionBackgroundColor": "#f5f7f5",
+    "questionTextColor": "#112233",
+    "prayerBackgroundColor": "#406f87",
+    "prayerTextColor": "#ffffff",
+    "headingFont": "\"Nunito Sans\", Arial, sans-serif",
+    "bodyFont": "distinct-style-sans-bold-7y22wx, Arial, sans-serif",
+    "headingWeight": "600",
+    "headingTransform": "uppercase",
+    "cornerRadius": "8px",
+    "pageWidth": "800px",
+    "pagePadding": "52px",
+    "sectionSpacing": "30px",
+    "buttonStyle": "soft",
+    "headerStyle": "filled",
+    "logoPosition": "right",
+    "logoSize": "medium",
+    "cardStyle": "soft",
+    "styleTheme": "contemporary",
+    "visualTone": "grounded, restrained, contemporary",
+    "visualNotes": "Automated review suggests a grounded, restrained, contemporary visual system. Confirm recommendations against current logo files and recent social graphics.",
     "stylesheet": "churches/southside-baptist/styles/southside-baptist.css",
     "publicStylesheet": "/resources/southside-baptist/church.css",
     "sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css",
@@ -28,8 +67,10 @@
       {
         "kind": "primary",
         "filename": "southside-baptist-logo.png",
+        "r2Key": "churches/southside-baptist-church/brand/primary-southside-baptist-logo.png",
         "publicUrl": "/api/resource-assets/southside-baptist/logo"
       }
     ]
-  }
+  },
+  "sources": "churches/southside-baptist/sources/streaming.json"
 }
