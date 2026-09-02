@@ -28,7 +28,7 @@ function installAdminNav() {
     @media(max-width:850px){.sm-admin-nav__inner{align-items:flex-start;flex-direction:column;gap:6px;padding:10px 16px}[data-admin-global-nav] nav{gap:2px}[data-admin-global-nav] nav a{padding:6px 8px}}
   `;
   document.head.appendChild(style);
-  document.body.prepend(nav);
+  document.body.insertBefore(nav, document.body.firstChild);
   if (new URLSearchParams(location.search).get("mode") === "theme") {
     const links = nav.querySelectorAll("nav a");
     links.forEach((link) => link.classList.remove("active"));
