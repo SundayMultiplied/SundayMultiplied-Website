@@ -45,10 +45,15 @@ body.sm-resource {
 
 /* Product names are canonical Sunday Multiplied brand labels, never AI-authored shorthand. */
 .sm-resource-label {
-  font-size: 0;
+  font-size: 0 !important;
   line-height: 1.2;
 }
+.sm-resource-label > * {
+  display: none !important;
+}
 .sm-resource-label::after {
+  display: inline;
+  color: inherit;
   font-size: 12px;
   line-height: 1.2;
 }
