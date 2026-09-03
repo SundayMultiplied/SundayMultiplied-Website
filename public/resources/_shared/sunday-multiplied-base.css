@@ -15,11 +15,17 @@
 html { background: #eee9df; }
 body { margin: 0; color: var(--sm-color-text); background: #eee9df; font-family: var(--sm-font-body); }
 
-/* Both resource root classes are supported by production generators. Keep their layout contract identical. */
-.sm-document,
-.sm-resource {
+/* Production uses .sm-resource on <body>, not as a second document wrapper. */
+body.sm-resource {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-shadow: none;
+}
+
+.sm-document {
   width: min(var(--sm-page-width, 860px), 100%);
-  margin: 0 auto;
+  margin-inline: auto;
   color: var(--sm-color-text);
   background: var(--sm-color-background);
   box-shadow: 0 20px 70px rgba(23, 48, 40, .12);
@@ -37,7 +43,6 @@ body { margin: 0; color: var(--sm-color-text); background: #eee9df; font-family:
 .sm-church-logo { display: block; width: 100%; max-height: 90px; object-fit: contain; }
 .sm-eyebrow { margin: 0 0 12px; color: var(--sm-color-secondary); font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
 .sm-title { margin: 0; color: #fff; font-family: var(--sm-font-heading); font-size: clamp(36px, 7vw, 60px); font-weight: 400; line-height: 1.02; letter-spacing: -.035em; }
-/* Church theme content-heading rules must never recolor the resource title inside the header. */
 .sm-document .sm-header .sm-title,
 .sm-resource .sm-header .sm-title { color: inherit; }
 .sm-meta { margin: 18px 0 0; color: rgba(255,255,255,.78); font-size: 13px; line-height: 1.6; }
@@ -75,12 +80,12 @@ body { margin: 0; color: var(--sm-color-text); background: #eee9df; font-family:
 @media (max-width: 620px) {
   .sm-header-content { align-items: flex-start; flex-direction: column-reverse; gap: 24px; }
   .sm-header-logo-wrap { width: min(190px, 65vw); }
-  .sm-document, .sm-resource { box-shadow: none; }
+  .sm-document { box-shadow: none; }
   .sm-section--scripture, .sm-section--prayer, .sm-section--leader-tip, .sm-section--parent-note { border-left-width: 4px; }
 }
 
 @media print {
   html, body { background: #fff; }
-  .sm-document, .sm-resource { width: 100%; box-shadow: none; }
+  .sm-document { width: 100%; box-shadow: none; }
   .sm-section { break-inside: avoid; }
 }
