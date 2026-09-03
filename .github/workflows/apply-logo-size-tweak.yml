@@ -1,0 +1,45 @@
+name: Apply logo size tweak
+
+on:
+  push:
+    branches:
+      - tweak/larger-logo-sizes
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Apply larger Theme Editor logo sizes'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: tweak/larger-logo-sizes
+      - name: Update logo size mapping
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('tools/church-onboarding-agent/src/services/repo-files.ts')
+          text = path.read_text()
+          old = '''function logoDimensions(size: ReturnType<typeof normalizeBrandProfile>["logoSize"]) {
+            if (size === "small") return { width: 130, height: 52 };
+            if (size === "large") return { width: 250, height: 96 };
+            return { width: 190, height: 72 };
+          }'''
+          new = '''function logoDimensions(size: ReturnType<typeof normalizeBrandProfile>["logoSize"]) {
+            if (size === "small") return { width: 190, height: 72 };
+            if (size === "large") return { width: 330, height: 126 };
+            return { width: 250, height: 96 };
+          }'''
+          if old not in text:
+              raise SystemExit('Expected logoDimensions block was not found.')
+          path.write_text(text.replace(old, new, 1))
+      - name: Remove temporary workflow and commit
+        run: |
+          git rm .github/workflows/apply-logo-size-tweak.yml
+          git config user.name "SundayMultiplied"
+          git config user.email "brian@sundaymultiplied.com"
+          git add tools/church-onboarding-agent/src/services/repo-files.ts
+          git commit -m "Apply larger Theme Editor logo sizes"
+          git push origin HEAD:tweak/larger-logo-sizes
