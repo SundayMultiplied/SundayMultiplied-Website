@@ -9,17 +9,18 @@ const items = [
   { href: "/approvals", label: "Approvals" },
   { href: "/revisions", label: "Revisions" },
   { href: "/onboarding", label: "Onboarding" },
+  { href: "/theme-editor", label: "Theme Editor" },
 ];
 
 export function AdminNav() {
   const pathname = usePathname();
   return (
     <header className="admin-nav-shell">
-      <div className="admin-nav-brand">
-        <Link href="/admin" className="admin-nav-home"><strong>Sunday Multiplied</strong><span>Admin</span></Link>
-      </div>
       <nav className="admin-nav-links" aria-label="Admin navigation">
-        {items.map((item) => <Link key={item.href} href={item.href} className={pathname === item.href ? "is-active" : ""}>{item.label}</Link>)}
+        {items.map((item) => {
+          const active = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(`${item.href}/`));
+          return <Link key={item.href} href={item.href} className={active ? "is-active" : ""}>{item.label}</Link>;
+        })}
       </nav>
     </header>
   );
