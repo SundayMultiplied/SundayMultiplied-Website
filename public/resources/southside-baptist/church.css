@@ -14,21 +14,23 @@
   --sm-font-heading: "Nunito Sans", Arial, sans-serif;
   --sm-font-body: distinct-style-sans-bold-7y22wx, Arial, sans-serif;
   --sm-corner-radius: 8px;
-  --sm-page-width: 800px;
+  --sm-page-width: 1000px;
   --sm-page-padding: 52px;
   --sm-section-spacing: 30px;
 }
 
-body.sm-resource { margin: 0; padding: 28px; background: #e9eceb; color: #112233; font-family: distinct-style-sans-bold-7y22wx, Arial, sans-serif; line-height: 1.65; }
-.sm-document { width: min(800px, 100%); max-width: 800px; margin: 0 auto; padding: 52px; color: #112233; background: #ffffff; font-family: distinct-style-sans-bold-7y22wx, Arial, sans-serif; }
+body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; background: #e9eceb; color: #112233; font-family: distinct-style-sans-bold-7y22wx, Arial, sans-serif; line-height: 1.65; box-shadow: none; }
+.sm-document { width: min(1000px, 100%); max-width: 1000px; margin-inline: auto; padding: 52px; color: #112233; background: #ffffff; font-family: distinct-style-sans-bold-7y22wx, Arial, sans-serif; }
 .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 38px; padding: 24px; background: #406f87; color: #ffffff; border-bottom: 4px solid #406f87; border-radius: 8px; overflow: hidden; }
 .sm-header--with-logo .sm-header-content { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .sm-header-text { flex: 1 1 auto; min-width: 0; }
 .sm-header-logo-wrap { flex: 0 0 auto; display: flex; align-items: center; order: 1; }
-.sm-church-logo, .sm-resource__header-logo { display: block; max-width: 190px; max-height: 72px; width: auto; height: auto; object-fit: contain; }
+.sm-header-logo-wrap { padding: 0; background: transparent; border-radius: 0; }
+.sm-church-logo, .sm-resource__header-logo { display: block; max-width: 250px; max-height: 96px; width: auto; height: auto; object-fit: contain; }
 .sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { margin: 0 0 8px; color: #ffffff; font-size: 12px; font-weight: 800; letter-spacing: .15em; line-height: 1.2; text-transform: uppercase; }
 .sm-title { margin: 0; color: #ffffff; font-family: "Nunito Sans", Arial, sans-serif; font-size: 34px; line-height: 1.1; font-weight: 600; text-transform: uppercase; }
 .sm-meta { margin: 10px 0 0; color: #ffffff; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+
 .sm-section { margin-bottom: 30px; padding: 0; border-bottom: 0; }
 .sm-section h2 { margin: 0 0 12px; color: #406f87; font-family: "Nunito Sans", Arial, sans-serif; font-size: 20px; line-height: 1.2; font-weight: 600; text-transform: uppercase; }
 .sm-section h3 { margin: 20px 0 8px; color: #406f87; font-family: "Nunito Sans", Arial, sans-serif; font-size: 15px; line-height: 1.3; font-weight: 600; text-transform: uppercase; }
@@ -67,7 +69,7 @@ a { color: #406f87; font-weight: 700; text-underline-offset: 3px; }
 @media print {
   @page { size: letter portrait; margin: .35in; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body.sm-resource { padding: 0; font-size: 11px; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.sm-resource { width: 100%; max-width: none; padding: 0; font-size: 11px; line-height: 1.35; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sm-document { max-width: none; width: 100%; margin: 0; padding: 0; background: #fff; color: #111; }
   .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 10px; padding: 0 0 8px; background: #fff; color: #111; border-radius: 0; border-bottom-color: #000; box-shadow: none; }
   .sm-header-logo-wrap { background: #fff; padding: 0; }
