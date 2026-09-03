@@ -48,13 +48,13 @@
     "headingWeight": "600",
     "headingTransform": "uppercase",
     "cornerRadius": "8px",
-    "pageWidth": "800px",
+    "pageWidth": "1000px",
     "pagePadding": "52px",
     "sectionSpacing": "30px",
     "buttonStyle": "soft",
     "headerStyle": "filled",
     "logoPosition": "right",
-    "logoSize": "medium",
+    "logoSize": "large",
     "cardStyle": "soft",
     "styleTheme": "contemporary",
     "visualTone": "grounded, restrained, contemporary",
@@ -70,7 +70,8 @@
         "r2Key": "churches/southside-baptist-church/brand/primary-southside-baptist-logo.png",
         "publicUrl": "/api/resource-assets/southside-baptist/logo"
       }
-    ]
+    ],
+    "removeLogoBackground": true
   },
   "sources": "churches/southside-baptist/sources/streaming.json"
 }
