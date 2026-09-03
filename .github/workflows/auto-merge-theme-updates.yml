@@ -1,0 +1,47 @@
+name: Auto-merge Theme Editor updates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate-and-merge:
+    if: startsWith(github.head_ref, 'theme/') && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Theme Editor file scope
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          files="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename')"
+          if [ -z "$files" ]; then
+            echo "Theme update PR contains no files."
+            exit 1
+          fi
+
+          while IFS= read -r file; do
+            case "$file" in
+              churches/*/church.json|churches/*/styles/*.css|public/resources/*/church.css)
+                ;;
+              *)
+                echo "Refusing to auto-merge unexpected Theme Editor file: $file"
+                exit 1
+                ;;
+            esac
+          done <<< "$files"
+
+          echo "Validated Theme Editor file scope:"
+          printf '%s\n' "$files"
+
+      - name: Merge Theme Editor update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge "$PR_URL" --merge
