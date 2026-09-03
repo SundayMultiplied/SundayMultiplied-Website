@@ -82,8 +82,8 @@ body.sm-resource {
   border-left: 6px solid var(--sm-color-accent);
 }
 .sm-scripture-reference { color: var(--sm-color-label); font-size: 13px !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.sm-scripture-text { color: var(--sm-color-primary); font-family: var(--sm-font-heading); font-size: 19px; }
-.sm-scripture-paragraph { margin: 0 0 18px; color: inherit; font-family: inherit; font-size: 19px !important; line-height: 1.72 !important; }
+.sm-scripture-text { color: var(--sm-color-primary); font-family: var(--sm-font-heading); font-size: 15px; }
+.sm-scripture-paragraph { margin: 0 0 16px; color: inherit; font-family: inherit; font-size: 15px !important; line-height: 1.65 !important; }
 .sm-scripture-paragraph:last-child { margin-bottom: 0; }
 .sm-verse-number { margin-right: .18em; color: var(--sm-color-accent); font-family: var(--sm-font-body); font-size: .6em; font-weight: 800; vertical-align: super; }
 .sm-scripture-attribution { color: color-mix(in srgb, var(--sm-color-text) 65%, transparent); font-size: 12px !important; }
