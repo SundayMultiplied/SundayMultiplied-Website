@@ -3,53 +3,46 @@
   top: 0;
   z-index: 50;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 14px 24px;
-  border-bottom: 1px solid rgba(23,48,40,.12);
-  background: rgba(250,249,245,.97);
-  backdrop-filter: blur(10px);
-}
-
-.admin-nav-home {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  color: #173028;
-  text-decoration: none;
-}
-
-.admin-nav-home strong { font-size: 15px; }
-.admin-nav-home span {
-  color: #8b5718;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .09em;
-  text-transform: uppercase;
+  justify-content: center;
+  padding: 8px 18px 16px;
+  background: #14211d;
 }
 
 .admin-nav-links {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #d7dfdc;
 }
 
 .admin-nav-links a {
-  padding: 8px 10px;
-  border: 1px solid transparent;
-  color: #40554b;
-  font-size: 12px;
-  font-weight: 750;
+  display: block;
+  padding: 13px 18px;
+  color: #173028;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
   text-decoration: none;
+  border-radius: 12px;
 }
 
 .admin-nav-links a:hover,
+.admin-nav-links a:focus {
+  background: #c7d2ce;
+  color: #0f1f19;
+}
+
 .admin-nav-links a.is-active {
-  border-color: rgba(47,91,71,.2);
-  background: #eef3ef;
-  color: #173028;
+  background: #fff;
+  color: #0f1f19;
+  box-shadow: 0 1px 0 rgba(23,48,40,.08);
 }
 
 .admin-home {
@@ -272,14 +265,15 @@
 }
 
 @media (max-width: 800px) {
-  .admin-nav-shell,
   .admin-home-hero,
   .admin-health-head {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .admin-nav-links { width: 100%; }
+  .admin-nav-shell { padding: 7px 10px 12px; overflow-x: auto; justify-content: flex-start; }
+  .admin-nav-links { flex-wrap: nowrap; width: max-content; }
+  .admin-nav-links a { padding: 11px 13px; white-space: nowrap; }
   .admin-tool-grid,
   .admin-health-grid { grid-template-columns: 1fr; }
   .admin-home { width: min(100% - 24px, 1180px); padding-top: 24px; }
