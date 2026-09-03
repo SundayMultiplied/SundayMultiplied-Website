@@ -106,20 +106,21 @@ export function buildThemeCss(churchName: string, profile: BrandProfile): string
   --sm-section-spacing: ${b.sectionSpacing};
 }
 
-body { background: ${b.backgroundColor}; color: ${b.textColor}; font-family: ${b.bodyFont}; line-height: 1.65; }
-.sm-document, .sm-resource { max-width: ${b.pageWidth}; padding: ${b.pagePadding}; color: ${b.textColor}; background: ${b.backgroundColor}; font-family: ${b.bodyFont}; }
+body.sm-resource { margin: 0; padding: 28px; background: #e9eceb; color: ${b.textColor}; font-family: ${b.bodyFont}; line-height: 1.65; }
+.sm-document { width: min(${b.pageWidth}, 100%); max-width: ${b.pageWidth}; margin: 0 auto; padding: ${b.pagePadding}; color: ${b.textColor}; background: ${b.backgroundColor}; font-family: ${b.bodyFont}; }
 .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 38px; padding: ${headerPadding}; background: ${headerBackground}; color: ${headerText}; border-bottom: 4px solid ${b.primaryColor}; border-radius: ${b.headerStyle === "filled" ? b.cornerRadius : "0"}; overflow: hidden; }
 .sm-header--with-logo .sm-header-content { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .sm-header-text { flex: 1 1 auto; min-width: 0; }
 .sm-header-logo-wrap { flex: 0 0 auto; display: flex; align-items: center; order: ${logoOrder}; }
 .sm-church-logo, .sm-resource__header-logo { display: block; max-width: ${logo.width}px; max-height: ${logo.height}px; width: auto; height: auto; object-fit: contain; }
-.sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { color: ${b.headerStyle === "filled" ? b.headerTextColor : "var(--sm-color-label)"}; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-.sm-title { color: ${headerText}; font-family: ${b.headingFont}; font-weight: ${b.headingWeight}; }
-.sm-meta { color: ${b.headerStyle === "filled" ? b.headerTextColor : b.mutedColor}; opacity: .82; }
+.sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { margin: 0 0 8px; color: ${b.headerStyle === "filled" ? b.headerTextColor : "var(--sm-color-label)"}; font-size: 12px; font-weight: 800; letter-spacing: .15em; line-height: 1.2; text-transform: uppercase; }
+.sm-title { margin: 0; color: ${headerText}; font-family: ${b.headingFont}; font-size: 34px; line-height: 1.1; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
+.sm-meta { margin: 10px 0 0; color: ${b.headerStyle === "filled" ? b.headerTextColor : b.mutedColor}; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 ${splitRules}
-.sm-section { margin-bottom: ${b.sectionSpacing}; }
-.sm-section h2, .sm-section h3, .sm-resource h1, .sm-resource h2, .sm-resource h3 { color: ${b.primaryColor}; font-family: ${b.headingFont}; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
-.sm-section h3 { color: ${b.accentColor}; }
+.sm-section { margin-bottom: ${b.sectionSpacing}; padding: 0; border-bottom: 0; }
+.sm-section h2 { margin: 0 0 12px; color: ${b.primaryColor}; font-family: ${b.headingFont}; font-size: 20px; line-height: 1.2; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
+.sm-section h3 { margin: 20px 0 8px; color: ${b.accentColor}; font-family: ${b.headingFont}; font-size: 15px; line-height: 1.3; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
+.sm-section p, .sm-section li { font-size: 16px; line-height: 1.65; }
 .sm-section li::marker { color: ${b.accentColor}; font-weight: 800; }
 .sm-section--big-idea, .sm-section--reflection { padding: 22px 24px; border-left: 6px solid ${b.accentColor}; border-radius: ${b.cornerRadius}; background: ${b.calloutBackgroundColor}; color: ${b.calloutTextColor}; }
 .sm-section--big-idea h2, .sm-section--big-idea h3, .sm-section--reflection h2, .sm-section--reflection h3 { color: ${b.calloutTextColor}; }
@@ -140,7 +141,8 @@ a { color: ${b.primaryColor}; font-weight: 700; text-underline-offset: 3px; }
 .sm-resource__button, .sm-theme-button { display: inline-block; border: 0; padding: 11px 18px; border-radius: ${buttonRadius}; background: ${b.primaryColor}; color: ${contrast("#ffffff", b.primaryColor) >= 4.5 ? "#ffffff" : b.textColor}; font-weight: 800; }
 ${structuralThemeCss(theme, b)}
 @media (max-width: 680px) {
-  .sm-document, .sm-resource { padding: 30px 22px; }
+  body.sm-resource { padding: 14px; }
+  .sm-document { padding: 30px 22px; }
   .sm-header--with-logo .sm-header-content { align-items: flex-start; flex-direction: column; }
   .sm-header-logo-wrap { order: -1; min-width: 0; width: 100%; }
   .sm-church-logo { max-width: ${Math.min(165, logo.width)}px; max-height: ${Math.min(72, logo.height)}px; }
@@ -148,8 +150,8 @@ ${structuralThemeCss(theme, b)}
 @media print {
   @page { size: letter portrait; margin: .35in; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body { font-size: 11px; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .sm-document, .sm-resource { max-width: none; width: 100%; margin: 0; padding: 0; background: #fff; color: #111; }
+  body.sm-resource { padding: 0; font-size: 11px; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sm-document { max-width: none; width: 100%; margin: 0; padding: 0; background: #fff; color: #111; }
   .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 10px; padding: 0 0 8px; background: #fff; color: #111; border-radius: 0; border-bottom-color: #000; box-shadow: none; }
   .sm-header-logo-wrap { background: #fff; padding: 0; }
   .sm-title, .sm-eyebrow, .sm-meta { color: #111; }
