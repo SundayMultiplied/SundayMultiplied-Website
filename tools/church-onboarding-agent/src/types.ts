@@ -45,6 +45,7 @@ export type BrandProfile = {
   headerStyle?: "plain" | "filled" | "split";
   logoPosition?: "left" | "right";
   logoSize?: "small" | "medium" | "large";
+  removeLogoBackground?: boolean;
   cardStyle?: "flat" | "bordered" | "soft";
 };
 
@@ -82,6 +83,7 @@ export const defaultBrandProfile = (): ResolvedBrandProfile => ({
   headerStyle: "plain",
   logoPosition: "right",
   logoSize: "medium",
+  removeLogoBackground: false,
   cardStyle: "soft",
   styleTheme: "contemporary",
   visualTone: "",

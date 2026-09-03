@@ -8,11 +8,18 @@ function controlValue(labelText: string): string | undefined {
   const label = labels.find((item) => item.querySelector(":scope > span")?.textContent?.trim() === labelText);
   if (!label) return undefined;
   const inputs = Array.from(label.querySelectorAll("input")) as HTMLInputElement[];
-  const textInput = inputs.find((input) => input.type !== "color");
+  const textInput = inputs.find((input) => input.type !== "color" && input.type !== "checkbox");
   if (textInput) return textInput.value;
   const select = label.querySelector("select") as HTMLSelectElement | null;
   if (select) return select.value;
   return inputs[0]?.value;
+}
+
+function controlChecked(labelText: string): boolean | undefined {
+  const labels = Array.from(document.querySelectorAll(".theme-controls label")) as HTMLLabelElement[];
+  const label = labels.find((item) => item.querySelector(":scope > span")?.textContent?.trim() === labelText);
+  const checkbox = label?.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+  return checkbox?.checked;
 }
 
 function currentBrand(): BrandProfile {
@@ -32,6 +39,7 @@ function currentBrand(): BrandProfile {
     headerStyle: (controlValue("Header style") as BrandProfile["headerStyle"]) || b.headerStyle,
     logoPosition: (controlValue("Logo position") as BrandProfile["logoPosition"]) || b.logoPosition,
     logoSize: (controlValue("Logo size") as BrandProfile["logoSize"]) || b.logoSize,
+    removeLogoBackground: controlChecked("Remove white logo background") ?? b.removeLogoBackground,
     headingFont: controlValue("Heading font") || b.headingFont,
     bodyFont: controlValue("Body font") || b.bodyFont,
     headingWeight: (controlValue("Heading weight") as BrandProfile["headingWeight"]) || b.headingWeight,
