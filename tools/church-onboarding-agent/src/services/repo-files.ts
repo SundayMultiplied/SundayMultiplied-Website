@@ -80,6 +80,9 @@ export function buildThemeCss(churchName: string, profile: BrandProfile): string
   const headerBackground = b.headerStyle === "filled" ? b.headerBackgroundColor : b.backgroundColor;
   const headerText = b.headerStyle === "filled" ? b.headerTextColor : b.textColor;
   const headerPadding = b.headerStyle === "plain" ? "0 0 24px" : b.headerStyle === "filled" ? "24px" : "0";
+  const logoBackdropRules = b.removeLogoBackground && b.headerStyle !== "split"
+    ? ".sm-header-logo-wrap { padding: 0; background: transparent; border-radius: 0; }\n"
+    : "";
   const splitRules = b.headerStyle === "split" ? `
 .sm-header--with-logo .sm-header-content { gap: 0; align-items: stretch; }
 .sm-header-text { padding: 24px 28px; }
@@ -106,13 +109,13 @@ export function buildThemeCss(churchName: string, profile: BrandProfile): string
   --sm-section-spacing: ${b.sectionSpacing};
 }
 
-body.sm-resource { margin: 0; padding: 28px; background: #e9eceb; color: ${b.textColor}; font-family: ${b.bodyFont}; line-height: 1.65; }
-.sm-document { width: min(${b.pageWidth}, 100%); max-width: ${b.pageWidth}; margin: 0 auto; padding: ${b.pagePadding}; color: ${b.textColor}; background: ${b.backgroundColor}; font-family: ${b.bodyFont}; }
+body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; background: #e9eceb; color: ${b.textColor}; font-family: ${b.bodyFont}; line-height: 1.65; box-shadow: none; }
+.sm-document { width: min(${b.pageWidth}, 100%); max-width: ${b.pageWidth}; margin-inline: auto; padding: ${b.pagePadding}; color: ${b.textColor}; background: ${b.backgroundColor}; font-family: ${b.bodyFont}; }
 .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 38px; padding: ${headerPadding}; background: ${headerBackground}; color: ${headerText}; border-bottom: 4px solid ${b.primaryColor}; border-radius: ${b.headerStyle === "filled" ? b.cornerRadius : "0"}; overflow: hidden; }
 .sm-header--with-logo .sm-header-content { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .sm-header-text { flex: 1 1 auto; min-width: 0; }
 .sm-header-logo-wrap { flex: 0 0 auto; display: flex; align-items: center; order: ${logoOrder}; }
-.sm-church-logo, .sm-resource__header-logo { display: block; max-width: ${logo.width}px; max-height: ${logo.height}px; width: auto; height: auto; object-fit: contain; }
+${logoBackdropRules}.sm-church-logo, .sm-resource__header-logo { display: block; max-width: ${logo.width}px; max-height: ${logo.height}px; width: auto; height: auto; object-fit: contain; }
 .sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { margin: 0 0 8px; color: ${b.headerStyle === "filled" ? b.headerTextColor : "var(--sm-color-label)"}; font-size: 12px; font-weight: 800; letter-spacing: .15em; line-height: 1.2; text-transform: uppercase; }
 .sm-title { margin: 0; color: ${headerText}; font-family: ${b.headingFont}; font-size: 34px; line-height: 1.1; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
 .sm-meta { margin: 10px 0 0; color: ${b.headerStyle === "filled" ? b.headerTextColor : b.mutedColor}; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
@@ -150,7 +153,7 @@ ${structuralThemeCss(theme, b)}
 @media print {
   @page { size: letter portrait; margin: .35in; }
   html, body { margin: 0; padding: 0; background: #fff; }
-  body.sm-resource { padding: 0; font-size: 11px; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.sm-resource { width: 100%; max-width: none; padding: 0; font-size: 11px; line-height: 1.35; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .sm-document { max-width: none; width: 100%; margin: 0; padding: 0; background: #fff; color: #111; }
   .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 10px; padding: 0 0 8px; background: #fff; color: #111; border-radius: 0; border-bottom-color: #000; box-shadow: none; }
   .sm-header-logo-wrap { background: #fff; padding: 0; }
@@ -186,7 +189,7 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
     sources: `${root}/sources/streaming.json`,
   };
   const streaming = { schemaVersion: 1, church: state.basics.slug, links: state.links };
-  const notes = `# ${state.basics.name} brand source notes\n\nGenerated during onboarding. Confirm all inferred colors, fonts, and assets before activation.\n\n${state.brand.visualNotes || "No additional visual notes recorded."}\n\n## Automated brand review\n\n- Visual tone: ${state.brand.visualTone || "Not recorded"}\n- Style theme: ${inferStyleTheme(normalizeBrandProfile(state.brand))}\n- Button style: ${state.brand.buttonStyle}\n- Corner radius: ${state.brand.cornerRadius}\n- Logo size: ${normalizeBrandProfile(state.brand).logoSize}\n- Pages inspected: ${state.brandAnalysis?.pagesAnalyzed.length || 0}\n- Stylesheets inspected: ${state.brandAnalysis?.stylesheetsAnalyzed.length || 0}\n\n${state.brandAnalysis?.warnings.map((warning) => `- Review: ${warning}`).join("\n") || "- No automated warnings."}\n\n## Research provenance\n\n${state.findings.map((item) => `- **${item.field}**: ${item.value} (${item.confidence}; ${item.sourceUrl})`).join("\n") || "- No automated findings recorded."}\n`;
+  const notes = `# ${state.basics.name} brand source notes\n\nGenerated during onboarding. Confirm all inferred colors, fonts, and assets before activation.\n\n${state.brand.visualNotes || "No additional visual notes recorded."}\n\n## Automated brand review\n\n- Visual tone: ${state.brand.visualTone || "Not recorded"}\n- Style theme: ${inferStyleTheme(normalizeBrandProfile(state.brand))}\n- Button style: ${state.brand.buttonStyle}\n- Corner radius: ${state.brand.cornerRadius}\n- Logo size: ${normalizeBrandProfile(state.brand).logoSize}\n- Remove logo background: ${normalizeBrandProfile(state.brand).removeLogoBackground ? "yes" : "no"}\n- Pages inspected: ${state.brandAnalysis?.pagesAnalyzed.length || 0}\n- Stylesheets inspected: ${state.brandAnalysis?.stylesheetsAnalyzed.length || 0}\n\n${state.brandAnalysis?.warnings.map((warning) => `- Review: ${warning}`).join("\n") || "- No automated warnings."}\n\n## Research provenance\n\n${state.findings.map((item) => `- **${item.field}**: ${item.value} (${item.confidence}; ${item.sourceUrl})`).join("\n") || "- No automated findings recorded."}\n`;
   return [
     { path: `${root}/church.json`, content: `${JSON.stringify(church, null, 2)}\n` },
     { path: `${root}/styles/${state.basics.slug}.css`, content: churchStyles },
