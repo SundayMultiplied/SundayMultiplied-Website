@@ -26,9 +26,9 @@ function inferStyleTheme(b: ReturnType<typeof normalizeBrandProfile>): StyleThem
   return b.styleTheme || "contemporary";
 }
 function logoDimensions(size: ReturnType<typeof normalizeBrandProfile>["logoSize"]) {
-  if (size === "small") return { width: 130, height: 52 };
-  if (size === "large") return { width: 250, height: 96 };
-  return { width: 190, height: 72 };
+  if (size === "small") return { width: 190, height: 72 };
+  if (size === "large") return { width: 330, height: 126 };
+  return { width: 250, height: 96 };
 }
 function structuralThemeCss(theme: StyleTheme, b: ReturnType<typeof normalizeBrandProfile>): string {
   if (theme === "traditional") return `
