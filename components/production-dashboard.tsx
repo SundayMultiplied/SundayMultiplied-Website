@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string };
+type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string; reviewerEmail?: string };
 type ProductionJob = {
   id: string; churchSlug: string; churchName: string; weekOf: string; createdAt: string;
   status: "ready_for_internal_review" | "sent_for_approval"; sourceFilename: string;
@@ -60,7 +60,10 @@ export function ProductionDashboard() {
   }
 
   async function sendForApproval(job: ProductionJob) {
-    if (!window.confirm(`Send ${job.churchName}: ${job.metadata.sermonTitle || job.weekOf} for church approval?`)) return;
+    const church = churches.find((item) => item.slug === job.churchSlug);
+    const approver = church?.reviewerEmail || "Reviewer not configured";
+    const packageName = job.metadata.sermonTitle || job.weekOf;
+    if (!window.confirm(`Send this package for church approval?\n\nChurch: ${job.churchName}\nPackage: ${packageName}\nApprover: ${approver}`)) return;
     setSendingId(job.id); setError(""); setActionMessage("");
     try {
       const response = await fetch(`/api/production/jobs/${encodeURIComponent(job.id)}/send`, { method: "POST" });

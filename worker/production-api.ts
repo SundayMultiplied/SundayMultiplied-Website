@@ -9,6 +9,7 @@ type ProductionEnv = {
   OPENAI_MODEL?: string;
   PUBLIC_SITE_ORIGIN?: string;
   APPROVAL_ADMIN_EMAIL?: string;
+  APPROVAL_REVIEWER_EMAIL?: string;
 };
 
 type ChurchConfig = {
@@ -55,6 +56,10 @@ const LEGACY_LOGO_FALLBACKS: Record<string, string> = {
 };
 const CHURCHES = PRODUCTION_CHURCHES as ChurchConfig[];
 
+function effectiveReviewerEmail(church: ChurchConfig | undefined, env: ProductionEnv) {
+  return church?.reviewerEmail || env.APPROVAL_REVIEWER_EMAIL || "brian@sundaymultiplied.com";
+}
+
 export async function handleProductionApi(request: Request, env: ProductionEnv): Promise<Response | null> {
   const url = new URL(request.url);
   const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
@@ -67,7 +72,9 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     if (authError) return json({ error: authError }, 401);
   }
 
-  if (url.pathname === "/api/production/churches" && request.method === "GET") return json({ churches: CHURCHES });
+  if (url.pathname === "/api/production/churches" && request.method === "GET") {
+    return json({ churches: CHURCHES.map((church) => ({ ...church, reviewerEmail: effectiveReviewerEmail(church, env) })) });
+  }
 
   if (url.pathname === "/api/production/jobs" && request.method === "GET") {
     if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
@@ -107,6 +114,8 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     const manifest = await loadManifest(env.BUCKET, sendMatch[1]);
     if (!manifest) return json({ error: "Production job not found." }, 404);
     if (manifest.status === "sent_for_approval" && manifest.reviewUrl) return json({ ok: true, reviewUrl: manifest.reviewUrl });
+    const church = CHURCHES.find((item) => item.slug === manifest.churchSlug);
+    const reviewerEmail = effectiveReviewerEmail(church, env);
 
     const response = await fetch(new URL("/api/approvals", request.url), {
       method: "POST",
@@ -118,6 +127,7 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
         seriesTitle: manifest.metadata.seriesTitle,
         weekOf: manifest.weekOf,
         scripture: manifest.metadata.scripture,
+        reviewerEmail,
         resources: manifest.resources.map((item) => ({ kind: item.kind, title: item.title, previewUrl: item.previewUrl })),
       }),
     });
