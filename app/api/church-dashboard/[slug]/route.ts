@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
+const DASHBOARD_ACCESS_ERROR = "This dashboard isn't available for your account. Check the link or contact Sunday Multiplied if you believe you should have access.";
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ slug: string }> },
@@ -20,7 +22,9 @@ export async function GET(
       "SELECT id, name, slug FROM churches WHERE lower(slug) = ? LIMIT 1",
     ).bind(slug).first<{ id: string; name: string; slug: string }>();
 
-    if (!church) return json({ error: "Church not found." }, 404);
+    // Deliberately use the same public-facing message for missing and unauthorized
+    // churches so the portal does not reveal which church slugs have dashboards.
+    if (!church) return json({ error: DASHBOARD_ACCESS_ERROR }, 404);
 
     const adminEmail = env.APPROVAL_ADMIN_EMAIL?.trim() || "brian@sundaymultiplied.com";
     const isAdmin = email.toLowerCase() === adminEmail.toLowerCase();
@@ -33,7 +37,7 @@ export async function GET(
         LIMIT 1
       `).bind(church.id, email.toLowerCase()).first<{ id: string }>();
 
-      if (!membership) return json({ error: "You do not have access to this church." }, 403);
+      if (!membership) return json({ error: DASHBOARD_ACCESS_ERROR }, 403);
     }
 
     const packagesResult = await env.DB.prepare(`
