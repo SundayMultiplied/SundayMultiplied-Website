@@ -1,6 +1,7 @@
 import { PRODUCTION_CHURCHES } from "./generated/church-registry";
-import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type TeachingSourceDescriptor, type TeachingSourceType } from "./sermon-analysis";
+import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type NormalizedTeachingSource, type TeachingSourceType } from "./sermon-analysis";
 import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
+import { extractTeachingSourceText, MAX_TOTAL_SUPPLEMENTAL_CHARACTERS } from "./teaching-source-extraction";
 
 type ProductionEnv = {
   ASSETS?: Fetcher;
@@ -41,7 +42,16 @@ type ProductionManifest = {
   createdAt: string;
   status: "ready_for_internal_review" | "sent_for_approval";
   sourceFilename: string;
-  sourceFiles?: Array<{ sourceId: string; sourceType: TeachingSourceType; filename: string; storageKey: string; status: "analyzed" | "stored_pending_extraction" }>;
+  sourceFiles?: Array<{
+    sourceId: string;
+    sourceType: TeachingSourceType;
+    filename: string;
+    storageKey: string;
+    normalizedStorageKey?: string;
+    characterCount?: number;
+    warnings?: string[];
+    status: "analyzed" | "extracted" | "extracted_with_warnings";
+  }>;
   metadataOverrides?: { speaker?: string; sermonTitle?: string; seriesTitle?: string; primaryPassage?: string };
   analysisStorageKey?: string;
   analysisId?: string;
@@ -193,25 +203,58 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
   const transcriptKey = `production/jobs/${id}/transcript.txt`;
   const analysisKey = `production/jobs/${id}/sermon-analysis.json`;
   await env.BUCKET.put(transcriptKey, transcript, { httpMetadata: { contentType: "text/plain; charset=utf-8" } });
-  const supplementalSources: TeachingSourceDescriptor[] = [];
+  const supplementalSources: NormalizedTeachingSource[] = [];
   const storedSourceFiles: NonNullable<ProductionManifest["sourceFiles"]> = [{ sourceId: `transcript-${id}`, sourceType: "transcript", filename: transcriptFilename, storageKey: transcriptKey, status: "analyzed" }];
+  let totalSupplementalCharacters = 0;
   for (const [index, upload] of supplementalUploads.entries()) {
     const bytes = await upload.file.arrayBuffer();
     const sourceFilename = clean(upload.file.name, 180);
     const sourceId = `${upload.sourceType}-${id}-${index + 1}`;
     const storageKey = `production/jobs/${id}/sources/${sourceId}/${safeStorageName(sourceFilename)}`;
+    const normalizedStorageKey = `production/jobs/${id}/sources/${sourceId}/normalized.txt`;
     const mediaType = upload.file.type || mediaTypeForFilename(sourceFilename);
+    let extraction: Awaited<ReturnType<typeof extractTeachingSourceText>>;
+    try {
+      extraction = await extractTeachingSourceText(sourceFilename, bytes);
+    } catch (error) {
+      console.error("teaching_source_extraction_failed", { sourceId, sourceFilename, error });
+      return json({
+        error: error instanceof Error ? clean(error.message, 500) : `${sourceFilename} could not be converted to readable text.`,
+        jobId: id,
+        sourceId,
+      }, 422);
+    }
+    totalSupplementalCharacters += extraction.text.length;
+    if (totalSupplementalCharacters > MAX_TOTAL_SUPPLEMENTAL_CHARACTERS) {
+      return json({
+        error: `The supporting files contain more than ${MAX_TOTAL_SUPPLEMENTAL_CHARACTERS.toLocaleString("en-US")} extracted characters combined. Remove or shorten a source and try again.`,
+        jobId: id,
+      }, 413);
+    }
     await env.BUCKET.put(storageKey, bytes, { httpMetadata: { contentType: mediaType } });
+    await env.BUCKET.put(normalizedStorageKey, extraction.text, { httpMetadata: { contentType: "text/plain; charset=utf-8" } });
     supplementalSources.push({
-      source_id: sourceId,
-      source_type: upload.sourceType,
-      name: sourceFilename,
-      media_type: mediaType,
-      sha256: await sha256Hex(bytes),
-      role: "supporting",
-      authorized_use: "Stored pending text extraction; not used as evidence in this analysis version.",
+      descriptor: {
+        source_id: sourceId,
+        source_type: upload.sourceType,
+        name: sourceFilename,
+        media_type: mediaType,
+        sha256: await sha256Hex(bytes),
+        role: "supporting",
+        authorized_use: "May clarify transcript-supported structure, wording, references, and probable transcription errors; may not override or independently establish delivered sermon content.",
+      },
+      text: extraction.text,
     });
-    storedSourceFiles.push({ sourceId, sourceType: upload.sourceType, filename: sourceFilename, storageKey, status: "stored_pending_extraction" });
+    storedSourceFiles.push({
+      sourceId,
+      sourceType: upload.sourceType,
+      filename: sourceFilename,
+      storageKey,
+      normalizedStorageKey,
+      characterCount: extraction.text.length,
+      warnings: extraction.warnings,
+      status: extraction.warnings.length ? "extracted_with_warnings" : "extracted",
+    });
   }
 
   let analysis: CanonicalSermonAnalysis;

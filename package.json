@@ -12,15 +12,18 @@
     "start": "vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "test:sermon-schema": "node --test tests/sermon-analysis-schema.test.mjs",
+    "test:teaching-sources": "node --test tests/teaching-source-extraction.test.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
+    "fflate": "0.8.3",
     "next": "16.2.6",
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "unpdf": "1.8.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

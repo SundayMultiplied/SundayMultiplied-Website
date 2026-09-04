@@ -99,3 +99,22 @@ test("runtime validation pins server-owned identity fields", () => {
     sermon_date: "2026-09-06",
   });
 });
+
+test("runtime validation rejects incorrect supporting-source provenance", () => {
+  const analysis = validationFixture();
+  analysis.central_claim.evidence = [{
+    source_ref: "notes-job",
+    source_role: "controlling",
+    delivery_status: "delivered",
+  }];
+  assert.throws(
+    () => validateTranscriptLedAnalysis(
+      analysis,
+      "analysis-job",
+      "sermon-job",
+      { churchSlug: "sample-church", churchName: "Sample Church", weekOf: "2026-09-06" },
+      new Map([["notes-job", { role: "supporting", deliveryStatus: "planned" }]]),
+    ),
+    /assigned invalid provenance/,
+  );
+});
