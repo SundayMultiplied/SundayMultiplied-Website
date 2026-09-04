@@ -79,6 +79,8 @@ The production form accepts:
 - optional pastor notes, manuscript, outline, and supporting documents in TXT, DOCX, or PDF form;
 - optional speaker, sermon title, series title, and primary-passage overrides.
 
-Supplemental file bytes are stored in R2 under the production job with a source ID, source type, original filename, media type, SHA-256 hash, and `stored_pending_extraction` status. Until Step 3 extracts their text, they are present in `source_bundle` but explicitly unauthorized as analysis evidence.
+Supplemental TXT, DOCX, and text-based PDF files are extracted before analysis. The original bytes and separately normalized text are stored in R2 under the production job with a source ID, source type, original filename, media type, SHA-256 hash, character count, extraction status, and any warnings. Scanned PDFs without a usable text layer stop the workflow with a clear OCR/upload correction message.
+
+The canonical analysis receives every source as a separately labeled input. Supporting sources may clarify transcript-supported structure, wording, references, and probable transcription errors, but may not override or independently establish what was delivered. Evidence records must retain the exact source ID, supporting role, and planned delivery status.
 
 Nonblank metadata overrides are applied after analysis as server-controlled factual values with high-confidence `church_metadata` evidence. Blank fields continue to use conservative automatic detection.

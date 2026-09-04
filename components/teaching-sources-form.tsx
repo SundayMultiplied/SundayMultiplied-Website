@@ -70,7 +70,7 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
 
     <fieldset className="teaching-source-section">
       <legend>Supporting pastor materials</legend>
-      <p className="teaching-source-help">These files are stored separately with their source identity intact. DOCX and PDF text extraction is added in Step 3.</p>
+      <p className="teaching-source-help">TXT, DOCX, and text-based PDF files are extracted and compared separately, with their source identity intact.</p>
       <div className="teaching-source-grid">
         <SourceInput key={`pastor-notes-${resetVersion}`} name="pastorNotes" label="Pastor notes" description="Working notes used to prepare or deliver the message." accept=".txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
         <SourceInput key={`manuscript-${resetVersion}`} name="sermonManuscript" label="Sermon manuscript" description="A written manuscript or fuller prepared draft." accept=".txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
@@ -94,6 +94,6 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
       <button className="approval-approve" disabled={saving}>{saving ? "Creating source bundle…" : "Create source bundle and resources"}</button>
       <button className="teaching-source-reset" type="reset" disabled={saving}>Clear form</button>
     </div>
-    {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Building the weekly source bundle</strong><span>The transcript is being analyzed, supporting files are being preserved, and the resource package is being created.</span></div> : <small>The transcript leads the analysis. Supplemental uploads remain separate and are currently stored pending Step 3 text extraction.</small>}
+    {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Building the weekly source bundle</strong><span>Teaching sources are being extracted, analyzed, and turned into the resource package.</span></div> : <small>Scanned PDFs need searchable text. Run OCR first or upload a TXT/DOCX version.</small>}
   </form>;
 }
