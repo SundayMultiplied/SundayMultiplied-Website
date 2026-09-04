@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./church-dashboard.module.css";
 
 type Resource = {
@@ -57,6 +57,8 @@ export function ChurchDashboard({ slug }: { slug: string }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [historyPage, setHistoryPage] = useState(1);
+  const [canScrollHistoryRight, setCanScrollHistoryRight] = useState(false);
+  const historyScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,6 +97,19 @@ export function ChurchDashboard({ slug }: { slug: string }) {
   useEffect(() => {
     if (historyPage > totalHistoryPages) setHistoryPage(totalHistoryPages);
   }, [historyPage, totalHistoryPages]);
+
+  useEffect(() => {
+    const node = historyScrollRef.current;
+    if (!node) return;
+
+    const updateScrollState = () => {
+      setCanScrollHistoryRight(node.scrollWidth - node.clientWidth - node.scrollLeft > 4);
+    };
+
+    updateScrollState();
+    window.addEventListener("resize", updateScrollState);
+    return () => window.removeEventListener("resize", updateScrollState);
+  }, [data, historyPage]);
 
   if (loading) {
     return <main className={styles.shell}><div className={styles.stateCard}>Loading church dashboard…</div></main>;
@@ -196,21 +211,31 @@ export function ChurchDashboard({ slug }: { slug: string }) {
         <div className={styles.cardHeading}><div><p className={styles.kicker}>Archive</p><h2>Approval History & Resources</h2></div><span className={styles.count}>{data.packages.length} packages</span></div>
         {data.packages.length === 0 ? <p className={styles.empty}>Your history will appear here once the first package is created.</p> : (
           <>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead><tr><th>Week</th><th>Package</th><th>Status</th><th>Reviewer</th><th>Resources</th></tr></thead>
-                <tbody>
-                  {pagedPackages.map((item) => (
-                    <tr key={item.id}>
-                      <td>{formatDate(item.weekOf)}</td>
-                      <td><strong>{item.title}</strong>{item.seriesTitle && <small>{item.seriesTitle}</small>}</td>
-                      <td><span className={`${styles.status} ${statusClass(item.status, styles)}`}>{formatStatus(item.status)}</span>{item.decidedAt && <small>{formatDate(item.decidedAt)}</small>}</td>
-                      <td>{item.reviewerName || item.reviewerEmail || "—"}</td>
-                      <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span key={resource.id}>{resource.kind}</span>)}</div></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <p className={styles.mobileScrollHint}>Swipe to see status, reviewer, and resources →</p>
+            <div className={`${styles.tableViewport} ${canScrollHistoryRight ? styles.hasMoreRight : ""}`}>
+              <div
+                className={styles.tableWrap}
+                ref={historyScrollRef}
+                onScroll={(event) => {
+                  const node = event.currentTarget;
+                  setCanScrollHistoryRight(node.scrollWidth - node.clientWidth - node.scrollLeft > 4);
+                }}
+              >
+                <table className={styles.table}>
+                  <thead><tr><th>Week</th><th>Package</th><th>Status</th><th>Reviewer</th><th>Resources</th></tr></thead>
+                  <tbody>
+                    {pagedPackages.map((item) => (
+                      <tr key={item.id}>
+                        <td>{formatDate(item.weekOf)}</td>
+                        <td><strong>{item.title}</strong>{item.seriesTitle && <small>{item.seriesTitle}</small>}</td>
+                        <td><span className={`${styles.status} ${statusClass(item.status, styles)}`}>{formatStatus(item.status)}</span>{item.decidedAt && <small>{formatDate(item.decidedAt)}</small>}</td>
+                        <td>{item.reviewerName || item.reviewerEmail || "—"}</td>
+                        <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span key={resource.id}>{resource.kind}</span>)}</div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             {totalHistoryPages > 1 && (
               <div className={styles.pagination} aria-label="Approval history pagination">
