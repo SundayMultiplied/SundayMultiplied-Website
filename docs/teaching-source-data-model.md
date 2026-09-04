@@ -70,3 +70,15 @@ Resource generation may continue only when:
 - no notes-only item has been approved for context use without human review.
 
 The next intake step should populate `source_bundle` with distinct source records and retain the extracted text for each source separately. It should not concatenate all uploaded files into an unattributed text blob.
+
+## Step 2 intake contract
+
+The production form accepts:
+
+- one required TXT or VTT delivered-sermon transcript;
+- optional pastor notes, manuscript, outline, and supporting documents in TXT, DOCX, or PDF form;
+- optional speaker, sermon title, series title, and primary-passage overrides.
+
+Supplemental file bytes are stored in R2 under the production job with a source ID, source type, original filename, media type, SHA-256 hash, and `stored_pending_extraction` status. Until Step 3 extracts their text, they are present in `source_bundle` but explicitly unauthorized as analysis evidence.
+
+Nonblank metadata overrides are applied after analysis as server-controlled factual values with high-confidence `church_metadata` evidence. Blank fields continue to use conservative automatic detection.

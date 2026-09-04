@@ -1,5 +1,5 @@
 import { PRODUCTION_CHURCHES } from "./generated/church-registry";
-import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis } from "./sermon-analysis";
+import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type TeachingSourceDescriptor, type TeachingSourceType } from "./sermon-analysis";
 import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
 
 type ProductionEnv = {
@@ -41,6 +41,8 @@ type ProductionManifest = {
   createdAt: string;
   status: "ready_for_internal_review" | "sent_for_approval";
   sourceFilename: string;
+  sourceFiles?: Array<{ sourceId: string; sourceType: TeachingSourceType; filename: string; storageKey: string; status: "analyzed" | "stored_pending_extraction" }>;
+  metadataOverrides?: { speaker?: string; sermonTitle?: string; seriesTitle?: string; primaryPassage?: string };
   analysisStorageKey?: string;
   analysisId?: string;
   fidelityResult?: string;
@@ -157,14 +159,60 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
   if (!(file instanceof File)) return json({ error: "Upload a TXT or VTT sermon transcript." }, 400);
   if (!/\.(txt|vtt)$/i.test(file.name)) return json({ error: "Transcript must be a .txt or .vtt file." }, 400);
   if (file.size > 5_000_000) return json({ error: "Transcript is too large. Maximum upload is 5 MB." }, 413);
+  const transcriptFilename = clean(file.name, 180);
 
-  const transcript = normalizeTranscript(await file.text(), file.name);
+  const supplementalFieldTypes = [
+    ["pastorNotes", "pastor_notes"],
+    ["sermonManuscript", "sermon_manuscript"],
+    ["outline", "outline"],
+    ["supportingDocuments", "supporting_document"],
+  ] as const;
+  const supplementalUploads: Array<{ file: File; sourceType: TeachingSourceType }> = [];
+  for (const [field, sourceType] of supplementalFieldTypes) {
+    for (const value of form.getAll(field)) {
+      if (!(value instanceof File) || value.size === 0) continue;
+      if (!/\.(txt|docx|pdf)$/i.test(value.name)) return json({ error: `${clean(value.name, 180)} must be a TXT, DOCX, or PDF file.` }, 400);
+      if (value.size > 10_000_000) return json({ error: `${clean(value.name, 180)} is too large. Maximum supplemental file size is 10 MB.` }, 413);
+      supplementalUploads.push({ file: value, sourceType });
+    }
+  }
+  if (supplementalUploads.length > 8) return json({ error: "Upload no more than 8 supplemental teaching-source files." }, 400);
+  if (supplementalUploads.reduce((total, item) => total + item.file.size, 0) > 25_000_000) return json({ error: "Supplemental teaching sources exceed the 25 MB combined limit." }, 413);
+
+  const metadataOverrides = {
+    speaker: optionalClean(form.get("speaker"), 160),
+    sermonTitle: optionalClean(form.get("sermonTitle"), 240),
+    seriesTitle: optionalClean(form.get("seriesTitle"), 240),
+    primaryPassage: optionalClean(form.get("primaryPassage"), 160),
+  };
+
+  const transcript = normalizeTranscript(await file.text(), transcriptFilename);
   if (transcript.length < 500) return json({ error: "The transcript is too short to generate reliable resources." }, 400);
 
   const id = crypto.randomUUID();
   const transcriptKey = `production/jobs/${id}/transcript.txt`;
   const analysisKey = `production/jobs/${id}/sermon-analysis.json`;
   await env.BUCKET.put(transcriptKey, transcript, { httpMetadata: { contentType: "text/plain; charset=utf-8" } });
+  const supplementalSources: TeachingSourceDescriptor[] = [];
+  const storedSourceFiles: NonNullable<ProductionManifest["sourceFiles"]> = [{ sourceId: `transcript-${id}`, sourceType: "transcript", filename: transcriptFilename, storageKey: transcriptKey, status: "analyzed" }];
+  for (const [index, upload] of supplementalUploads.entries()) {
+    const bytes = await upload.file.arrayBuffer();
+    const sourceFilename = clean(upload.file.name, 180);
+    const sourceId = `${upload.sourceType}-${id}-${index + 1}`;
+    const storageKey = `production/jobs/${id}/sources/${sourceId}/${safeStorageName(sourceFilename)}`;
+    const mediaType = upload.file.type || mediaTypeForFilename(sourceFilename);
+    await env.BUCKET.put(storageKey, bytes, { httpMetadata: { contentType: mediaType } });
+    supplementalSources.push({
+      source_id: sourceId,
+      source_type: upload.sourceType,
+      name: sourceFilename,
+      media_type: mediaType,
+      sha256: await sha256Hex(bytes),
+      role: "supporting",
+      authorized_use: "Stored pending text extraction; not used as evidence in this analysis version.",
+    });
+    storedSourceFiles.push({ sourceId, sourceType: upload.sourceType, filename: sourceFilename, storageKey, status: "stored_pending_extraction" });
+  }
 
   let analysis: CanonicalSermonAnalysis;
   try {
@@ -173,8 +221,10 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
       churchSlug: church.slug,
       churchName: church.name,
       weekOf,
-      sourceFilename: file.name,
+      sourceFilename: transcriptFilename,
       transcript,
+      supplementalSources,
+      metadataOverrides,
     });
     await env.BUCKET.put(analysisKey, JSON.stringify(analysis, null, 2), { httpMetadata: { contentType: "application/json; charset=utf-8" } });
   } catch (error) {
@@ -241,7 +291,9 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
     weekOf,
     createdAt: new Date().toISOString(),
     status: "ready_for_internal_review",
-    sourceFilename: file.name,
+    sourceFilename: transcriptFilename,
+    sourceFiles: storedSourceFiles,
+    metadataOverrides,
     analysisStorageKey: analysisKey,
     analysisId: analysis.analysis_id,
     fidelityResult: analysis.fidelity_audit.result,
@@ -413,6 +465,23 @@ function accessIdentityEmail(request: Request) {
 }
 function titleCase(value: string) { return value.charAt(0).toUpperCase() + value.slice(1); }
 function clean(value: string, max: number) { return value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, max); }
+function optionalClean(value: FormDataEntryValue | null, max: number) {
+  if (typeof value !== "string") return undefined;
+  return clean(value, max) || undefined;
+}
+function safeStorageName(value: string) {
+  const cleaned = value.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 180);
+  return cleaned || "source-file";
+}
+function mediaTypeForFilename(value: string) {
+  if (/\.pdf$/i.test(value)) return "application/pdf";
+  if (/\.docx$/i.test(value)) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  return "text/plain; charset=utf-8";
+}
+async function sha256Hex(value: ArrayBuffer) {
+  const digest = await crypto.subtle.digest("SHA-256", value);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, "cache-control": "no-store", "x-content-type-options": "nosniff" } });
 }
