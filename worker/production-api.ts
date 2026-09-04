@@ -287,10 +287,10 @@ async function generateResourcesFromAnalysis(env: ProductionEnv, church: ChurchC
 
 AUTHORITY ORDER
 1. Sunday Multiplied Sermon Fidelity Standard v1.0.
-2. The supplied Canonical Sermon Analysis v2.
+2. The supplied transcript-led Canonical Sermon Analysis v3.
 3. The resource format requirements below.
 
-The analysis is the governing evidence map. Do not add sermon claims, theology, quotations, applications, illustrations, references, or pastoral intent that are not supported there. Prefer Pastor Language Bank wording. Preserve qualifications. Represent the sermon's complete major-movement arc rather than narrowing everything to one attractive theme. Use only applications classified explicit or supported and stay inside adaptation_boundaries.
+The analysis is the governing evidence map. The delivered-sermon transcript controls whenever it is available. Do not add sermon claims, theology, quotations, applications, illustrations, references, or pastoral intent that are not supported there. Never use source_comparison.notes_only_content in a resource. Follow memorable_structure only when use_in_resources is true. Prefer Pastor Language Bank wording that is verified by transcript evidence. Preserve qualifications. Represent the sermon's complete major-movement arc rather than narrowing everything to one attractive theme. Use only applications classified explicit or supported and stay inside adaptation_boundaries.
 
 Generate these resources: ${resourceList}.
 Church: ${church.name}.
