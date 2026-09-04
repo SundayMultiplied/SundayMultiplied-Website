@@ -53,13 +53,6 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
   >
     <div className="approval-create-heading">
       <div><p className="approval-kicker">Step 1 · Teaching sources</p><h2>Create weekly source bundle</h2></div>
-      <p>Start with what the congregation heard. Supporting documents clarify the sermon but never override the delivered transcript.</p>
-    </div>
-
-    <div className="source-authority-order" aria-label="Teaching source authority order">
-      <div><strong>1 · Transcript</strong><span>Controls sermon content and emphasis</span></div>
-      <div><strong>2 · Pastor materials</strong><span>Clarify structure and wording</span></div>
-      <div><strong>3 · Church metadata</strong><span>Controls supplied factual fields</span></div>
     </div>
 
     <fieldset className="teaching-source-section">
