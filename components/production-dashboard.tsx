@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TeachingSourcesForm } from "./teaching-sources-form";
 
 type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string; reviewerEmail?: string };
 type ProductionJob = {
@@ -105,17 +106,8 @@ export function ProductionDashboard() {
   }
 
   return <main className="approval-dashboard">
-    <div className="approval-dashboard-head"><div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Resource Production</h1><p>Upload a sermon transcript, generate the church&apos;s configured resources, review them internally, and release them into pastoral approval.</p></div></div>
-    <form className="approval-create production-create" onSubmit={(event) => { event.preventDefault(); if (!saving) void createSermonResources(new FormData(event.currentTarget)); }}>
-      <div className="approval-create-heading"><h2>Create sermon resources</h2><p>TXT and VTT transcripts are supported. Canonical sermon analysis runs first, then downstream resources are generated and held for internal review.</p></div>
-      <div className="approval-create-grid">
-        <label><span className="approval-field-label">Church</span><select name="churchSlug" required defaultValue=""><option value="" disabled>Select a church…</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
-        <label><span className="approval-field-label">Sermon date</span><input name="weekOf" type="date" required /></label>
-        <label className="wide"><span className="approval-field-label">Sermon transcript</span><input name="transcript" type="file" accept=".txt,.vtt,text/plain,text/vtt" required /></label>
-      </div>
-      <button className="approval-approve" disabled={saving}>{saving ? "Creating resources…" : "Create sermon resources"}</button>
-      {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Generating sermon resources</strong><span>The transcript is being analyzed, then the resource package is being built.</span></div> : <small>The transcript, canonical analysis, and generated resources are stored as one production job.</small>}
-    </form>
+    <div className="approval-dashboard-head"><div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Resource Production</h1><p>Create a transcript-led teaching source bundle, generate the church&apos;s resources, review them internally, and release them into pastoral approval.</p></div></div>
+    <TeachingSourcesForm churches={churches} saving={saving} onSubmit={(formData) => void createSermonResources(formData)} />
     {error && <div className="approval-admin-error"><strong>Production unavailable</strong><p>{error}</p></div>}
     {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
     {createdLink && <div className="approval-created-link"><strong>Secure review link</strong><input readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} /><small>The church notification uses this secure review page.</small></div>}

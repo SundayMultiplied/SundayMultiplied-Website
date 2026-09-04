@@ -5,7 +5,7 @@ type AnalysisEnv = {
 
 type Confidence = "high" | "medium" | "low";
 
-type SourceType =
+export type TeachingSourceType =
   | "transcript"
   | "pastor_notes"
   | "sermon_manuscript"
@@ -14,22 +14,22 @@ type SourceType =
   | "church_metadata"
   | "scripture_text";
 
-type SourceRole = "controlling" | "supporting" | "factual" | "verification_only";
+export type TeachingSourceRole = "controlling" | "supporting" | "factual" | "verification_only";
 
-type SourceDescriptor = {
+export type TeachingSourceDescriptor = {
   source_id: string;
-  source_type: SourceType;
+  source_type: TeachingSourceType;
   name: string;
   media_type: string;
   sha256: string | null;
-  role: SourceRole;
+  role: TeachingSourceRole;
   authorized_use: string;
 };
 
 type Evidence = {
-  source_type: SourceType;
+  source_type: TeachingSourceType;
   source_ref: string;
-  source_role: SourceRole;
+  source_role: TeachingSourceRole;
   delivery_status: "delivered" | "planned" | "factual_context" | "verification_only";
   start_time: string | null;
   end_time: string | null;
@@ -67,14 +67,14 @@ export type CanonicalSermonAnalysis = {
     sermon_title: string | null;
     series_title: string | null;
     primary_passage: string | null;
-    metadata_evidence: Array<{ field: string; value: string | null; source_type: SourceType; source_ref: string; confidence: Confidence }>;
+    metadata_evidence: Array<{ field: string; value: string | null; source_type: TeachingSourceType; source_ref: string; confidence: Confidence }>;
   };
   source_bundle: {
     source_bundle_id: string;
-    transcript: SourceDescriptor | null;
-    supplemental_sources: SourceDescriptor[];
-    church_metadata: SourceDescriptor[];
-    scripture_text: SourceDescriptor[];
+    transcript: TeachingSourceDescriptor | null;
+    supplemental_sources: TeachingSourceDescriptor[];
+    church_metadata: TeachingSourceDescriptor[];
+    scripture_text: TeachingSourceDescriptor[];
   };
   source_quality: {
     overall: Confidence;
@@ -204,7 +204,16 @@ export type CanonicalSermonAnalysis = {
 
 export async function generateCanonicalSermonAnalysis(
   env: AnalysisEnv,
-  input: { jobId: string; churchSlug: string; churchName: string; weekOf: string; sourceFilename: string; transcript: string },
+  input: {
+    jobId: string;
+    churchSlug: string;
+    churchName: string;
+    weekOf: string;
+    sourceFilename: string;
+    transcript: string;
+    supplementalSources?: TeachingSourceDescriptor[];
+    metadataOverrides?: { speaker?: string; sermonTitle?: string; seriesTitle?: string; primaryPassage?: string };
+  },
 ): Promise<CanonicalSermonAnalysis> {
   if (!env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured for sermon analysis.");
 
@@ -214,6 +223,8 @@ export async function generateCanonicalSermonAnalysis(
   const metadataSourceId = `church-metadata-${input.jobId}`;
   const sourceBundleId = `source-bundle-${input.jobId}`;
   const transcriptHash = await sha256Hex(input.transcript);
+  const metadataOverrides = input.metadataOverrides || {};
+  const metadataHash = await sha256Hex(JSON.stringify({ churchName: input.churchName, weekOf: input.weekOf, ...metadataOverrides }));
   const prompt = `You are creating the canonical Sunday Multiplied Sermon Analysis v3. This analysis governs every downstream resource from this sermon.
 
 GOVERNING STANDARD
@@ -242,6 +253,8 @@ Sermon Date: ${input.weekOf}
 Transcript Source ID: ${sourceId}
 Transcript Filename: ${input.sourceFilename}
 Church Metadata Source ID: ${metadataSourceId}
+Factual Metadata Overrides: ${JSON.stringify(metadataOverrides)}
+Supplemental files stored pending extraction: ${(input.supplementalSources || []).map((source) => `${source.source_type}: ${source.name}`).join(", ") || "none"}
 
 REQUIRED ANALYSIS
 1. Validate transcript/source quality and generation disposition.
@@ -308,18 +321,30 @@ Return only the required structured JSON.`;
       role: "controlling",
       authorized_use: "Controlling evidence for the sermon as delivered.",
     },
-    supplemental_sources: [],
+    supplemental_sources: input.supplementalSources || [],
     church_metadata: [{
       source_id: metadataSourceId,
       source_type: "church_metadata",
       name: "Production intake metadata",
       media_type: "application/json",
-      sha256: null,
+      sha256: metadataHash,
       role: "factual",
-      authorized_use: "Authoritative only for supplied church and sermon-date fields.",
+      authorized_use: "Authoritative only for supplied church, sermon-date, and nonblank metadata override fields.",
     }],
     scripture_text: [],
   };
+  const overrideFields = [
+    ["speaker", metadataOverrides.speaker],
+    ["sermon_title", metadataOverrides.sermonTitle],
+    ["series_title", metadataOverrides.seriesTitle],
+    ["primary_passage", metadataOverrides.primaryPassage],
+  ] as const;
+  for (const [analysisField, value] of overrideFields) {
+    if (!value) continue;
+    analysis.sermon[analysisField] = value;
+    analysis.sermon.metadata_evidence = analysis.sermon.metadata_evidence.filter((item) => item.field !== analysisField);
+    analysis.sermon.metadata_evidence.push({ field: analysisField, value, source_type: "church_metadata", source_ref: metadataSourceId, confidence: "high" });
+  }
   validateTranscriptLedAnalysis(analysis, analysisId, sermonId, input);
   return analysis;
 }

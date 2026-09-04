@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TeachingSourcesForm } from "./teaching-sources-form";
 
 type PackageSummary = {
   id: string;
@@ -224,29 +225,13 @@ export function ApprovalDashboard() {
   return (
     <main className="approval-dashboard">
       <div className="approval-dashboard-head">
-        <div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Sermon production</h1><p>Upload the sermon transcript. The church configuration, branding, resource URLs, and approval package are handled automatically.</p></div>
+        <div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Sermon production</h1><p>Build a transcript-led teaching source bundle. Church configuration, branding, resource URLs, and approval packaging remain automatic.</p></div>
         <div className="approval-dashboard-actions">
           <a className="approval-approve" href="/revisions">Revisions{revisions.length ? ` (${revisions.length})` : ""}</a>
         </div>
       </div>
 
-      <form
-        className="approval-create production-create"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (saving) return;
-          void createSermonResources(new FormData(event.currentTarget));
-        }}
-      >
-        <div className="approval-create-heading"><h2>Create sermon resources</h2><p>TXT and VTT transcripts are supported. Generated resources stop for your internal review before the church is notified.</p></div>
-        <div className="approval-create-grid">
-          <label><span className="approval-field-label">Church</span><select name="churchSlug" required defaultValue=""><option value="" disabled>Select a church…</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
-          <label><span className="approval-field-label">Sermon date</span><input name="weekOf" type="date" required /></label>
-          <label className="wide"><span className="approval-field-label">Sermon transcript</span><input name="transcript" type="file" accept=".txt,.vtt,text/plain,text/vtt" required /></label>
-        </div>
-        <button className="approval-approve" disabled={saving}>{saving ? "Creating resources…" : "Create sermon resources"}</button>
-        {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Generating sermon resources</strong><span>Your selections are still active. The transcript is being analyzed and the resource package is being built.</span></div> : <small>The transcript is normalized, analyzed, converted into the church&apos;s configured resources, and stored as an internal review package.</small>}
-      </form>
+      <TeachingSourcesForm churches={churches} saving={saving} onSubmit={(formData) => void createSermonResources(formData)} />
 
       {error && <div className="approval-admin-error"><strong>Production unavailable</strong><p>{error}</p></div>}
       {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
