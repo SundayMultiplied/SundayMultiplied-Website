@@ -50,10 +50,13 @@ type DashboardData = {
   activity: ActivityItem[];
 };
 
+const HISTORY_PAGE_SIZE = 10;
+
 export function ChurchDashboard({ slug }: { slug: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [historyPage, setHistoryPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +85,17 @@ export function ChurchDashboard({ slug }: { slug: string }) {
     [data],
   );
 
+  const totalHistoryPages = Math.max(1, Math.ceil((data?.packages.length || 0) / HISTORY_PAGE_SIZE));
+  const pagedPackages = useMemo(() => {
+    if (!data) return [];
+    const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
+    return data.packages.slice(start, start + HISTORY_PAGE_SIZE);
+  }, [data, historyPage]);
+
+  useEffect(() => {
+    if (historyPage > totalHistoryPages) setHistoryPage(totalHistoryPages);
+  }, [historyPage, totalHistoryPages]);
+
   if (loading) {
     return <main className={styles.shell}><div className={styles.stateCard}>Loading church dashboard…</div></main>;
   }
@@ -91,18 +105,33 @@ export function ChurchDashboard({ slug }: { slug: string }) {
   }
 
   const current = data.currentPackage;
+  const logoUrl = `/api/resource-assets/${encodeURIComponent(data.church.slug)}/logo`;
 
   return (
     <main className={styles.shell}>
-      <header className={styles.hero}>
-        <div>
-          <p className={styles.kicker}>Sunday Multiplied</p>
-          <h1>{data.church.name}</h1>
-          <p className={styles.subtitle}>Your sermon-based discipleship resources, approvals, and weekly history.</p>
+      <nav className={styles.portalNav} aria-label="Church portal navigation">
+        <a className={styles.portalBrand} href="#dashboard">Sunday Multiplied</a>
+        <div className={styles.portalLinks}>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#resources">Resources</a>
+          <a href="#history">History</a>
         </div>
-        <div className={styles.viewer}>
-          <span>Signed in as</span>
-          <strong>{data.viewer.email}</strong>
+      </nav>
+
+      <header className={styles.hero} id="dashboard">
+        <div className={styles.identity}>
+          <div className={styles.logoFrame}>
+            <img src={logoUrl} alt={`${data.church.name} logo`} className={styles.churchLogo} />
+          </div>
+          <div>
+            <p className={styles.kicker}>Church portal</p>
+            <h1>{data.church.name}</h1>
+            <div className={styles.viewer}>
+              <span>Signed in as</span>
+              <strong>{data.viewer.email}</strong>
+            </div>
+            <p className={styles.subtitle}>Your sermon-based discipleship resources, approvals, and weekly history.</p>
+          </div>
         </div>
       </header>
 
@@ -112,7 +141,7 @@ export function ChurchDashboard({ slug }: { slug: string }) {
         <div><span>Current status</span><strong className={styles.metricStatus}>{current ? formatStatus(current.status) : "No package yet"}</strong></div>
       </section>
 
-      <section className={styles.grid}>
+      <section className={styles.grid} id="resources">
         <article className={`${styles.card} ${styles.currentCard}`}>
           <div className={styles.cardHeading}>
             <div><p className={styles.kicker}>This week</p><h2>Current Package</h2></div>
@@ -163,25 +192,34 @@ export function ChurchDashboard({ slug }: { slug: string }) {
         </article>
       </section>
 
-      <section className={styles.card}>
+      <section className={styles.card} id="history">
         <div className={styles.cardHeading}><div><p className={styles.kicker}>Archive</p><h2>Approval History & Resources</h2></div><span className={styles.count}>{data.packages.length} packages</span></div>
         {data.packages.length === 0 ? <p className={styles.empty}>Your history will appear here once the first package is created.</p> : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead><tr><th>Week</th><th>Package</th><th>Status</th><th>Reviewer</th><th>Resources</th></tr></thead>
-              <tbody>
-                {data.packages.map((item) => (
-                  <tr key={item.id}>
-                    <td>{formatDate(item.weekOf)}</td>
-                    <td><strong>{item.title}</strong>{item.seriesTitle && <small>{item.seriesTitle}</small>}</td>
-                    <td><span className={`${styles.status} ${statusClass(item.status, styles)}`}>{formatStatus(item.status)}</span>{item.decidedAt && <small>{formatDate(item.decidedAt)}</small>}</td>
-                    <td>{item.reviewerName || item.reviewerEmail || "—"}</td>
-                    <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span key={resource.id}>{resource.kind}</span>)}</div></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead><tr><th>Week</th><th>Package</th><th>Status</th><th>Reviewer</th><th>Resources</th></tr></thead>
+                <tbody>
+                  {pagedPackages.map((item) => (
+                    <tr key={item.id}>
+                      <td>{formatDate(item.weekOf)}</td>
+                      <td><strong>{item.title}</strong>{item.seriesTitle && <small>{item.seriesTitle}</small>}</td>
+                      <td><span className={`${styles.status} ${statusClass(item.status, styles)}`}>{formatStatus(item.status)}</span>{item.decidedAt && <small>{formatDate(item.decidedAt)}</small>}</td>
+                      <td>{item.reviewerName || item.reviewerEmail || "—"}</td>
+                      <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span key={resource.id}>{resource.kind}</span>)}</div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {totalHistoryPages > 1 && (
+              <div className={styles.pagination} aria-label="Approval history pagination">
+                <button type="button" onClick={() => setHistoryPage((page) => Math.max(1, page - 1))} disabled={historyPage === 1}>Previous</button>
+                <span>Page {historyPage} of {totalHistoryPages}</span>
+                <button type="button" onClick={() => setHistoryPage((page) => Math.min(totalHistoryPages, page + 1))} disabled={historyPage === totalHistoryPages}>Next</button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </main>
