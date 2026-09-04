@@ -342,13 +342,24 @@
   color: #78847d;
 }
 
+.mobileScrollHint {
+  display: none;
+}
+
+.tableViewport {
+  position: relative;
+}
+
 .tableWrap {
   overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .table th,
@@ -357,6 +368,7 @@
   border-bottom: 1px solid #ecefec;
   text-align: left;
   vertical-align: top;
+  background: #fff;
 }
 
 .table th {
@@ -454,6 +466,42 @@
 
   .card {
     padding: 20px;
+  }
+
+  .mobileScrollHint {
+    display: block;
+    margin: -6px 0 10px;
+    color: #6d7972;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .tableViewport.hasMoreRight::after {
+    content: "";
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 34px;
+    pointer-events: none;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), #fff);
+  }
+
+  .table {
+    min-width: 760px;
+  }
+
+  .table th:first-child,
+  .table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    box-shadow: 10px 0 14px -14px rgba(29, 42, 36, 0.65);
+  }
+
+  .table th:first-child {
+    z-index: 4;
   }
 
   .pagination {
