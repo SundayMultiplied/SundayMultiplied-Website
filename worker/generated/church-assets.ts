@@ -3,5 +3,6 @@ export const PRIMARY_LOGO_R2_KEYS: Record<string, string> = {
   "calvary-baptist-temple": "churches/calvary-baptist-temple/brand/primary-cbt_logo.png",
   "cbc-savannah": "churches/cbc-savannah/brand/primary-cbc-savannah-logo.png",
   "sample-church": "churches/sample-church/brand/primary-Gemini_Generated_Image_82u22g82u22g82u2.jfif",
-  "skidaway-church": "churches/skidaway-church/brand/primary-SKidaway_2025_Horizontal-Slogan_Logo_Navy_1.svg"
+  "skidaway-church": "churches/skidaway-church/brand/primary-SKidaway_2025_Horizontal-Slogan_Logo_Navy_1.svg",
+  "southside-baptist": "churches/southside-baptist-church/brand/primary-southside-baptist-logo.png"
 };

@@ -3,7 +3,11 @@ export const PRODUCTION_CHURCHES = [
   {
     "slug": "calvary-baptist-temple",
     "name": "Calvary Baptist Temple",
-    "resources": ["monday", "group", "family"],
+    "resources": [
+      "monday",
+      "group",
+      "family"
+    ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/calvary-baptist-temple/church.css",
     "logoUrl": "/api/resource-assets/calvary-baptist-temple/logo"
@@ -11,7 +15,11 @@ export const PRODUCTION_CHURCHES = [
   {
     "slug": "cbc-savannah",
     "name": "CBC Savannah",
-    "resources": ["monday", "group", "family"],
+    "resources": [
+      "monday",
+      "group",
+      "family"
+    ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/cbc-savannah/church.css",
     "logoUrl": "/api/resource-assets/cbc-savannah/logo"
@@ -19,7 +27,11 @@ export const PRODUCTION_CHURCHES = [
   {
     "slug": "sample-church",
     "name": "Sample Church",
-    "resources": ["monday", "group", "family"],
+    "resources": [
+      "monday",
+      "group",
+      "family"
+    ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/sample-church/church.css",
     "logoUrl": "/api/resource-assets/sample-church/logo"
@@ -27,9 +39,25 @@ export const PRODUCTION_CHURCHES = [
   {
     "slug": "skidaway-church",
     "name": "Skidaway Church",
-    "resources": ["monday", "group", "family"],
+    "resources": [
+      "monday",
+      "group",
+      "family"
+    ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/skidaway-church/church.css",
     "logoUrl": "/api/resource-assets/skidaway-church/logo"
+  },
+  {
+    "slug": "southside-baptist",
+    "name": "Southside Baptist Church",
+    "resources": [
+      "monday",
+      "group",
+      "family"
+    ],
+    "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
+    "cssUrl": "/resources/southside-baptist/church.css",
+    "logoUrl": "/api/resource-assets/southside-baptist/logo"
   }
 ];
