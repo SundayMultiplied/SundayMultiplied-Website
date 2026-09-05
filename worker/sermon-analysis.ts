@@ -89,6 +89,18 @@ export type CanonicalSermonAnalysis = {
     material_issues: string[];
     generation_disposition: "proceed" | "proceed_with_warnings" | "human_review_required" | "blocked";
   };
+  pastoral_voice_profile?: {
+    scope: "current_sermon";
+    summary: string;
+    confidence: Confidence;
+    tone_traits: string[];
+    communication_patterns: string[];
+    application_posture: string;
+    question_posture: string;
+    preferred_vocabulary: string[];
+    cautions: string[];
+    evidence: Evidence[];
+  };
   central_claim: Claim;
   core_tension: Claim;
   memorable_structure: Array<{
@@ -274,14 +286,15 @@ REQUIRED ANALYSIS
 8. State the primary response.
 9. Identify heart issues actually addressed.
 10. Build a Pastor Language Bank of reusable exact/verified phrases, questions, contrasts, point titles, calls to action, qualifications, and useful paraphrases.
-11. Record sermon-used Scripture references, biblical stories, quotations, major illustrations, and important historical/cultural claims, explaining how each functioned in the sermon.
-12. Classify applications as explicit or supported. For supported applications, define what downstream resources may and may not adapt.
-13. Preserve material qualifications.
-14. Classify gospel/invitation content as explicit, implicit, or not_present.
-15. Produce an explicit source comparison. Distinguish content supported by both, transcript-only content, supporting-source-only content, delivered departures, conflicts, and well-supported transcription corrections. Supporting-source-only content must remain excluded from resources.
-16. Record unsupported candidate applications only when useful to document why they must be excluded.
-17. Record uncertainties with impact and required action.
-18. Run the fidelity audit. A pass requires transcript authority to be preserved, notes-only content to be restricted, major claims to have evidence, quotes to be verified/restricted, major movements identified, qualifications preserved, outside content excluded, and gospel/theological foundation faithfully handled.
+11. Build a pastoral_voice_profile from the DELIVERED TRANSCRIPT ONLY. Describe the pastor's observable tone, communication patterns, application posture, question posture, and preferred vocabulary. Include cautions against overstatement or caricature. This profile governs expression, never sermon content, and every supporting evidence item must come from the controlling transcript.
+12. Record sermon-used Scripture references, biblical stories, quotations, major illustrations, and important historical/cultural claims, explaining how each functioned in the sermon.
+13. Classify applications as explicit or supported. For supported applications, define what downstream resources may and may not adapt.
+14. Preserve material qualifications.
+15. Classify gospel/invitation content as explicit, implicit, or not_present.
+16. Produce an explicit source comparison. Distinguish content supported by both, transcript-only content, supporting-source-only content, delivered departures, conflicts, and well-supported transcription corrections. Supporting-source-only content must remain excluded from resources.
+17. Record unsupported candidate applications only when useful to document why they must be excluded.
+18. Record uncertainties with impact and required action.
+19. Run the fidelity audit. A pass requires transcript authority to be preserved, notes-only content to be restricted, major claims to have evidence, quotes to be verified/restricted, major movements identified, qualifications preserved, outside content excluded, and gospel/theological foundation faithfully handled.
 
 EVIDENCE RULES
 - Every conclusion about what was delivered must include evidence from transcript source ${sourceId}. Factual metadata evidence may point to ${metadataSourceId}.
@@ -385,6 +398,12 @@ export function validateTranscriptLedAnalysis(
   if (analysis.source_authority.policy !== "transcript_led" || !analysis.source_authority.transcript_available || analysis.source_authority.conflict_rule !== "delivered_sermon_controls") throw new Error("Canonical sermon analysis did not preserve transcript authority.");
   if (!analysis.source_bundle.transcript) throw new Error("Canonical sermon analysis omitted the controlling transcript source.");
   if (analysis.source_authority.controlling_source_id !== analysis.source_bundle.transcript.source_id || analysis.source_bundle.transcript.role !== "controlling") throw new Error("Canonical sermon analysis has an invalid controlling source.");
+  if (analysis.pastoral_voice_profile?.evidence.some((item) => item.source_ref !== analysis.source_bundle.transcript?.source_id
+      || item.source_type !== "transcript"
+      || item.source_role !== "controlling"
+      || item.delivery_status !== "delivered")) {
+    throw new Error("Pastoral voice profile evidence must come from the delivered transcript.");
+  }
   if (analysis.source_comparison.notes_only_content.some((item) => item.use_in_resources !== "exclude")
       && !["human_review_required", "fail"].includes(analysis.fidelity_audit.result)) {
     throw new Error("Notes-only content requires human review before it can enter resources.");
@@ -463,6 +482,10 @@ export function canonicalSermonAnalysisSchema() {
         supplemental_sources: { type: "array", items: sourceDescriptor }, church_metadata: { type: "array", items: sourceDescriptor }, scripture_text: { type: "array", items: sourceDescriptor },
       }, required: ["source_bundle_id", "transcript", "supplemental_sources", "church_metadata", "scripture_text"] },
       source_quality: { type: "object", additionalProperties: false, properties: { overall: confidence, transcript_complete: { type: "boolean" }, sermon_boundary_clear: { type: "boolean" }, speaker_clear: { type: "boolean" }, material_issues: stringArray, generation_disposition: { type: "string", enum: ["proceed", "proceed_with_warnings", "human_review_required", "blocked"] } }, required: ["overall", "transcript_complete", "sermon_boundary_clear", "speaker_clear", "material_issues", "generation_disposition"] },
+      pastoral_voice_profile: { type: "object", additionalProperties: false, properties: {
+        scope: { type: "string", enum: ["current_sermon"] }, summary: { type: "string" }, confidence, tone_traits: stringArray, communication_patterns: stringArray,
+        application_posture: { type: "string" }, question_posture: { type: "string" }, preferred_vocabulary: stringArray, cautions: stringArray, evidence: evidenceArray,
+      }, required: ["scope", "summary", "confidence", "tone_traits", "communication_patterns", "application_posture", "question_posture", "preferred_vocabulary", "cautions", "evidence"] },
       central_claim: claim, core_tension: claim,
       memorable_structure: { type: "array", items: { type: "object", additionalProperties: false, properties: {
         structure_id: { type: "string" }, label: { type: "string" }, kind: { type: "string", enum: ["outline", "alliteration", "repeated_phrase", "sequence", "contrast", "other"] },
@@ -488,6 +511,6 @@ export function canonicalSermonAnalysisSchema() {
       uncertainties: { type: "array", items: { type: "object", additionalProperties: false, properties: { uncertainty_id: { type: "string" }, field_or_topic: { type: "string" }, description: { type: "string" }, impact: { type: "string", enum: ["none", "minor", "material", "blocking"] }, required_action: { type: "string", enum: ["none", "retain_warning", "human_review", "block_generation"] } }, required: ["uncertainty_id", "field_or_topic", "description", "impact", "required_action"] } },
       fidelity_audit: { type: "object", additionalProperties: false, properties: { all_major_claims_supported: { type: "boolean" }, all_quotes_verified: { type: "boolean" }, major_movements_identified: { type: "boolean" }, qualifications_preserved: { type: "boolean" }, outside_content_excluded: { type: "boolean" }, gospel_foundation_preserved: { type: "boolean" }, transcript_authority_preserved: { type: "boolean" }, notes_only_content_restricted: { type: "boolean" }, result: { type: "string", enum: ["pass", "pass_with_warnings", "human_review_required", "fail"] }, notes: stringArray }, required: ["all_major_claims_supported", "all_quotes_verified", "major_movements_identified", "qualifications_preserved", "outside_content_excluded", "gospel_foundation_preserved", "transcript_authority_preserved", "notes_only_content_restricted", "result", "notes"] },
     },
-    required: ["schema_version", "analysis_id", "fidelity_standard_version", "created_at", "source_authority", "sermon", "source_bundle", "source_quality", "central_claim", "core_tension", "memorable_structure", "major_movements", "theological_foundation", "primary_response", "heart_issues", "pastor_language_bank", "references_and_illustrations", "applications", "qualifications", "gospel_and_invitation", "audience_context", "source_comparison", "unsupported_candidates_excluded", "uncertainties", "fidelity_audit"],
+    required: ["schema_version", "analysis_id", "fidelity_standard_version", "created_at", "source_authority", "sermon", "source_bundle", "source_quality", "pastoral_voice_profile", "central_claim", "core_tension", "memorable_structure", "major_movements", "theological_foundation", "primary_response", "heart_issues", "pastor_language_bank", "references_and_illustrations", "applications", "qualifications", "gospel_and_invitation", "audience_context", "source_comparison", "unsupported_candidates_excluded", "uncertainties", "fidelity_audit"],
   };
 }
