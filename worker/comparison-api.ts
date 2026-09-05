@@ -15,6 +15,12 @@ import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
 type VariantLabel = "A" | "B" | "C";
 type RecipeVersion = "v1" | "v2" | "v3";
 type ResourceKind = "monday" | "group" | "family";
+type ComparisonRatings = {
+  sermonConnection: VariantLabel;
+  pastoralVoice: VariantLabel;
+  realLifeUse: VariantLabel;
+  overall: VariantLabel;
+};
 
 type ComparisonManifest = {
   id: string;
@@ -158,14 +164,19 @@ async function getPublicReview(env: ProductionEnv, id: string) {
 async function saveFeedback(request: Request, env: ProductionEnv, id: string) {
   if (!env.BUCKET) return json({ error: "Comparison storage is unavailable." }, 503);
   if (!await loadComparison(env.BUCKET, id)) return json({ error: "Comparison not found." }, 404);
-  const body = await request.json().catch(() => ({})) as { reviewerName?: string; preferred?: string; notes?: string };
-  if (!body.preferred || !["A", "B", "C"].includes(body.preferred)) return json({ error: "Choose the version that feels best." }, 400);
+  const body = await request.json().catch(() => ({})) as { reviewerName?: string; ratings?: Partial<Record<keyof ComparisonRatings, string>>; notes?: string };
+  const ratingKeys: Array<keyof ComparisonRatings> = ["sermonConnection", "pastoralVoice", "realLifeUse", "overall"];
+  if (!body.ratings || ratingKeys.some((key) => !["A", "B", "C"].includes(body.ratings?.[key] || ""))) {
+    return json({ error: "Choose A, B, or C for each comparison question." }, 400);
+  }
+  const ratings = Object.fromEntries(ratingKeys.map((key) => [key, body.ratings?.[key]])) as ComparisonRatings;
   const feedbackId = crypto.randomUUID();
   const feedback = {
     id: feedbackId,
     comparisonId: id,
     reviewerName: clean(body.reviewerName || "Anonymous reviewer", 100),
-    preferred: body.preferred as VariantLabel,
+    preferred: ratings.overall,
+    ratings,
     notes: clean(body.notes || "", 2000),
     createdAt: new Date().toISOString(),
   };
