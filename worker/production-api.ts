@@ -442,6 +442,12 @@ AUTHORITY ORDER
 
 The analysis is the governing evidence map. The delivered-sermon transcript controls whenever it is available. Do not add sermon claims, theology, quotations, applications, illustrations, references, or pastoral intent that are not supported there. Never use source_comparison.notes_only_content in a resource. Follow memorable_structure only when use_in_resources is true. Prefer Pastor Language Bank wording that is verified by transcript evidence. Preserve qualifications. Represent the sermon's complete major-movement arc rather than narrowing everything to one attractive theme. Use only applications classified explicit or supported and stay inside adaptation_boundaries.
 
+VOICE AND HUMANITY
+- Use pastoral_voice_profile to shape expression, warmth, pacing, application posture, and question style when it is present.
+- Write as a thoughtful pastor pressing the sermon into ordinary life: personal, grounded, gracious, and direct rather than academic, clinical, or textbook-like.
+- The voice profile may influence HOW supported content is communicated; it may never add WHAT the pastor did not say.
+- Do not impersonate the pastor, manufacture quotations, overuse signature phrases, or turn observed traits into caricature.
+
 Generate these resources: ${resourceList}.
 Church: ${church.name}.
 Sermon date: ${weekOf}.
@@ -452,7 +458,7 @@ Primary Scripture: ${metadata.scripture || "not established"}.
 
 CONTENT REQUIREMENTS
 - Monday: concise sermon recap preserving the whole arc, 2-3 distinct supported takeaways, one reflection question, short sermon-rooted prayer. Scripture reference only.
-- Group: Big Idea, Tension, Sermon Snapshot, 3-5 Key Moments covering all major movements, 4-6 natural questions across Understand/Reflect/Apply, Practice This Week, Midweek Reinforcement, sermon-specific Leader Tip, Closing Prayer. Include exactly one Scripture section but do not write Scripture text; the system inserts exact BSB.
+- Group: Big Idea, Tension, Sermon Snapshot, 3-5 Key Moments covering all major movements, 4-6 natural questions across Understand/Reflect/Apply, Practice This Week, sermon-specific Leader Tip, Closing Prayer. Include exactly one Scripture section but do not write Scripture text; the system inserts exact BSB. Do not include a Midweek Reinforcement section or assign the group leader a later follow-up message.
 - Family: short family dinner-table resource. It may narrow to the most family-usable response, but its framing must not contradict or erase the sermon arc. Include simple big idea, exactly one Scripture section without passage text, age-flexible questions, supported family activity/application, and short prayer.
 - Quotation marks may only be used for exact_quote or verified_short_phrase entries from the Pastor Language Bank.
 - Do not create filler merely to hit a preferred count.

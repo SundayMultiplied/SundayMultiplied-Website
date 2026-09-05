@@ -64,6 +64,17 @@ export function SermonAnalysisReview({
       </ul>
     </AnalysisSection>
 
+    {analysis.pastoral_voice_profile && <AnalysisSection title="Pastoral voice profile">
+      <div className="analysis-voice-profile">
+        <p>{analysis.pastoral_voice_profile.summary}</p>
+        <div><strong>Tone</strong><span>{analysis.pastoral_voice_profile.tone_traits.join(" · ") || "Not established"}</span></div>
+        <div><strong>Communication patterns</strong><span>{analysis.pastoral_voice_profile.communication_patterns.join(" · ") || "Not established"}</span></div>
+        <div><strong>Application posture</strong><span>{analysis.pastoral_voice_profile.application_posture}</span></div>
+        <div><strong>Question posture</strong><span>{analysis.pastoral_voice_profile.question_posture}</span></div>
+        <small>Current sermon · {analysis.pastoral_voice_profile.confidence} confidence</small>
+      </div>
+    </AnalysisSection>}
+
     <AnalysisSection title="Sermon movements">
       <ol className="analysis-movement-list">
         {analysis.major_movements.map((movement) => <li key={movement.movement_id}>
@@ -230,6 +241,7 @@ function normalizeReviewAnalysis(input: CanonicalSermonAnalysis): CanonicalSermo
       material_issues: input.source_quality?.material_issues || [],
       generation_disposition: input.source_quality?.generation_disposition || "human_review_required",
     },
+    pastoral_voice_profile: input.pastoral_voice_profile,
     central_claim: normalizeClaim(input.central_claim),
     core_tension: normalizeClaim(input.core_tension),
     primary_response: normalizeClaim(input.primary_response),
