@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "church": {
+    "name": "Compass Bible Church",
+    "slug": "compass-bible-church",
+    "city": "Aliso Viejo",
+    "state": "CA",
+    "timezone": "America/Los Angeles",
+    "website": "https://www.compasschurch.org/"
+  },
+  "resources": [
+    "monday",
+    "group",
+    "family"
+  ],
+  "schedule": {
+    "serviceDay": "sunday",
+    "deliveryDay": "Monday"
+  },
+  "approval": {
+    "reviewerConfigured": true,
+    "linkLifetimeDays": 30,
+    "draftRetentionDays": 90,
+    "dashboardMode": "shared"
+  },
+  "brand": {
+    "primaryColor": "#4573b3",
+    "secondaryColor": "#ebf2f9",
+    "accentColor": "#243f6b",
+    "backgroundColor": "#ffffff",
+    "textColor": "#000000",
+    "headingFont": "proxima-nova, Arial, sans-serif",
+    "bodyFont": "Arial, Arial, sans-serif",
+    "cornerRadius": "3px",
+    "buttonStyle": "soft",
+    "visualTone": "grounded, bold, structured",
+    "visualNotes": "Automated review suggests a grounded, bold, structured visual system. Confirm recommendations against current logo files and recent social graphics.",
+    "stylesheet": "churches/compass-bible-church/styles/compass-bible-church.css",
+    "publicStylesheet": "/resources/compass-bible-church/church.css",
+    "sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css",
+    "logoUrl": "/api/resource-assets/compass-bible-church/logo",
+    "assets": [
+      {
+        "kind": "primary",
+        "filename": "compass-bible-church-logo.webp",
+        "r2Key": "churches/compass-bible-church/brand/primary-compass-bible-church-logo.webp",
+        "publicUrl": "/api/resource-assets/compass-bible-church/logo"
+      }
+    ]
+  },
+  "sources": "churches/compass-bible-church/sources/streaming.json"
+}

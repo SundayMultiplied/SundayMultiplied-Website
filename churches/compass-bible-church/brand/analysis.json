@@ -1,0 +1,311 @@
+{
+  "analyzedAt": "2026-08-30T03:01:15.023Z",
+  "pagesAnalyzed": [
+    "https://www.compasschurch.org/",
+    "https://www.youtube.com/c/compassbiblechurch/videos?view=2&live_view=502",
+    "https://www.compasschurch.org/upcoming-events/",
+    "https://www.compasschurch.org/sermons/",
+    "https://www.compasschurch.org/groups/"
+  ],
+  "stylesheetsAnalyzed": [
+    "https://www.compasschurch.org/wp-content/plugins/search-in-place-advanced/css/codepeople_shearch_in_place.min.css",
+    "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css",
+    "https://www.compasschurch.org/wp-includes/js/mediaelement/mediaelementplayer-legacy.min.css",
+    "https://www.compasschurch.org/wp-includes/js/mediaelement/wp-mediaelement.min.css",
+    "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/font-awesome/css/font-awesome.min.css",
+    "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css",
+    "https://www.compasschurch.org/wp-content/themes/compass/style.css",
+    "https://www.compasschurch.org/wp-content/themes/cbc-child/style.css",
+    "https://www.compasschurch.org/wp-content/themes/compass/assets/css/frontend/breakpoints/max.min.css",
+    "https://www.compasschurch.org/wp-content/themes/compass/assets/css/frontend/breakpoints/min.min.css",
+    "https://www.compasschurch.org/wp-content/themes/compass/assets/css/frontend/vcex-shortcodes.min.css",
+    "https://www.compasschurch.org/wp-content/plugins/easy-tables-vc/assets/css/style.min.css"
+  ],
+  "colorCandidates": [
+    {
+      "value": "#ffffff",
+      "occurrences": 389,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/",
+        "https://www.compasschurch.org/wp-content/plugins/search-in-place-advanced/css/codepeople_shearch_in_place.min.css"
+      ]
+    },
+    {
+      "value": "#000000",
+      "occurrences": 142,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/search-in-place-advanced/css/codepeople_shearch_in_place.min.css",
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css",
+        "https://www.compasschurch.org/wp-includes/js/mediaelement/mediaelementplayer-legacy.min.css",
+        "https://www.compasschurch.org/wp-includes/js/mediaelement/wp-mediaelement.min.css",
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css"
+      ]
+    },
+    {
+      "value": "#f7f7f7",
+      "occurrences": 57,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/",
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css"
+      ]
+    },
+    {
+      "value": "#003388",
+      "occurrences": 50,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/"
+      ]
+    },
+    {
+      "value": "#4b87c7",
+      "occurrences": 48,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/"
+      ]
+    },
+    {
+      "value": "#245693",
+      "occurrences": 37,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/"
+      ]
+    },
+    {
+      "value": "#2a2a2a",
+      "occurrences": 33,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css"
+      ]
+    },
+    {
+      "value": "#333133",
+      "occurrences": 32,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/"
+      ]
+    },
+    {
+      "value": "#44515c",
+      "occurrences": 27,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/",
+        "https://www.compasschurch.org/wp-content/themes/cbc-child/style.css"
+      ]
+    },
+    {
+      "value": "#444444",
+      "occurrences": 26,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css",
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css",
+        "https://www.compasschurch.org/wp-content/themes/compass/style.css"
+      ]
+    },
+    {
+      "value": "#5472d2",
+      "occurrences": 26,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css"
+      ]
+    },
+    {
+      "value": "#4cadc9",
+      "occurrences": 25,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css"
+      ]
+    }
+  ],
+  "fontCandidates": [
+    {
+      "value": "proxima-nova",
+      "occurrences": 8,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/"
+      ]
+    },
+    {
+      "value": "Arial, Helvetica, sans-serif !important",
+      "occurrences": 4,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css"
+      ]
+    },
+    {
+      "value": "\"proxima-nova\", sans-serif !important",
+      "occurrences": 1,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/themes/cbc-child/style.css"
+      ]
+    },
+    {
+      "value": "Helvetica,Arial",
+      "occurrences": 1,
+      "sources": [
+        "https://www.compasschurch.org/wp-includes/js/mediaelement/wp-mediaelement.min.css"
+      ]
+    },
+    {
+      "value": "Helvetica,Arial,serif",
+      "occurrences": 1,
+      "sources": [
+        "https://www.compasschurch.org/wp-includes/js/mediaelement/mediaelementplayer-legacy.min.css"
+      ]
+    },
+    {
+      "value": "Roboto, Arial, sans-serif",
+      "occurrences": 1,
+      "sources": [
+        "https://www.youtube.com/c/compassbiblechurch/videos?view=2&live_view=502"
+      ]
+    },
+    {
+      "value": "vcpb-plugin-icons",
+      "occurrences": 1,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css"
+      ]
+    },
+    {
+      "value": "vcpb-plugin-icons!important",
+      "occurrences": 1,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css"
+      ]
+    }
+  ],
+  "radiusCandidates": [
+    {
+      "value": "3px",
+      "occurrences": 13,
+      "sources": [
+        "https://www.compasschurch.org/",
+        "https://www.compasschurch.org/upcoming-events/",
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/groups/",
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css"
+      ]
+    },
+    {
+      "value": "15px",
+      "occurrences": 7,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/search-in-place-advanced/css/codepeople_shearch_in_place.min.css",
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css"
+      ]
+    },
+    {
+      "value": "2px",
+      "occurrences": 6,
+      "sources": [
+        "https://www.compasschurch.org/wp-includes/js/mediaelement/mediaelementplayer-legacy.min.css",
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css",
+        "https://www.compasschurch.org/wp-content/themes/compass/style.css",
+        "https://www.compasschurch.org/wp-content/themes/compass/assets/css/frontend/vcex-shortcodes.min.css"
+      ]
+    },
+    {
+      "value": "13px",
+      "occurrences": 5,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css"
+      ]
+    },
+    {
+      "value": "4px",
+      "occurrences": 5,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css",
+        "https://www.compasschurch.org/wp-content/themes/compass/style.css",
+        "https://www.compasschurch.org/wp-content/themes/compass/assets/css/frontend/vcex-shortcodes.min.css"
+      ]
+    },
+    {
+      "value": "50%",
+      "occurrences": 5,
+      "sources": [
+        "https://www.compasschurch.org/wp-includes/js/mediaelement/mediaelementplayer-legacy.min.css",
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css",
+        "https://www.compasschurch.org/wp-content/themes/compass/style.css",
+        "https://www.compasschurch.org/wp-content/themes/cbc-child/style.css"
+      ]
+    },
+    {
+      "value": "10px",
+      "occurrences": 4,
+      "sources": [
+        "https://www.compasschurch.org/sermons/",
+        "https://www.compasschurch.org/wp-content/plugins/seriesengine_plugin/css/se_styles.css"
+      ]
+    },
+    {
+      "value": "5px",
+      "occurrences": 3,
+      "sources": [
+        "https://www.compasschurch.org/wp-content/plugins/js_composer/assets/css/js_composer.min.css",
+        "https://www.compasschurch.org/wp-content/themes/cbc-child/style.css"
+      ]
+    }
+  ],
+  "suggestedProfile": {
+    "primaryColor": "#003388",
+    "secondaryColor": "#4b87c7",
+    "accentColor": "#245693",
+    "backgroundColor": "#ffffff",
+    "textColor": "#000000",
+    "headingFont": "proxima-nova, Arial, sans-serif",
+    "bodyFont": "Arial, Arial, sans-serif",
+    "cornerRadius": "3px",
+    "buttonStyle": "square",
+    "visualTone": "grounded, bold, structured",
+    "visualNotes": "Automated review suggests a grounded, bold, structured visual system. Confirm recommendations against current logo files and recent social graphics."
+  },
+  "contrastChecks": [
+    {
+      "label": "Body text",
+      "foreground": "#000000",
+      "background": "#ffffff",
+      "ratio": 21,
+      "level": "pass"
+    },
+    {
+      "label": "Primary text",
+      "foreground": "#003388",
+      "background": "#ffffff",
+      "ratio": 11.48,
+      "level": "pass"
+    },
+    {
+      "label": "Text on primary",
+      "foreground": "#ffffff",
+      "background": "#003388",
+      "ratio": 11.48,
+      "level": "pass"
+    }
+  ],
+  "warnings": []
+}
