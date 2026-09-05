@@ -57,6 +57,17 @@ test("fidelity audit must explicitly protect transcript authority", () => {
   assert.ok(audit.required.includes("notes_only_content_restricted"));
 });
 
+test("pastoral voice profile is current-sermon and transcript-evidenced", () => {
+  const voice = schema.properties.pastoral_voice_profile;
+  assert.ok(schema.required.includes("pastoral_voice_profile"));
+  assert.deepEqual(voice.properties.scope.enum, ["current_sermon"]);
+  assert.ok(voice.required.includes("tone_traits"));
+  assert.ok(voice.required.includes("communication_patterns"));
+  assert.ok(voice.required.includes("application_posture"));
+  assert.ok(voice.required.includes("question_posture"));
+  assert.ok(voice.required.includes("evidence"));
+});
+
 function validationFixture() {
   return {
     schema_version: "3.0",
@@ -116,5 +127,30 @@ test("runtime validation rejects incorrect supporting-source provenance", () => 
       new Map([["notes-job", { role: "supporting", deliveryStatus: "planned" }]]),
     ),
     /assigned invalid provenance/,
+  );
+});
+
+test("runtime validation rejects supporting material in the pastoral voice profile", () => {
+  const analysis = validationFixture();
+  analysis.pastoral_voice_profile = {
+    scope: "current_sermon",
+    summary: "Warm and direct",
+    confidence: "high",
+    tone_traits: ["warm"],
+    communication_patterns: ["uses direct questions"],
+    application_posture: "Invites concrete response",
+    question_posture: "Reflective and direct",
+    preferred_vocabulary: [],
+    cautions: [],
+    evidence: [{
+      source_type: "pastor_notes",
+      source_ref: "notes-job",
+      source_role: "supporting",
+      delivery_status: "planned",
+    }],
+  };
+  assert.throws(
+    () => validateTranscriptLedAnalysis(analysis, "analysis-job", "sermon-job", { churchSlug: "sample-church", churchName: "Sample Church", weekOf: "2026-09-06" }),
+    /must come from the delivered transcript/,
   );
 });
