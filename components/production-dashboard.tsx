@@ -16,7 +16,9 @@ type ProductionJob = {
   reviewUrl?: string;
 };
 type RevisionRequest = { id: string; previewUrl: string | null };
-type ComparisonFeedback = { id: string; reviewerName: string; preferred: "A" | "B" | "C"; notes: string; createdAt: string };
+type VariantLabel = "A" | "B" | "C";
+type ComparisonRatings = { sermonConnection: VariantLabel; pastoralVoice: VariantLabel; realLifeUse: VariantLabel; overall: VariantLabel };
+type ComparisonFeedback = { id: string; reviewerName: string; preferred: VariantLabel; ratings?: ComparisonRatings; notes: string; createdAt: string };
 type ComparisonSet = {
   id: string; sourceJobId: string; churchName: string; weekOf: string; sermonTitle: string; createdAt: string; reviewUrl: string;
   blindOrder: Record<"A" | "B" | "C", "v1" | "v2" | "v3">;
@@ -193,8 +195,21 @@ export function ProductionDashboard() {
         <div><strong>{comparison.sermonTitle}</strong><small>{comparison.churchName} · {comparison.weekOf}</small></div>
         <a href={comparison.reviewUrl} target="_blank" rel="noreferrer">Open blinded review</a>
         <details><summary>Reveal version mapping</summary><p>A = {comparison.blindOrder.A.toUpperCase()} · B = {comparison.blindOrder.B.toUpperCase()} · C = {comparison.blindOrder.C.toUpperCase()}</p></details>
-        <div className="comparison-feedback-summary"><strong>{comparison.feedback?.length || 0} responses</strong>{comparison.feedback?.map((item) => <p key={item.id}><b>{item.reviewerName}</b>: {item.preferred}{item.notes ? ` — ${item.notes}` : ""}</p>)}</div>
+        <div className="comparison-feedback-summary"><strong>{comparison.feedback?.length || 0} responses</strong><ComparisonResults feedback={comparison.feedback || []} />{comparison.feedback?.map((item) => <p key={item.id}><b>{item.reviewerName}</b>: overall {item.ratings?.overall || item.preferred}{item.ratings ? ` · sermon ${item.ratings.sermonConnection} · voice ${item.ratings.pastoralVoice} · usefulness ${item.ratings.realLifeUse}` : ""}{item.notes ? ` — ${item.notes}` : ""}</p>)}</div>
       </article>)}</div>}
     </section>
   </main>;
+}
+
+function ComparisonResults({ feedback }: { feedback: ComparisonFeedback[] }) {
+  if (!feedback.length) return null;
+  const definitions: Array<[keyof ComparisonRatings, string]> = [["sermonConnection", "Sermon"], ["pastoralVoice", "Voice"], ["realLifeUse", "Usefulness"], ["overall", "Overall"]];
+  return <div className="comparison-tally" aria-label="Comparison vote tally">{definitions.map(([key, label]) => {
+    const counts = { A: 0, B: 0, C: 0 };
+    for (const item of feedback) {
+      const choice = item.ratings?.[key] || (key === "overall" ? item.preferred : undefined);
+      if (choice) counts[choice] += 1;
+    }
+    return <div key={key}><span>{label}</span><b>A {counts.A}</b><b>B {counts.B}</b><b>C {counts.C}</b></div>;
+  })}</div>;
 }
