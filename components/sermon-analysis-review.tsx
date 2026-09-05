@@ -12,7 +12,7 @@ type ReviewJob = {
 };
 
 export function SermonAnalysisReview({
-  analysis,
+  analysis: suppliedAnalysis,
   job,
   generating,
   onClose,
@@ -24,6 +24,8 @@ export function SermonAnalysisReview({
   onClose: () => void;
   onGenerate: () => void;
 }) {
+  const legacy = String(suppliedAnalysis.schema_version) !== "3.0";
+  const analysis = normalizeReviewAnalysis(suppliedAnalysis);
   const blocked = analysis.source_quality.generation_disposition === "blocked" || analysis.fidelity_audit.result === "fail";
   const comparison = analysis.source_comparison;
   const reviewNotes = buildReviewNotes(analysis);
@@ -36,6 +38,7 @@ export function SermonAnalysisReview({
         <p>{job.churchName} · {job.weekOf}</p>
       </div>
       <div className="sermon-analysis-head-actions">
+        {legacy && <span className="analysis-version-label">Legacy transcript-only analysis</span>}
         <span className={`analysis-result analysis-result--${analysis.fidelity_audit.result}`}>{analysis.fidelity_audit.result.replaceAll("_", " ")}</span>
         <button type="button" className="teaching-source-reset" onClick={onClose}>Close analysis</button>
       </div>
@@ -75,10 +78,12 @@ export function SermonAnalysisReview({
         <div><strong>{item.label}</strong><span>{item.kind.replaceAll("_", " ")}</span></div>
         <p>{item.delivered_status.replaceAll("_", " ")}</p>
         <small>{item.use_in_resources ? "Approved for resource use" : "Excluded from resource use"}</small>
-      </article>)}</div> : <p className="analysis-empty">No memorable framework was established.</p>}
+      </article>)}</div> : <p className="analysis-empty">{legacy ? "Memorable structure was not captured in this legacy analysis." : "No memorable framework was established."}</p>}
     </AnalysisSection>
 
-    <AnalysisSection title="Source comparison">
+    {legacy ? <AnalysisSection title="Source comparison">
+      <div className="analysis-legacy-note"><strong>Not available for this legacy package</strong><p>This transcript-only analysis was created before supporting-source comparison was added. Its sermon content remains available above.</p></div>
+    </AnalysisSection> : <AnalysisSection title="Source comparison">
       <div className="analysis-comparison-grid">
         <ComparisonColumn title="Supported by transcript and notes" items={comparison.supported_by_both.map((item) => item.summary)} empty="No shared items recorded." />
         <ComparisonColumn title="Transcript only" items={comparison.transcript_only.map((item) => item.text)} empty="No transcript-only items recorded." />
@@ -89,7 +94,7 @@ export function SermonAnalysisReview({
         <ComparisonColumn title="Source conflicts" items={comparison.source_conflicts.map((item) => `${item.topic}: transcript followed over supporting material`)} empty="" />
         <ComparisonColumn title="Transcription corrections" items={comparison.transcription_corrections.map((item) => `${item.transcript_excerpt} → ${item.corrected_text}`)} empty="" />
       </div>}
-    </AnalysisSection>
+    </AnalysisSection>}
 
     <div className="analysis-content-grid">
       <AnalysisSection title="Applications">
@@ -179,4 +184,73 @@ function reviewNoteTopic(value: string) {
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function normalizeReviewAnalysis(input: CanonicalSermonAnalysis): CanonicalSermonAnalysis {
+  const sourceBundle = input.source_bundle;
+  const transcript = sourceBundle?.transcript ? {
+    source_type: "transcript" as const,
+    media_type: "text/plain; charset=utf-8",
+    role: "controlling" as const,
+    ...sourceBundle.transcript,
+  } : null;
+  const emptyComparison: CanonicalSermonAnalysis["source_comparison"] = {
+    supported_by_both: [],
+    transcript_only: [],
+    notes_only_content: [],
+    delivered_departures: [],
+    source_conflicts: [],
+    transcription_corrections: [],
+  };
+  const normalizeClaim = (claim: CanonicalSermonAnalysis["central_claim"]): CanonicalSermonAnalysis["central_claim"] => ({
+    ...claim,
+    basis: claim?.basis || "transcript",
+    evidence: claim?.evidence || [],
+  });
+
+  return {
+    ...input,
+    schema_version: "3.0",
+    source_authority: input.source_authority || {
+      policy: "transcript_led",
+      transcript_available: Boolean(transcript),
+      controlling_source_id: transcript?.source_id || null,
+      fallback_reason: null,
+      conflict_rule: "delivered_sermon_controls",
+    },
+    source_bundle: {
+      ...sourceBundle,
+      transcript,
+      supplemental_sources: sourceBundle?.supplemental_sources || [],
+      church_metadata: sourceBundle?.church_metadata || [],
+      scripture_text: sourceBundle?.scripture_text || [],
+    },
+    source_quality: {
+      ...input.source_quality,
+      material_issues: input.source_quality?.material_issues || [],
+      generation_disposition: input.source_quality?.generation_disposition || "human_review_required",
+    },
+    central_claim: normalizeClaim(input.central_claim),
+    core_tension: normalizeClaim(input.core_tension),
+    primary_response: normalizeClaim(input.primary_response),
+    memorable_structure: input.memorable_structure || [],
+    major_movements: input.major_movements || [],
+    applications: input.applications || [],
+    references_and_illustrations: input.references_and_illustrations || [],
+    source_comparison: input.source_comparison || emptyComparison,
+    uncertainties: input.uncertainties || [],
+    fidelity_audit: {
+      all_major_claims_supported: false,
+      all_quotes_verified: false,
+      major_movements_identified: false,
+      qualifications_preserved: false,
+      outside_content_excluded: false,
+      gospel_foundation_preserved: false,
+      transcript_authority_preserved: true,
+      notes_only_content_restricted: true,
+      ...input.fidelity_audit,
+      result: input.fidelity_audit?.result || "human_review_required",
+      notes: input.fidelity_audit?.notes || [],
+    },
+  };
 }
