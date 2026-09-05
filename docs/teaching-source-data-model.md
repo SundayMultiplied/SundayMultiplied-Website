@@ -63,13 +63,13 @@ The default conflict resolution is `follow_transcript`. A genuinely ambiguous ma
 
 Resource generation may continue only when:
 
-- source quality does not require human review or blocking;
-- the fidelity audit passes or passes with warnings;
+- an administrator has reviewed and explicitly accepted the saved analysis;
+- source quality is not blocked and the fidelity audit has not failed;
 - transcript authority is preserved;
 - notes-only content is restricted;
 - no notes-only item has been approved for context use without human review.
 
-The next intake step should populate `source_bundle` with distinct source records and retain the extracted text for each source separately. It should not concatenate all uploaded files into an unattributed text blob.
+An analysis marked `human_review_required` remains at the checkpoint until an administrator reviews it. A blocked or failed analysis cannot be accepted for generation.
 
 ## Step 2 intake contract
 
@@ -84,3 +84,9 @@ Supplemental TXT, DOCX, and text-based PDF files are extracted before analysis. 
 The canonical analysis receives every source as a separately labeled input. Supporting sources may clarify transcript-supported structure, wording, references, and probable transcription errors, but may not override or independently establish what was delivered. Evidence records must retain the exact source ID, supporting role, and planned delivery status.
 
 Nonblank metadata overrides are applied after analysis as server-controlled factual values with high-confidence `church_metadata` evidence. Blank fields continue to use conservative automatic detection.
+
+## Analysis review workflow
+
+Creating a production job now stops at `awaiting_analysis_review`. The admin interface loads the saved canonical analysis and surfaces metadata, central claim, core tension, response, sermon movements, memorable structure, source comparison, applications, references, source list, uncertainties, and fidelity notes.
+
+`Accept analysis & generate resources` records the administrator and acceptance time, then generates the subscribed resources from that saved analysis. Existing production jobs with an `analysisStorageKey` can open the same review interface without regenerating their resources.

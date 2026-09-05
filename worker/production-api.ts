@@ -40,7 +40,7 @@ type ProductionManifest = {
   churchName: string;
   weekOf: string;
   createdAt: string;
-  status: "ready_for_internal_review" | "sent_for_approval";
+  status: "awaiting_analysis_review" | "ready_for_internal_review" | "sent_for_approval";
   sourceFilename: string;
   sourceFiles?: Array<{
     sourceId: string;
@@ -56,6 +56,8 @@ type ProductionManifest = {
   analysisStorageKey?: string;
   analysisId?: string;
   fidelityResult?: string;
+  analysisAcceptedAt?: string;
+  analysisAcceptedBy?: string;
   metadata: GeneratedPackage["metadata"];
   resources: Array<{ kind: string; title: string; storageKey: string; previewUrl: string }>;
   reviewUrl?: string;
@@ -75,6 +77,8 @@ function effectiveReviewerEmail(church: ChurchConfig | undefined, env: Productio
 export async function handleProductionApi(request: Request, env: ProductionEnv): Promise<Response | null> {
   const url = new URL(request.url);
   const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
+  const analysisMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/analysis$/);
+  const generateMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/generate$/);
   const logoMatch = url.pathname.match(/^\/api\/resource-assets\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
 
   if (logoMatch && request.method === "GET") return serveChurchLogo(request, env, logoMatch[1]);
@@ -105,6 +109,19 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     return createProductionJob(request, env);
   }
 
+  if (analysisMatch && request.method === "GET") {
+    if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
+    const manifest = await loadManifest(env.BUCKET, analysisMatch[1]);
+    if (!manifest) return json({ error: "Production job not found." }, 404);
+    const analysis = await loadAnalysis(env.BUCKET, manifest);
+    if (!analysis) return json({ error: "Sermon analysis is unavailable for this production job." }, 404);
+    return json({ analysis });
+  }
+
+  if (generateMatch && request.method === "POST") {
+    return generateProductionJobResources(request, env, generateMatch[1]);
+  }
+
   if (previewMatch && request.method === "GET") {
     if (!env.BUCKET) return new Response("Production storage is not configured.", { status: 503 });
     const object = await env.BUCKET.get(`production/jobs/${previewMatch[1]}/${previewMatch[2]}.html`);
@@ -125,6 +142,9 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
     const manifest = await loadManifest(env.BUCKET, sendMatch[1]);
     if (!manifest) return json({ error: "Production job not found." }, 404);
+    if (manifest.status === "awaiting_analysis_review" || !manifest.resources.length) {
+      return json({ error: "Accept the sermon analysis and generate resources before sending this package for approval." }, 409);
+    }
     if (manifest.status === "sent_for_approval" && manifest.reviewUrl) return json({ ok: true, reviewUrl: manifest.reviewUrl });
     const church = CHURCHES.find((item) => item.slug === manifest.churchSlug);
     const reviewerEmail = effectiveReviewerEmail(church, env);
@@ -275,36 +295,61 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
     return json({ error: error instanceof Error ? clean(error.message, 500) : "Canonical sermon analysis failed.", jobId: id }, 502);
   }
 
-  if (["blocked", "human_review_required"].includes(analysis.source_quality.generation_disposition)
-      || ["fail", "human_review_required"].includes(analysis.fidelity_audit.result)) {
-    return json({
-      error: "The canonical sermon analysis requires human review before resources can be generated.",
-      jobId: id,
-      analysisStorageKey: analysisKey,
-      fidelityResult: analysis.fidelity_audit.result,
-      analysisNotes: analysis.fidelity_audit.notes,
-    }, 422);
+  const manifest: ProductionManifest = {
+    id,
+    churchSlug: church.slug,
+    churchName: church.name,
+    weekOf,
+    createdAt: new Date().toISOString(),
+    status: "awaiting_analysis_review",
+    sourceFilename: transcriptFilename,
+    sourceFiles: storedSourceFiles,
+    metadataOverrides,
+    analysisStorageKey: analysisKey,
+    analysisId: analysis.analysis_id,
+    fidelityResult: analysis.fidelity_audit.result,
+    metadata: metadataFromAnalysis(analysis),
+    resources: [],
+  };
+  await saveManifest(env.BUCKET, manifest);
+  return json({ ok: true, job: manifest }, 201);
+}
+
+async function generateProductionJobResources(request: Request, env: ProductionEnv, jobId: string) {
+  if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
+  if (!env.OPENAI_API_KEY) return json({ error: "OPENAI_API_KEY is not configured for production generation." }, 503);
+  const manifest = await loadManifest(env.BUCKET, jobId);
+  if (!manifest) return json({ error: "Production job not found." }, 404);
+  if (manifest.status === "sent_for_approval") return json({ error: "This package has already been sent for approval." }, 409);
+  if (manifest.status === "ready_for_internal_review" && manifest.resources.length) return json({ ok: true, job: manifest });
+
+  const analysis = await loadAnalysis(env.BUCKET, manifest);
+  if (!analysis) return json({ error: "Sermon analysis is unavailable for this production job." }, 404);
+  if (analysis.source_quality.generation_disposition === "blocked" || analysis.fidelity_audit.result === "fail") {
+    return json({ error: "This analysis is blocked. Correct the teaching sources and create a new analysis before generating resources." }, 422);
   }
+  const church = CHURCHES.find((item) => item.slug === manifest.churchSlug);
+  if (!church) return json({ error: "The church configuration for this production job is unavailable." }, 409);
 
   let generated: GeneratedPackage;
   try {
-    generated = await generateResourcesFromAnalysis(env, church, weekOf, analysis);
+    generated = await generateResourcesFromAnalysis(env, church, manifest.weekOf, analysis);
   } catch (error) {
     console.error("sermon_resource_generation_failed", error);
-    return json({ error: error instanceof Error ? clean(error.message, 500) : "Resource generation failed.", jobId: id, analysisStorageKey: analysisKey }, 502);
+    return json({ error: error instanceof Error ? clean(error.message, 500) : "Resource generation failed.", jobId }, 502);
   }
 
   const needsFullScripture = church.resources.some((kind) => kind === "group" || kind === "family");
   let scripturePassage: Awaited<ReturnType<typeof resolveBsbPassage>> | undefined;
   if (needsFullScripture) {
     if (!generated.metadata.scripture) {
-      return json({ error: "The canonical analysis did not establish a primary Scripture passage. Group and Family resources require an exact BSB passage before production can continue.", jobId: id, analysisStorageKey: analysisKey }, 422);
+      return json({ error: "The analysis did not establish a primary Scripture passage. Add a passage override and create a new analysis before generating Group or Family resources.", jobId }, 422);
     }
     try {
       scripturePassage = await resolveBsbPassage(generated.metadata.scripture);
     } catch (error) {
       console.error("bsb_scripture_lookup_failed", error);
-      return json({ error: error instanceof Error ? clean(error.message, 500) : "The BSB Scripture passage could not be loaded.", jobId: id }, 502);
+      return json({ error: error instanceof Error ? clean(error.message, 500) : "The BSB Scripture passage could not be loaded.", jobId }, 502);
     }
   }
 
@@ -318,33 +363,22 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
       try { html = injectBsbScripture(html, scripturePassage); }
       catch (error) {
         console.error("bsb_scripture_injection_failed", error);
-        return json({ error: error instanceof Error ? clean(error.message, 500) : "The exact BSB Scripture passage could not be inserted into the resource.", jobId: id }, 502);
+        return json({ error: error instanceof Error ? clean(error.message, 500) : "The exact BSB Scripture passage could not be inserted into the resource.", jobId }, 502);
       }
     }
-    const storageKey = `production/jobs/${id}/${kind}.html`;
+    const storageKey = `production/jobs/${jobId}/${kind}.html`;
     await env.BUCKET.put(storageKey, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
-    resources.push({ kind: titleCase(kind), title: `${titleCase(kind)} Multiplied`, storageKey, previewUrl: `${origin}/api/production/preview/${id}/${kind}` });
+    resources.push({ kind: titleCase(kind), title: `${titleCase(kind)} Multiplied`, storageKey, previewUrl: `${origin}/api/production/preview/${jobId}/${kind}` });
   }
-  if (!resources.length) return json({ error: "No resources were generated.", jobId: id }, 502);
+  if (!resources.length) return json({ error: "No resources were generated.", jobId }, 502);
 
-  const manifest: ProductionManifest = {
-    id,
-    churchSlug: church.slug,
-    churchName: church.name,
-    weekOf,
-    createdAt: new Date().toISOString(),
-    status: "ready_for_internal_review",
-    sourceFilename: transcriptFilename,
-    sourceFiles: storedSourceFiles,
-    metadataOverrides,
-    analysisStorageKey: analysisKey,
-    analysisId: analysis.analysis_id,
-    fidelityResult: analysis.fidelity_audit.result,
-    metadata: generated.metadata,
-    resources,
-  };
+  manifest.status = "ready_for_internal_review";
+  manifest.analysisAcceptedAt = new Date().toISOString();
+  manifest.analysisAcceptedBy = accessIdentityEmail(request);
+  manifest.metadata = generated.metadata;
+  manifest.resources = resources;
   await saveManifest(env.BUCKET, manifest);
-  return json({ ok: true, job: manifest }, 201);
+  return json({ ok: true, job: manifest });
 }
 
 async function serveChurchLogo(request: Request, env: ProductionEnv, slug: string) {
@@ -477,6 +511,21 @@ function normalizeTranscript(input: string, filename: string) {
 
 async function saveManifest(bucket: R2Bucket, manifest: ProductionManifest) {
   await bucket.put(`production/manifests/${manifest.id}.json`, JSON.stringify(manifest, null, 2), { httpMetadata: { contentType: "application/json" } });
+}
+function metadataFromAnalysis(analysis: CanonicalSermonAnalysis): GeneratedPackage["metadata"] {
+  return {
+    sermonTitle: analysis.sermon.sermon_title || "",
+    seriesTitle: analysis.sermon.series_title || "",
+    scripture: analysis.sermon.primary_passage || "",
+    speaker: analysis.sermon.speaker || "",
+    confidence: analysis.source_quality.overall,
+  };
+}
+async function loadAnalysis(bucket: R2Bucket, manifest: ProductionManifest) {
+  if (!manifest.analysisStorageKey) return null;
+  const object = await bucket.get(manifest.analysisStorageKey);
+  if (!object) return null;
+  try { return await object.json<CanonicalSermonAnalysis>(); } catch { return null; }
 }
 async function loadManifest(bucket: R2Bucket, id: string) {
   const object = await bucket.get(`production/manifests/${id}.json`);

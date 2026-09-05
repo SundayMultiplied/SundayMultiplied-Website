@@ -4,7 +4,7 @@ type ProductionJobAdminEnv = {
 };
 
 type ProductionManifestSummary = {
-  status?: "ready_for_internal_review" | "sent_for_approval";
+  status?: "awaiting_analysis_review" | "ready_for_internal_review" | "sent_for_approval";
 };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };

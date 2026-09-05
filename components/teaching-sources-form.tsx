@@ -91,9 +91,9 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
     </fieldset>
 
     <div className="teaching-source-actions">
-      <button className="approval-approve" disabled={saving}>{saving ? "Creating source bundle…" : "Create source bundle and resources"}</button>
+      <button className="approval-approve" disabled={saving}>{saving ? "Analyzing teaching sources…" : "Create source bundle and analysis"}</button>
       <button className="teaching-source-reset" type="reset" disabled={saving}>Clear form</button>
     </div>
-    {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Building the weekly source bundle</strong><span>Teaching sources are being extracted, analyzed, and turned into the resource package.</span></div> : <small>Scanned PDFs need searchable text. Run OCR first or upload a TXT/DOCX version.</small>}
+    {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Building the sermon analysis</strong><span>Teaching sources are being extracted and compared. Resource generation begins only after you accept the analysis.</span></div> : <small>Scanned PDFs need searchable text. Run OCR first or upload a TXT/DOCX version.</small>}
   </form>;
 }
