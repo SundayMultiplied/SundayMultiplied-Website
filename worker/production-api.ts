@@ -3,7 +3,7 @@ import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type Nor
 import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
 import { extractTeachingSourceText, MAX_TOTAL_SUPPLEMENTAL_CHARACTERS } from "./teaching-source-extraction";
 
-type ProductionEnv = {
+export type ProductionEnv = {
   ASSETS?: Fetcher;
   BUCKET?: R2Bucket;
   OPENAI_API_KEY?: string;
@@ -13,7 +13,7 @@ type ProductionEnv = {
   APPROVAL_REVIEWER_EMAIL?: string;
 };
 
-type ChurchConfig = {
+export type ChurchConfig = {
   slug: string;
   name: string;
   resources: Array<"monday" | "group" | "family">;
@@ -23,7 +23,7 @@ type ChurchConfig = {
   reviewerEmail?: string;
 };
 
-type GeneratedPackage = {
+export type GeneratedPackage = {
   metadata: {
     sermonTitle: string;
     seriesTitle: string;
@@ -34,7 +34,7 @@ type GeneratedPackage = {
   resources: { monday?: string; group?: string; family?: string };
 };
 
-type ProductionManifest = {
+export type ProductionManifest = {
   id: string;
   churchSlug: string;
   churchName: string;
@@ -68,7 +68,7 @@ const LEGACY_LOGO_FALLBACKS: Record<string, string> = {
   "sample-church": "/sample-church-logo.webp",
   "southside-baptist": "/resources/southside-baptist/2026-08-09/southside-baptist-logo.png",
 };
-const CHURCHES = PRODUCTION_CHURCHES as ChurchConfig[];
+export const CHURCHES = PRODUCTION_CHURCHES as ChurchConfig[];
 
 function effectiveReviewerEmail(church: ChurchConfig | undefined, env: ProductionEnv) {
   return church?.reviewerEmail || env.APPROVAL_REVIEWER_EMAIL || "brian@sundaymultiplied.com";
@@ -424,7 +424,7 @@ async function serveChurchLogo(request: Request, env: ProductionEnv, slug: strin
   return new Response(response.body, { status: response.status, headers });
 }
 
-async function generateResourcesFromAnalysis(env: ProductionEnv, church: ChurchConfig, weekOf: string, analysis: CanonicalSermonAnalysis): Promise<GeneratedPackage> {
+export async function generateResourcesFromAnalysis(env: ProductionEnv, church: ChurchConfig, weekOf: string, analysis: CanonicalSermonAnalysis): Promise<GeneratedPackage> {
   const resourceList = church.resources.join(", ");
   const metadata: GeneratedPackage["metadata"] = {
     sermonTitle: analysis.sermon.sermon_title || "",
@@ -498,7 +498,7 @@ Return only the requested JSON structure.`;
   return { metadata, resources: parsed.resources };
 }
 
-function enforceResourceStyling(input: string, church: ChurchConfig, kind: "monday" | "group" | "family") {
+export function enforceResourceStyling(input: string, church: ChurchConfig, kind: "monday" | "group" | "family") {
   let html = input.trim();
   const stylesheetLinks = `<link rel="stylesheet" href="${church.baseCssUrl}">\n<link rel="stylesheet" href="${church.cssUrl}">`;
   html = html.replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>\s*/gi, "");
@@ -513,11 +513,11 @@ function enforceResourceStyling(input: string, church: ChurchConfig, kind: "mond
   return html;
 }
 
-function extractOutputText(output: Array<{ content?: Array<{ type?: string; text?: string }> }> | undefined) {
+export function extractOutputText(output: Array<{ content?: Array<{ type?: string; text?: string }> }> | undefined) {
   return (output || []).flatMap((item) => item.content || []).filter((item) => item.type === "output_text" && typeof item.text === "string").map((item) => item.text || "").join("");
 }
 
-function normalizeTranscript(input: string, filename: string) {
+export function normalizeTranscript(input: string, filename: string) {
   let text = input.replace(/^\uFEFF/, "").replace(/\r/g, "");
   if (/\.vtt$/i.test(filename)) {
     text = text.split("\n")

@@ -16,6 +16,13 @@ type ProductionJob = {
   reviewUrl?: string;
 };
 type RevisionRequest = { id: string; previewUrl: string | null };
+type ComparisonFeedback = { id: string; reviewerName: string; preferred: "A" | "B" | "C"; notes: string; createdAt: string };
+type ComparisonSet = {
+  id: string; sourceJobId: string; churchName: string; weekOf: string; sermonTitle: string; createdAt: string; reviewUrl: string;
+  blindOrder: Record<"A" | "B" | "C", "v1" | "v2" | "v3">;
+  variants: Array<{ label: "A" | "B" | "C"; resources: Array<{ kind: string; previewUrl: string }> }>;
+  feedback?: ComparisonFeedback[];
+};
 
 export function ProductionDashboard() {
   const [churches, setChurches] = useState<ChurchConfig[]>([]);
@@ -32,18 +39,24 @@ export function ProductionDashboard() {
   const [analysisJob, setAnalysisJob] = useState<ProductionJob | null>(null);
   const [loadingAnalysisId, setLoadingAnalysisId] = useState("");
   const [generatingId, setGeneratingId] = useState("");
+  const [comparisons, setComparisons] = useState<ComparisonSet[]>([]);
+  const [comparingId, setComparingId] = useState("");
 
   async function loadProduction() {
-    const [churchResponse, jobsResponse] = await Promise.all([
+    const [churchResponse, jobsResponse, comparisonsResponse] = await Promise.all([
       fetch("/api/production/churches", { cache: "no-store" }),
       fetch("/api/production/jobs", { cache: "no-store" }),
+      fetch("/api/comparisons", { cache: "no-store" }),
     ]);
     const churchData = await churchResponse.json() as { error?: string; churches?: ChurchConfig[] };
     const jobsData = await jobsResponse.json() as { error?: string; jobs?: ProductionJob[] };
+    const comparisonsData = await comparisonsResponse.json() as { error?: string; comparisons?: ComparisonSet[] };
     if (!churchResponse.ok) throw new Error(churchData.error || "Unable to load configured churches.");
     if (!jobsResponse.ok) throw new Error(jobsData.error || "Unable to load production jobs.");
+    if (!comparisonsResponse.ok) throw new Error(comparisonsData.error || "Unable to load comparison sets.");
     setChurches(churchData.churches || []);
     setJobs(jobsData.jobs || []);
+    setComparisons(comparisonsData.comparisons || []);
     setSelectedJobIds((current) => current.filter((id) => (jobsData.jobs || []).some((job) => job.id === id && job.status !== "sent_for_approval")));
   }
 
@@ -112,6 +125,20 @@ export function ProductionDashboard() {
     finally { setSendingId(""); }
   }
 
+  async function createComparison(job: ProductionJob) {
+    if (!window.confirm(`Create a blinded V1 / V2 / V3 comparison for ${job.metadata.sermonTitle || job.weekOf}?\n\nThis generates three fresh versions of every subscribed resource and may take several minutes.`)) return;
+    setComparingId(job.id); setError(""); setActionMessage("");
+    try {
+      const response = await fetch("/api/comparisons", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jobId: job.id }) });
+      const data = await response.json() as { error?: string; comparison?: ComparisonSet };
+      if (!response.ok || !data.comparison) throw new Error(data.error || "Unable to create the comparison set.");
+      setActionMessage("Blinded comparison created. The family review link is ready to share.");
+      setCreatedLink(data.comparison.reviewUrl);
+      await loadProduction();
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to create the comparison set."); }
+    finally { setComparingId(""); }
+  }
+
   function toggleJobSelection(job: ProductionJob) {
     if (job.status === "sent_for_approval") return;
     setSelectedJobIds((current) => current.includes(job.id) ? current.filter((id) => id !== job.id) : [...current, job.id]);
@@ -156,9 +183,18 @@ export function ProductionDashboard() {
           <span>{job.weekOf}</span>
           <span className="approval-metadata"><strong>{job.metadata.scripture || "Passage not detected"}</strong><small>Confidence: {job.metadata.confidence}</small>{job.metadata.speaker && <small>{job.metadata.speaker}</small>}</span>
           <span className="approval-notification">{job.analysisStorageKey && <button type="button" className="analysis-open-button" onClick={() => void openAnalysis(job)} disabled={loadingAnalysisId === job.id}>{loadingAnalysisId === job.id ? "Loading analysis…" : "View analysis"}</button>}{job.resources.map((resource) => <a key={resource.kind} href={resource.previewUrl} target="_blank" rel="noreferrer">Preview {resource.kind}</a>)}</span>
-          <span className="production-action-stack">{job.status === "awaiting_analysis_review" ? <button type="button" className="approval-approve" onClick={() => void openAnalysis(job)} disabled={loadingAnalysisId === job.id}>{loadingAnalysisId === job.id ? "Loading…" : "Review analysis"}</button> : revisionRequested ? <><a className="approval-status status-revision_requested production-revision-link" href="/revisions">revision requested</a>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : job.status === "sent_for_approval" ? <><strong className="notification-sent">sent for approval</strong>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : <button type="button" className="approval-approve" onClick={() => void sendForApproval(job)} disabled={sendingId === job.id}>{sendingId === job.id ? "Sending…" : "Send for approval"}</button>}</span>
+          <span className="production-action-stack">{job.status === "awaiting_analysis_review" ? <button type="button" className="approval-approve" onClick={() => void openAnalysis(job)} disabled={loadingAnalysisId === job.id}>{loadingAnalysisId === job.id ? "Loading…" : "Review analysis"}</button> : <>{revisionRequested ? <><a className="approval-status status-revision_requested production-revision-link" href="/revisions">revision requested</a>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : job.status === "sent_for_approval" ? <><strong className="notification-sent">sent for approval</strong>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : <button type="button" className="approval-approve" onClick={() => void sendForApproval(job)} disabled={sendingId === job.id}>{sendingId === job.id ? "Sending…" : "Send for approval"}</button>}<button type="button" className="comparison-create-button" onClick={() => void createComparison(job)} disabled={comparingId === job.id}>{comparingId === job.id ? "Generating A/B/C…" : "Create A/B/C comparison"}</button></>}</span>
         </div>; })}
       </div>}
+    </section>
+    <section className="approval-create comparison-admin-section">
+      <div className="approval-create-heading"><div><p className="approval-kicker">Internal testing</p><h2>Comparison Mode</h2><p>Each set randomly assigns V1, V2, and V3 to A, B, and C. Reviewers only see the letters.</p></div></div>
+      {comparisons.length === 0 ? <p>No comparison sets yet. Create one from a generated job above.</p> : <div className="comparison-set-list">{comparisons.map((comparison) => <article key={comparison.id} className="comparison-set-card">
+        <div><strong>{comparison.sermonTitle}</strong><small>{comparison.churchName} · {comparison.weekOf}</small></div>
+        <a href={comparison.reviewUrl} target="_blank" rel="noreferrer">Open blinded review</a>
+        <details><summary>Reveal version mapping</summary><p>A = {comparison.blindOrder.A.toUpperCase()} · B = {comparison.blindOrder.B.toUpperCase()} · C = {comparison.blindOrder.C.toUpperCase()}</p></details>
+        <div className="comparison-feedback-summary"><strong>{comparison.feedback?.length || 0} responses</strong>{comparison.feedback?.map((item) => <p key={item.id}><b>{item.reviewerName}</b>: {item.preferred}{item.notes ? ` — ${item.notes}` : ""}</p>)}</div>
+      </article>)}</div>}
     </section>
   </main>;
 }
