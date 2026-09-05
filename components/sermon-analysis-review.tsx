@@ -66,7 +66,6 @@ export function SermonAnalysisReview({
         {analysis.major_movements.map((movement) => <li key={movement.movement_id}>
           <div><strong>{movement.title}</strong><span>{movement.emphasis}</span></div>
           <p>{movement.summary}</p>
-          {movement.pastor_stated_point && <blockquote>{movement.pastor_stated_point}</blockquote>}
         </li>)}
       </ol>
     </AnalysisSection>
@@ -86,7 +85,7 @@ export function SermonAnalysisReview({
         <ComparisonColumn title="Supporting materials only" items={comparison.notes_only_content.map((item) => `${item.summary} — ${item.use_in_resources.replaceAll("_", " ")}`)} empty="No notes-only material recorded." />
       </div>
       {(comparison.delivered_departures.length > 0 || comparison.source_conflicts.length > 0 || comparison.transcription_corrections.length > 0) && <div className="analysis-comparison-detail">
-        <ComparisonColumn title="Delivered departures" items={comparison.delivered_departures.map((item) => `Planned: ${item.planned} Delivered: ${item.delivered}`)} empty="" />
+        <DeliveredDepartures items={comparison.delivered_departures} />
         <ComparisonColumn title="Source conflicts" items={comparison.source_conflicts.map((item) => `${item.topic}: transcript followed over supporting material`)} empty="" />
         <ComparisonColumn title="Transcription corrections" items={comparison.transcription_corrections.map((item) => `${item.transcript_excerpt} → ${item.corrected_text}`)} empty="" />
       </div>}
@@ -129,6 +128,16 @@ function AnalysisSection({ title, tone, children }: { title: string; tone?: "war
 function ComparisonColumn({ title, items, empty }: { title: string; items: string[]; empty: string }) {
   if (!items.length && !empty) return null;
   return <article><h4>{title}</h4>{items.length ? <ul>{items.map((item, index) => <li key={index}>{item}</li>)}</ul> : <p className="analysis-empty">{empty}</p>}</article>;
+}
+
+function DeliveredDepartures({ items }: { items: CanonicalSermonAnalysis["source_comparison"]["delivered_departures"] }) {
+  if (!items.length) return null;
+  return <article><h4>Delivered departures</h4><ol className="analysis-departure-list">
+    {items.map((item, index) => <li key={index}>
+      <p><strong>Planned:</strong> {item.planned}</p>
+      <p><strong>Delivered:</strong> {item.delivered}</p>
+    </li>)}
+  </ol></article>;
 }
 
 function SourceCard({ descriptor, job }: { descriptor: CanonicalSermonAnalysis["source_bundle"]["supplemental_sources"][number]; job: ReviewJob }) {
