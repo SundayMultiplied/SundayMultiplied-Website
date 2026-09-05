@@ -52,6 +52,7 @@ type ProductionJob = {
     confidence: "high" | "medium" | "low";
   };
   resources: Array<{ kind: string; title: string; previewUrl: string }>;
+  sourceFiles?: Array<{ sourceId: string; sourceType: string; filename: string }>;
   analysisStorageKey?: string;
   reviewUrl?: string;
 };

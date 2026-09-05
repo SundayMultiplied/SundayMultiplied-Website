@@ -79,6 +79,7 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
   const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
   const analysisMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/analysis$/);
   const generateMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/generate$/);
+  const sourceMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/sources\/([^/]+)$/);
   const logoMatch = url.pathname.match(/^\/api\/resource-assets\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
 
   if (logoMatch && request.method === "GET") return serveChurchLogo(request, env, logoMatch[1]);
@@ -116,6 +117,24 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     const analysis = await loadAnalysis(env.BUCKET, manifest);
     if (!analysis) return json({ error: "Sermon analysis is unavailable for this production job." }, 404);
     return json({ analysis });
+  }
+
+  if (sourceMatch && request.method === "GET") {
+    if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
+    const manifest = await loadManifest(env.BUCKET, sourceMatch[1]);
+    if (!manifest) return json({ error: "Production job not found." }, 404);
+    const source = manifest.sourceFiles?.find((item) => item.sourceId === sourceMatch[2]);
+    if (!source) return json({ error: "Teaching source not found." }, 404);
+    const object = await env.BUCKET.get(source.storageKey);
+    if (!object) return json({ error: "Teaching source file is unavailable." }, 404);
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    if (!headers.get("content-type")) headers.set("content-type", mediaTypeForFilename(source.filename));
+    headers.set("content-disposition", sourceContentDisposition(source.filename));
+    headers.set("cache-control", "private, no-store");
+    headers.set("x-content-type-options", "nosniff");
+    headers.set("x-robots-tag", "noindex, nofollow, noarchive");
+    return new Response(object.body, { headers });
   }
 
   if (generateMatch && request.method === "POST") {
@@ -216,15 +235,17 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
     primaryPassage: optionalClean(form.get("primaryPassage"), 160),
   };
 
-  const transcript = normalizeTranscript(await file.text(), transcriptFilename);
+  const transcriptBytes = await file.arrayBuffer();
+  const transcript = normalizeTranscript(new TextDecoder().decode(transcriptBytes), transcriptFilename);
   if (transcript.length < 500) return json({ error: "The transcript is too short to generate reliable resources." }, 400);
 
   const id = crypto.randomUUID();
-  const transcriptKey = `production/jobs/${id}/transcript.txt`;
+  const transcriptSourceId = `transcript-${id}`;
+  const transcriptKey = `production/jobs/${id}/sources/${transcriptSourceId}/${safeStorageName(transcriptFilename)}`;
   const analysisKey = `production/jobs/${id}/sermon-analysis.json`;
-  await env.BUCKET.put(transcriptKey, transcript, { httpMetadata: { contentType: "text/plain; charset=utf-8" } });
+  await env.BUCKET.put(transcriptKey, transcriptBytes, { httpMetadata: { contentType: mediaTypeForFilename(transcriptFilename) } });
   const supplementalSources: NormalizedTeachingSource[] = [];
-  const storedSourceFiles: NonNullable<ProductionManifest["sourceFiles"]> = [{ sourceId: `transcript-${id}`, sourceType: "transcript", filename: transcriptFilename, storageKey: transcriptKey, status: "analyzed" }];
+  const storedSourceFiles: NonNullable<ProductionManifest["sourceFiles"]> = [{ sourceId: transcriptSourceId, sourceType: "transcript", filename: transcriptFilename, storageKey: transcriptKey, status: "analyzed" }];
   let totalSupplementalCharacters = 0;
   for (const [index, upload] of supplementalUploads.entries()) {
     const bytes = await upload.file.arrayBuffer();
@@ -568,7 +589,13 @@ function safeStorageName(value: string) {
 function mediaTypeForFilename(value: string) {
   if (/\.pdf$/i.test(value)) return "application/pdf";
   if (/\.docx$/i.test(value)) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  if (/\.vtt$/i.test(value)) return "text/vtt; charset=utf-8";
   return "text/plain; charset=utf-8";
+}
+function sourceContentDisposition(filename: string) {
+  const asciiFilename = clean(filename, 180).replace(/[^\x20-\x7e]|["\\]/g, "_");
+  const encodedFilename = encodeURIComponent(filename).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
+  return `inline; filename="${asciiFilename || "teaching-source"}"; filename*=UTF-8''${encodedFilename}`;
 }
 async function sha256Hex(value: ArrayBuffer) {
   const digest = await crypto.subtle.digest("SHA-256", value);

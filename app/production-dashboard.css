@@ -238,13 +238,15 @@
 .analysis-movement-list blockquote { padding-left: 12px; border-left: 3px solid #b2c4b9; color: #40554b; }
 .analysis-structure-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .analysis-structure-list p, .analysis-structure-list small { margin: 7px 0 0; text-transform: capitalize; }
-.analysis-comparison-warning { border-color: #d7bd83 !important; background: #fffaf0 !important; }
 .analysis-comparison-detail { margin-top: 12px; }
 .analysis-content-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .analysis-content-grid .analysis-section { padding: 18px; border: 1px solid rgba(23,48,40,.14); background: rgba(255,255,255,.55); }
 .analysis-source-list { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0 !important; list-style: none; }
 .analysis-source-list li { padding: 12px 14px; border-left: 3px solid #78917f; background: #fff; }
+.analysis-source-list a { display: inline-block; margin-top: 8px; color: #285d47; font-size: 13px; font-weight: 800; text-decoration: underline; text-underline-offset: 2px; }
 .analysis-section--warning { padding: 18px; border-left: 4px solid #b17b24; background: #fffaf0; }
+.analysis-section--warning li { padding-bottom: 10px; }
+.analysis-impact { margin-top: 3px; color: #76520f; font-size: 13px; font-weight: 800; letter-spacing: .01em; }
 .analysis-empty { margin: 0; font-style: italic; }
 .analysis-review-actions { align-items: center; padding-top: 20px; border-top: 1px solid rgba(23,48,40,.18); }
 .analysis-review-actions > div { display: flex; flex-direction: column; gap: 4px; }

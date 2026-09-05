@@ -11,6 +11,7 @@ type ProductionJob = {
   status: "awaiting_analysis_review" | "ready_for_internal_review" | "sent_for_approval"; sourceFilename: string;
   metadata: { sermonTitle: string; seriesTitle: string; scripture: string; speaker: string; confidence: "high" | "medium" | "low" };
   resources: Array<{ kind: string; title: string; previewUrl: string }>;
+  sourceFiles?: Array<{ sourceId: string; sourceType: string; filename: string }>;
   analysisStorageKey?: string;
   reviewUrl?: string;
 };
