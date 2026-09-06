@@ -125,6 +125,12 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     if (!manifest) return json({ error: "Production job not found." }, 404);
     const source = manifest.sourceFiles?.find((item) => item.sourceId === sourceMatch[2]);
     if (!source) return json({ error: "Teaching source not found." }, 404);
+    const sourceMetadata = await env.BUCKET.head(source.storageKey);
+    if (!sourceMetadata) return json({ error: "Teaching source file is unavailable." }, 404);
+    if (sourceMetadata.size === 0 && source.normalizedStorageKey) {
+      const normalized = await env.BUCKET.get(source.normalizedStorageKey);
+      if (normalized) return serveExtractedSourceFallback(request, normalized, source.filename);
+    }
     const rangeHeader = request.headers.get("range");
     const object = await env.BUCKET.get(source.storageKey, rangeHeader ? { range: request.headers } : undefined);
     if (!object) return json({ error: "Teaching source file is unavailable." }, 404);
@@ -265,6 +271,7 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
     const storageKey = `production/jobs/${id}/sources/${sourceId}/${safeStorageName(sourceFilename)}`;
     const normalizedStorageKey = `production/jobs/${id}/sources/${sourceId}/normalized.txt`;
     const mediaType = upload.file.type || mediaTypeForFilename(sourceFilename);
+    await env.BUCKET.put(storageKey, bytes, { httpMetadata: { contentType: mediaType } });
     let extraction: Awaited<ReturnType<typeof extractTeachingSourceText>>;
     try {
       extraction = await extractTeachingSourceText(sourceFilename, bytes);
@@ -283,7 +290,6 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
         jobId: id,
       }, 413);
     }
-    await env.BUCKET.put(storageKey, bytes, { httpMetadata: { contentType: mediaType } });
     await env.BUCKET.put(normalizedStorageKey, extraction.text, { httpMetadata: { contentType: "text/plain; charset=utf-8" } });
     supplementalSources.push({
       descriptor: {
@@ -613,6 +619,20 @@ function sourceContentDisposition(filename: string) {
   const asciiFilename = clean(filename, 180).replace(/[^\x20-\x7e]|["\\]/g, "_");
   const encodedFilename = encodeURIComponent(filename).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`);
   return `inline; filename="${asciiFilename || "teaching-source"}"; filename*=UTF-8''${encodedFilename}`;
+}
+function serveExtractedSourceFallback(request: Request, object: R2ObjectBody, originalFilename: string) {
+  const fallbackFilename = originalFilename.replace(/\.[^.]+$/, "") + ".extracted.txt";
+  const headers = new Headers({
+    "content-type": "text/plain; charset=utf-8",
+    "content-disposition": sourceContentDisposition(fallbackFilename),
+    "content-length": String(object.size),
+    "cache-control": "private, no-store",
+    "etag": object.httpEtag,
+    "x-content-type-options": "nosniff",
+    "x-robots-tag": "noindex, nofollow, noarchive",
+    "x-sunday-multiplied-source-fallback": "extracted-text",
+  });
+  return new Response(request.method === "HEAD" ? null : object.body, { headers });
 }
 async function sha256Hex(value: ArrayBuffer) {
   const digest = await crypto.subtle.digest("SHA-256", value);
