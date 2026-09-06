@@ -119,22 +119,33 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     return json({ analysis });
   }
 
-  if (sourceMatch && request.method === "GET") {
+  if (sourceMatch && (request.method === "GET" || request.method === "HEAD")) {
     if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
     const manifest = await loadManifest(env.BUCKET, sourceMatch[1]);
     if (!manifest) return json({ error: "Production job not found." }, 404);
     const source = manifest.sourceFiles?.find((item) => item.sourceId === sourceMatch[2]);
     if (!source) return json({ error: "Teaching source not found." }, 404);
-    const object = await env.BUCKET.get(source.storageKey);
+    const rangeHeader = request.headers.get("range");
+    const object = await env.BUCKET.get(source.storageKey, rangeHeader ? { range: request.headers } : undefined);
     if (!object) return json({ error: "Teaching source file is unavailable." }, 404);
     const headers = new Headers();
     object.writeHttpMetadata(headers);
-    if (!headers.get("content-type")) headers.set("content-type", mediaTypeForFilename(source.filename));
+    headers.set("content-type", mediaTypeForFilename(source.filename));
     headers.set("content-disposition", sourceContentDisposition(source.filename));
     headers.set("cache-control", "private, no-store");
+    headers.set("accept-ranges", "bytes");
+    headers.set("etag", object.httpEtag);
     headers.set("x-content-type-options", "nosniff");
     headers.set("x-robots-tag", "noindex, nofollow, noarchive");
-    return new Response(object.body, { headers });
+    const range = object.range;
+    const isPartial = rangeHeader && range && typeof range.offset === "number" && typeof range.length === "number";
+    if (isPartial) {
+      headers.set("content-range", `bytes ${range.offset}-${range.offset + range.length - 1}/${object.size}`);
+      headers.set("content-length", String(range.length));
+    } else {
+      headers.set("content-length", String(object.size));
+    }
+    return new Response(request.method === "HEAD" ? null : object.body, { status: isPartial ? 206 : 200, headers });
   }
 
   if (generateMatch && request.method === "POST") {
