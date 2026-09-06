@@ -18,11 +18,13 @@ interface D1Database {
 interface R2ObjectBody {
   body: ReadableStream;
   httpEtag: string;
+  size: number;
+  range?: { offset?: number; length?: number; suffix?: number };
   writeHttpMetadata(headers: Headers): void;
 }
 
 interface R2Bucket {
-  get(key: string): Promise<R2ObjectBody | null>;
+  get(key: string, options?: { range?: Headers }): Promise<R2ObjectBody | null>;
 }
 
 interface Fetcher {
