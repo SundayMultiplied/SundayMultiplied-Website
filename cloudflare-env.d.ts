@@ -15,15 +15,19 @@ interface D1Database {
   batch<T = unknown>(statements: D1PreparedStatement[]): Promise<T[]>;
 }
 
-interface R2ObjectBody {
-  body: ReadableStream;
+interface R2ObjectMetadata {
   httpEtag: string;
   size: number;
   range?: { offset?: number; length?: number; suffix?: number };
   writeHttpMetadata(headers: Headers): void;
 }
 
+interface R2ObjectBody extends R2ObjectMetadata {
+  body: ReadableStream;
+}
+
 interface R2Bucket {
+  head(key: string): Promise<R2ObjectMetadata | null>;
   get(key: string, options?: { range?: Headers }): Promise<R2ObjectBody | null>;
 }
 
