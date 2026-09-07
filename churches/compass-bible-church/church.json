@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "church": {
+    "name": "Compass Bible Church",
+    "slug": "compass-bible-church",
+    "city": "Aliso Viejo",
+    "state": "CA",
+    "timezone": "America/Los Angeles",
+    "website": "https://www.compasschurch.org/"
+  },
+  "resources": [
+    "monday",
+    "group",
+    "family"
+  ],
+  "schedule": {
+    "serviceDay": "sunday",
+    "deliveryDay": "Sunday"
+  },
+  "approval": {
+    "reviewerConfigured": true,
+    "linkLifetimeDays": 30,
+    "draftRetentionDays": 90,
+    "dashboardMode": "shared"
+  },
+  "brand": {
+    "primaryColor": "#3c568e",
+    "secondaryColor": "#6587c2",
+    "accentColor": "#245693",
+    "backgroundColor": "#ffffff",
+    "textColor": "#000000",
+    "mutedColor": "#68736e",
+    "borderColor": "#d9dfdc",
+    "sectionBackgroundColor": "#f5f7f5",
+    "sectionTextColor": "#14211d",
+    "calloutBackgroundColor": "#eef3ef",
+    "calloutTextColor": "#14211d",
+    "headerBackgroundColor": "#3a4149",
+    "headerTextColor": "#ebebeb",
+    "scriptureBackgroundColor": "#f5f7f5",
+    "scriptureTextColor": "#14211d",
+    "questionBackgroundColor": "#f5f7f5",
+    "questionTextColor": "#14211d",
+    "prayerBackgroundColor": "#49515b",
+    "prayerTextColor": "#ffffff",
+    "headingFont": "Inter, Arial, sans-serif",
+    "bodyFont": "Georgia, 'Times New Roman', serif",
+    "headingWeight": "800",
+    "headingTransform": "none",
+    "cornerRadius": "5px",
+    "pageWidth": "820px",
+    "pagePadding": "50px",
+    "sectionSpacing": "34px",
+    "buttonStyle": "soft",
+    "headerStyle": "filled",
+    "logoPosition": "right",
+    "logoSize": "large",
+    "removeLogoBackground": false,
+    "cardStyle": "bordered",
+    "styleTheme": "contemporary",
+    "visualTone": "grounded, bold, structured",
+    "visualNotes": "Automated review suggests a grounded, bold, structured visual system. Confirm recommendations against current logo files and recent social graphics.",
+    "stylesheet": "churches/compass-bible-church/styles/compass-bible-church.css",
+    "publicStylesheet": "/resources/compass-bible-church/church.css",
+    "sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css",
+    "logoUrl": "/api/resource-assets/compass-bible-church/logo",
+    "assets": [
+      {
+        "kind": "primary",
+        "filename": "compass-bible-church-logo.webp",
+        "r2Key": "churches/compass-bible-church/brand/primary-compass-bible-church-logo.webp",
+        "publicUrl": "/api/resource-assets/compass-bible-church/logo"
+      },
+      {
+        "kind": "reverse",
+        "filename": "compass-bible-church-white_logo.webp",
+        "r2Key": "churches/compass-bible-church/brand/reverse-compass-bible-church-white_logo.webp"
+      }
+    ]
+  },
+  "sources": "churches/compass-bible-church/sources/streaming.json"
+}
