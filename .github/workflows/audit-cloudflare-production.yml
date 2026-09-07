@@ -39,8 +39,20 @@ jobs:
             "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/services" \
             > cloudflare-audit/workers-response.json
 
-          npx --yes wrangler@4.92.0 d1 list --json > cloudflare-audit/d1.json
-          npx --yes wrangler@4.92.0 r2 bucket list --json > cloudflare-audit/r2.json
+          d1_access=false
+          if npx --yes wrangler@4.92.0 d1 info 10522aad-f31e-4fb2-a848-a2563f015171 --json \
+            > cloudflare-audit/d1.json 2> cloudflare-audit/d1-error.txt; then
+            d1_access=true
+          fi
+
+          r2_access=false
+          if npx --yes wrangler@4.92.0 r2 bucket list --json \
+            > cloudflare-audit/r2.json 2> cloudflare-audit/r2-error.txt; then
+            r2_access=true
+          fi
+
+          export D1_ACCESS="${d1_access}"
+          export R2_ACCESS="${r2_access}"
 
           node <<'NODE'
           const fs = require("node:fs");
@@ -55,18 +67,23 @@ jobs:
               modifiedOn: item.modified_on || null,
               environment: item.default_environment?.environment || null,
             })),
-            d1: JSON.parse(fs.readFileSync("cloudflare-audit/d1.json", "utf8")).map((item) => ({
-              name: item.name,
-              uuid: item.uuid,
-              createdAt: item.created_at,
-              version: item.version,
-            })),
-            r2: JSON.parse(fs.readFileSync("cloudflare-audit/r2.json", "utf8")).map((item) => ({
-              name: item.name,
-              creationDate: item.creation_date,
-              location: item.location,
-              storageClass: item.storage_class,
-            })),
+            knownD1: {
+              name: "sunday-multiplied-approvals",
+              uuid: "10522aad-f31e-4fb2-a848-a2563f015171",
+              accessibleWithDeploymentToken: process.env.D1_ACCESS === "true",
+            },
+            r2: process.env.R2_ACCESS === "true"
+              ? JSON.parse(fs.readFileSync("cloudflare-audit/r2.json", "utf8")).map((item) => ({
+                  name: item.name,
+                  creationDate: item.creation_date,
+                  location: item.location,
+                  storageClass: item.storage_class,
+                }))
+              : [],
+            inventoryPermissions: {
+              d1: process.env.D1_ACCESS === "true",
+              r2: process.env.R2_ACCESS === "true",
+            },
             githubSecrets: {
               CLOUDFLARE_API_TOKEN: Boolean(process.env.CLOUDFLARE_API_TOKEN),
               CLOUDFLARE_ACCOUNT_ID: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID),
@@ -78,8 +95,9 @@ jobs:
           };
           fs.writeFileSync("cloudflare-audit/inventory.json", JSON.stringify(result, null, 2));
           fs.rmSync("cloudflare-audit/workers-response.json");
-          fs.rmSync("cloudflare-audit/d1.json");
-          fs.rmSync("cloudflare-audit/r2.json");
+          for (const path of ["cloudflare-audit/d1.json", "cloudflare-audit/d1-error.txt", "cloudflare-audit/r2.json", "cloudflare-audit/r2-error.txt"]) {
+            if (fs.existsSync(path)) fs.rmSync(path);
+          }
           NODE
 
       - name: Upload sanitized inventory
