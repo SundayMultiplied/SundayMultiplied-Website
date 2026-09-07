@@ -5,6 +5,7 @@ type ProductionJobAdminEnv = {
 
 type ProductionManifestSummary = {
   status?: "awaiting_analysis_review" | "ready_for_internal_review" | "sent_for_approval";
+  analysisReviewId?: string;
 };
 
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
@@ -41,7 +42,20 @@ export async function handleProductionJobAdminApi(request: Request, env: Product
   } while (cursor);
 
   await env.BUCKET.delete(manifestKey);
+  if (manifest.analysisReviewId) {
+    await env.BUCKET.delete(`production/analysis-review-manifests/${manifest.analysisReviewId}.json`);
+    await deletePrefix(env.BUCKET, `production/analysis-reviews/${manifest.analysisReviewId}/`);
+  }
   return json({ ok: true, jobId });
+}
+
+async function deletePrefix(bucket: R2Bucket, prefix: string) {
+  let cursor: string | undefined;
+  do {
+    const listed = await bucket.list({ prefix, cursor, limit: 1000 });
+    if (listed.objects.length) await bucket.delete(listed.objects.map((item) => item.key));
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
 }
 
 function adminAuthorizationError(request: Request, env: ProductionJobAdminEnv) {

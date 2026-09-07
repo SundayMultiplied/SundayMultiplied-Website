@@ -322,13 +322,66 @@
 }
 .analysis-empty { margin: 0; font-style: italic; }
 .analysis-review-actions { align-items: center; padding-top: 20px; border-top: 1px solid rgba(23,48,40,.18); }
-.analysis-review-actions > div { display: flex; flex-direction: column; gap: 4px; }
-.analysis-review-actions .approval-approve { flex: 0 0 auto; }
+.analysis-decision-copy { display: flex; flex: 1 1 320px; flex-direction: column; gap: 4px; }
+.analysis-action-stack { display: flex; flex: 0 1 520px; align-items: flex-end; flex-direction: column; gap: 10px; }
+.analysis-primary-action { min-width: min(100%, 320px); padding: 15px 20px; border: 2px solid #173028; background: #173028; color: #fff; font: inherit; font-size: 14px; font-weight: 850; cursor: pointer; box-shadow: 0 5px 0 #b17b24; }
+.analysis-primary-action:hover { background: #285d47; }
+.analysis-primary-action:disabled { cursor: wait; opacity: .55; box-shadow: none; }
+.analysis-secondary-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.analysis-secondary-actions button, .analysis-share-panel button, .analysis-share-panel a { padding: 9px 11px; border: 1px solid #78917f; background: #fff; color: #285d47; font: inherit; font-size: 12px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.analysis-secondary-actions button:disabled { cursor: wait; opacity: .55; }
+.analysis-share-panel { display: grid; gap: 8px; padding: 16px; border-left: 4px solid #385643; background: #edf2ee; }
+.analysis-share-panel > div { display: flex; gap: 8px; }
+.analysis-share-panel input { min-width: 0; flex: 1; padding: 10px 12px; border: 1px solid rgba(23,48,40,.2); background: #fff; font: inherit; }
+.analysis-share-panel small { color: #59685f; }
+.analysis-feedback-list { display: grid; gap: 10px; }
+.analysis-feedback-list article { padding: 14px; border: 1px solid rgba(23,48,40,.14); background: #fff; }
+.analysis-feedback-list article > div { display: flex; justify-content: space-between; gap: 12px; }
+.analysis-feedback-list article span { color: #76520f; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+.analysis-feedback-list article p { margin: 8px 0; }
+.analysis-feedback-list article small { color: #6c796f; }
+
+.analysis-share-page { min-height: 100vh; padding: clamp(22px, 5vw, 64px) 18px; background: #e8dfcf; color: #173028; }
+.analysis-share-shell { width: min(1120px, 100%); margin: 0 auto; }
+.analysis-share-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+.analysis-share-intro h1 { margin: 5px 0 8px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(34px, 5vw, 54px); font-weight: 500; }
+.analysis-share-intro p:not(.approval-kicker) { max-width: 680px; margin: 0; color: #4e6158; line-height: 1.6; }
+.analysis-share-intro button { flex: 0 0 auto; padding: 12px 16px; border: 1px solid #173028; background: #173028; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+.analysis-share-page .sermon-analysis-review { margin-bottom: 26px; }
+.analysis-feedback-form, .analysis-feedback-thanks { display: grid; gap: 16px; padding: clamp(22px, 4vw, 38px); background: #173028; color: #fff; }
+.analysis-feedback-form h2, .analysis-feedback-thanks h2 { margin: 4px 0 6px; font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 500; }
+.analysis-feedback-form > div > p:not(.approval-kicker), .analysis-feedback-thanks p { margin: 0; color: #ced9d3; }
+.analysis-feedback-form > label { display: grid; gap: 7px; font-weight: 800; }
+.analysis-feedback-form > label small { color: #aabbb2; font-weight: 400; }
+.analysis-feedback-form input[type="text"], .analysis-feedback-form input:not([type]), .analysis-feedback-form textarea { width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,.35); background: #fff; color: #173028; font: inherit; }
+.analysis-feedback-form fieldset { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; padding: 15px 0 0; border: 0; border-top: 1px solid rgba(255,255,255,.2); }
+.analysis-feedback-form legend { width: 100%; margin-bottom: 9px; font-weight: 800; }
+.analysis-feedback-form fieldset label { position: relative; cursor: pointer; }
+.analysis-feedback-form fieldset input { position: absolute; opacity: 0; }
+.analysis-feedback-form fieldset span { display: block; padding: 11px 13px; border: 2px solid rgba(255,255,255,.35); }
+.analysis-feedback-form fieldset input:checked + span { border-color: #e5bd69; background: #e5bd69; color: #173028; }
+.analysis-feedback-form > button { width: fit-content; padding: 13px 19px; border: 0; background: #e5bd69; color: #173028; font: inherit; font-weight: 850; cursor: pointer; }
+.analysis-feedback-error { margin: 0; color: #ffd7d0; font-weight: 800; }
+.analysis-share-loading, .analysis-share-error { width: min(760px, 100%); margin: 10vh auto; padding: 32px; background: #fff; }
 
 @media (max-width: 800px) {
   .sermon-analysis-head, .analysis-review-actions { align-items: stretch; flex-direction: column; }
   .sermon-analysis-head-actions { align-items: flex-start; }
   .analysis-metadata-grid, .analysis-message-grid, .analysis-comparison-grid, .analysis-comparison-detail, .analysis-content-grid, .analysis-structure-list, .analysis-source-list { grid-template-columns: 1fr; }
+  .analysis-action-stack { align-items: stretch; }
+  .analysis-primary-action { width: 100%; }
+  .analysis-secondary-actions { justify-content: flex-start; }
+  .analysis-share-panel > div, .analysis-share-intro { align-items: stretch; flex-direction: column; }
+}
+
+@media print {
+  @page { margin: .55in; }
+  body { background: #fff !important; }
+  body * { visibility: hidden !important; }
+  .sermon-analysis-review, .sermon-analysis-review * { visibility: visible !important; }
+  .sermon-analysis-review { position: absolute; inset: 0 auto auto 0; width: 100%; margin: 0; padding: 0; border: 0; background: #fff; box-shadow: none; }
+  .sermon-analysis-head-actions button, .analysis-review-actions, .analysis-share-panel { display: none !important; }
+  .analysis-section, .analysis-message-grid > article, .analysis-metadata-grid > div, .analysis-comparison-grid > article, .analysis-comparison-detail > article, .analysis-structure-list > article, .analysis-feedback-list article { break-inside: avoid; }
 }
 
 .approval-metadata {

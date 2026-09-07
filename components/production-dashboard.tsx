@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { TeachingSourcesForm } from "./teaching-sources-form";
 import { SermonAnalysisReview } from "./sermon-analysis-review";
 import type { CanonicalSermonAnalysis } from "../worker/sermon-analysis";
+import type { AnalysisReviewFeedback } from "../worker/analysis-review-api";
 
 type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string; reviewerEmail?: string };
 type ProductionJob = {
@@ -13,6 +14,7 @@ type ProductionJob = {
   resources: Array<{ kind: string; title: string; previewUrl: string }>;
   sourceFiles?: Array<{ sourceId: string; sourceType: string; filename: string }>;
   analysisStorageKey?: string;
+  analysisReviewUrl?: string;
   reviewUrl?: string;
 };
 type RevisionRequest = { id: string; previewUrl: string | null };
@@ -41,6 +43,10 @@ export function ProductionDashboard() {
   const [analysisJob, setAnalysisJob] = useState<ProductionJob | null>(null);
   const [loadingAnalysisId, setLoadingAnalysisId] = useState("");
   const [generatingId, setGeneratingId] = useState("");
+  const [retryingAnalysisId, setRetryingAnalysisId] = useState("");
+  const [sharingAnalysisId, setSharingAnalysisId] = useState("");
+  const [analysisShareUrl, setAnalysisShareUrl] = useState("");
+  const [analysisFeedback, setAnalysisFeedback] = useState<AnalysisReviewFeedback[]>([]);
   const [comparisons, setComparisons] = useState<ComparisonSet[]>([]);
   const [comparingId, setComparingId] = useState("");
 
@@ -88,11 +94,44 @@ export function ProductionDashboard() {
     setLoadingAnalysisId(job.id); setError("");
     try {
       const response = await fetch(`/api/production/jobs/${encodeURIComponent(job.id)}/analysis`, { cache: "no-store" });
-      const data = await response.json() as { error?: string; analysis?: CanonicalSermonAnalysis };
+      const data = await response.json() as { error?: string; analysis?: CanonicalSermonAnalysis; analysisReviewUrl?: string; feedback?: AnalysisReviewFeedback[] };
       if (!response.ok || !data.analysis) throw new Error(data.error || "Unable to load the sermon analysis.");
-      setAnalysisJob(job); setAnalysis(data.analysis);
+      setAnalysisJob({ ...job, analysisReviewUrl: data.analysisReviewUrl || job.analysisReviewUrl }); setAnalysis(data.analysis); setAnalysisShareUrl(data.analysisReviewUrl || job.analysisReviewUrl || ""); setAnalysisFeedback(data.feedback || []);
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to load the sermon analysis."); }
     finally { setLoadingAnalysisId(""); }
+  }
+
+  async function shareAnalysis() {
+    if (!analysisJob) return;
+    if (analysisShareUrl) { setCreatedLink(analysisShareUrl); return; }
+    setSharingAnalysisId(analysisJob.id); setError("");
+    try {
+      const response = await fetch(`/api/production/jobs/${encodeURIComponent(analysisJob.id)}/analysis/share`, { method: "POST" });
+      const data = await response.json() as { error?: string; reviewUrl?: string };
+      if (!response.ok || !data.reviewUrl) throw new Error(data.error || "Unable to create the analysis review link.");
+      setAnalysisShareUrl(data.reviewUrl); setCreatedLink(data.reviewUrl); setActionMessage("Secure sermon analysis review link created.");
+      await loadProduction();
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to create the analysis review link."); }
+    finally { setSharingAnalysisId(""); }
+  }
+
+  async function retryAnalysis() {
+    if (!analysisJob) return;
+    if (!window.confirm("Retry this analysis using the same saved transcript and supporting documents?\n\nThis uses another AI generation and replaces the current analysis. Any existing analysis-review link will be retired.")) return;
+    setRetryingAnalysisId(analysisJob.id); setError(""); setActionMessage("");
+    try {
+      const response = await fetch(`/api/production/jobs/${encodeURIComponent(analysisJob.id)}/analysis/retry`, { method: "POST" });
+      const data = await response.json() as { error?: string; analysis?: CanonicalSermonAnalysis; job?: ProductionJob };
+      if (!response.ok || !data.analysis) throw new Error(data.error || "Unable to retry the sermon analysis.");
+      setAnalysis(data.analysis); setAnalysisJob(data.job || analysisJob); setAnalysisShareUrl(""); setAnalysisFeedback([]); setActionMessage("Analysis regenerated from the same saved sources. Review the new result before continuing.");
+      await loadProduction();
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to retry the sermon analysis."); }
+    finally { setRetryingAnalysisId(""); }
+  }
+
+  function replaceAnalysisSources() {
+    setAnalysis(null); setAnalysisJob(null); setAnalysisShareUrl(""); setAnalysisFeedback([]);
+    requestAnimationFrame(() => document.getElementById("teaching-sources-form")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   async function acceptAnalysisAndGenerate() {
@@ -174,7 +213,7 @@ export function ProductionDashboard() {
     {error && <div className="approval-admin-error"><strong>Production unavailable</strong><p>{error}</p></div>}
     {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
     {createdLink && <div className="approval-created-link"><strong>Secure review link</strong><input readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} /><small>The church notification uses this secure review page.</small></div>}
-    {analysis && analysisJob && <SermonAnalysisReview analysis={analysis} job={analysisJob} generating={generatingId === analysisJob.id} onClose={() => { setAnalysis(null); setAnalysisJob(null); }} onGenerate={() => void acceptAnalysisAndGenerate()} />}
+    {analysis && analysisJob && <SermonAnalysisReview analysis={analysis} job={analysisJob} generating={generatingId === analysisJob.id} retrying={retryingAnalysisId === analysisJob.id} sharing={sharingAnalysisId === analysisJob.id} shareUrl={analysisShareUrl} feedback={analysisFeedback} onClose={() => { setAnalysis(null); setAnalysisJob(null); setAnalysisShareUrl(""); setAnalysisFeedback([]); }} onGenerate={() => void acceptAnalysisAndGenerate()} onRetry={() => void retryAnalysis()} onReplaceSources={replaceAnalysisSources} onShare={() => void shareAnalysis()} />}
     <section className="approval-create production-queue">
       <div className="approval-create-heading production-queue-heading"><div><h2>Production queue</h2><p>Review sermon analysis first, then preview generated resources before pastoral review.</p></div><button type="button" className="production-delete" onClick={() => void deleteSelectedJobs()} disabled={!selectedJobIds.length || deletingJobs}>{deletingJobs ? "Deleting…" : `Delete selected${selectedJobIds.length ? ` (${selectedJobIds.length})` : ""}`}</button></div>
       {jobs.length === 0 ? <p>No sermon production jobs yet.</p> : <div className="approval-table production-job-table">

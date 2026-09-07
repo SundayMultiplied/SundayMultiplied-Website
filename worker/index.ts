@@ -3,6 +3,7 @@ import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } fr
 import handler from "vinext/server/app-router-entry";
 import { handleApprovalApi } from "./approval-api";
 import { handleApprovalListApi } from "./approval-list-api";
+import { handleAnalysisReviewApi } from "./analysis-review-api";
 import { handleChurchAssetApi } from "./church-asset-api";
 import { handleComparisonApi } from "./comparison-api";
 import { finalizeApprovedPackage } from "./package-finalization";
@@ -67,6 +68,9 @@ const worker = {
 
     const systemHealthResponse = await handleSystemHealthApi(request, env);
     if (systemHealthResponse) return systemHealthResponse;
+
+    const analysisReviewResponse = await handleAnalysisReviewApi(request, env);
+    if (analysisReviewResponse) return analysisReviewResponse;
 
     if (url.pathname === "/api/resource-assets/sample-church/logo" && request.method === "GET") {
       return Response.redirect(new URL("/sample-church-logo.webp", request.url).toString(), 302);

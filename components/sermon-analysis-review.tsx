@@ -1,6 +1,7 @@
 "use client";
 
 import type { CanonicalSermonAnalysis } from "../worker/sermon-analysis";
+import type { AnalysisReviewFeedback } from "../worker/analysis-review-api";
 import type { ReactNode } from "react";
 
 type ReviewJob = {
@@ -17,12 +18,28 @@ export function SermonAnalysisReview({
   generating,
   onClose,
   onGenerate,
+  onRetry,
+  onReplaceSources,
+  onShare,
+  retrying = false,
+  sharing = false,
+  shareUrl = "",
+  feedback = [],
+  publicView = false,
 }: {
   analysis: CanonicalSermonAnalysis;
   job: ReviewJob;
   generating: boolean;
   onClose: () => void;
   onGenerate: () => void;
+  onRetry?: () => void;
+  onReplaceSources?: () => void;
+  onShare?: () => void;
+  retrying?: boolean;
+  sharing?: boolean;
+  shareUrl?: string;
+  feedback?: AnalysisReviewFeedback[];
+  publicView?: boolean;
 }) {
   const legacy = String(suppliedAnalysis.schema_version) !== "3.0";
   const analysis = normalizeReviewAnalysis(suppliedAnalysis);
@@ -40,7 +57,7 @@ export function SermonAnalysisReview({
       <div className="sermon-analysis-head-actions">
         {legacy && <span className="analysis-version-label">Legacy transcript-only analysis</span>}
         <span className={`analysis-result analysis-result--${analysis.fidelity_audit.result}`}>{analysis.fidelity_audit.result.replaceAll("_", " ")}</span>
-        <button type="button" className="teaching-source-reset" onClick={onClose}>Close analysis</button>
+        {!publicView && <button type="button" className="teaching-source-reset" onClick={onClose}>Close analysis</button>}
       </div>
     </header>
 
@@ -59,8 +76,8 @@ export function SermonAnalysisReview({
 
     <AnalysisSection title="Teaching sources">
       <ul className="analysis-source-list">
-        {analysis.source_bundle.transcript && <SourceCard descriptor={analysis.source_bundle.transcript} job={job} />}
-        {analysis.source_bundle.supplemental_sources.map((source) => <SourceCard key={source.source_id} descriptor={source} job={job} />)}
+        {analysis.source_bundle.transcript && <SourceCard descriptor={analysis.source_bundle.transcript} job={job} allowOpen={!publicView} />}
+        {analysis.source_bundle.supplemental_sources.map((source) => <SourceCard key={source.source_id} descriptor={source} job={job} allowOpen={!publicView} />)}
       </ul>
     </AnalysisSection>
 
@@ -122,10 +139,29 @@ export function SermonAnalysisReview({
       </ul>
     </AnalysisSection>}
 
-    <footer className="analysis-review-actions">
-      <div><strong>{blocked ? "Generation blocked" : job.status === "awaiting_analysis_review" ? "Ready for your decision" : "Analysis previously accepted"}</strong><span>{blocked ? "Correct the teaching sources and create a new analysis." : job.status === "awaiting_analysis_review" ? "Accepting this analysis makes it the source for every generated resource." : "You can review this record without regenerating the package."}</span></div>
-      {job.status === "awaiting_analysis_review" && <button type="button" className="approval-approve" onClick={onGenerate} disabled={blocked || generating}>{generating ? "Generating resources…" : "Accept analysis & generate resources"}</button>}
-    </footer>
+    {!publicView && feedback.length > 0 && <AnalysisSection title="Pastor feedback">
+      <div className="analysis-feedback-list">{feedback.map((item) => <article key={item.id}>
+        <div><strong>{item.reviewerName}</strong><span>{feedbackLabel(item.assessment)}</span></div>
+        {item.notes && <p>{item.notes}</p>}
+        <small>{new Date(item.createdAt).toLocaleString()}</small>
+      </article>)}</div>
+    </AnalysisSection>}
+
+    {!publicView && <>
+      {shareUrl && <div className="analysis-share-panel"><strong>Secure analysis review link</strong><div><input readOnly value={shareUrl} onFocus={(event) => event.currentTarget.select()} /><button type="button" onClick={() => void navigator.clipboard?.writeText(shareUrl)}>Copy link</button><a href={shareUrl} target="_blank" rel="noreferrer">Open</a></div><small>Anyone with this unlisted link can read the analysis and leave feedback. Source documents are not shared.</small></div>}
+      <footer className="analysis-review-actions">
+        <div className="analysis-decision-copy"><strong>{blocked ? "Generation blocked" : job.status === "awaiting_analysis_review" ? "Ready for your decision" : "Analysis previously accepted"}</strong><span>{blocked ? "Replace the teaching sources and create a new analysis." : job.status === "awaiting_analysis_review" ? "Accepting this analysis makes it the source for every generated resource." : "You can review this record without regenerating the package."}</span></div>
+        <div className="analysis-action-stack">
+          {job.status === "awaiting_analysis_review" && <button type="button" className="analysis-primary-action" onClick={onGenerate} disabled={blocked || generating || retrying}>{generating ? "Generating resources…" : "Accept analysis & generate resources"}</button>}
+          <div className="analysis-secondary-actions">
+            <button type="button" onClick={() => window.print()}>Print / Save PDF</button>
+            {onShare && <button type="button" onClick={onShare} disabled={sharing}>{sharing ? "Creating link…" : shareUrl ? "View share link" : "Create secure review link"}</button>}
+            {job.status === "awaiting_analysis_review" && onRetry && <button type="button" onClick={onRetry} disabled={retrying || generating}>{retrying ? "Retrying analysis…" : "Retry same sources"}</button>}
+            {job.status === "awaiting_analysis_review" && onReplaceSources && <button type="button" onClick={onReplaceSources}>Replace sources</button>}
+          </div>
+        </div>
+      </footer>
+    </>}
   </section>;
 }
 
@@ -156,14 +192,14 @@ function DeliveredDepartures({ items }: { items: CanonicalSermonAnalysis["source
   </ol></article>;
 }
 
-function SourceCard({ descriptor, job }: { descriptor: CanonicalSermonAnalysis["source_bundle"]["supplemental_sources"][number]; job: ReviewJob }) {
+function SourceCard({ descriptor, job, allowOpen }: { descriptor: CanonicalSermonAnalysis["source_bundle"]["supplemental_sources"][number]; job: ReviewJob; allowOpen: boolean }) {
   const storedSource = job.sourceFiles?.find((source) => source.sourceId === descriptor.source_id)
     || job.sourceFiles?.find((source) => source.filename === descriptor.name && source.sourceType === descriptor.source_type);
   const role = descriptor.role === "controlling" ? "controlling" : "supporting";
   return <li>
     <strong>{descriptor.name}</strong>
     <span>{descriptor.source_type.replaceAll("_", " ")} · {role}</span>
-    {storedSource && <a href={`/api/production/jobs/${encodeURIComponent(job.id)}/sources/${encodeURIComponent(storedSource.sourceId)}`} target="_blank" rel="noreferrer">Open source file</a>}
+    {allowOpen && storedSource && <a href={`/api/production/jobs/${encodeURIComponent(job.id)}/sources/${encodeURIComponent(storedSource.sourceId)}`} target="_blank" rel="noreferrer">Open source file</a>}
   </li>;
 }
 
@@ -195,6 +231,12 @@ function reviewNoteTopic(value: string) {
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function feedbackLabel(value: AnalysisReviewFeedback["assessment"]) {
+  if (value === "accurate") return "Looks accurate";
+  if (value === "questions") return "Questions";
+  return "Changes requested";
 }
 
 function normalizeReviewAnalysis(input: CanonicalSermonAnalysis): CanonicalSermonAnalysis {

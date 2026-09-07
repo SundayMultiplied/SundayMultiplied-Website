@@ -2,6 +2,7 @@ import { PRODUCTION_CHURCHES } from "./generated/church-registry";
 import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type NormalizedTeachingSource, type TeachingSourceType } from "./sermon-analysis";
 import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
 import { extractTeachingSourceText, MAX_TOTAL_SUPPLEMENTAL_CHARACTERS } from "./teaching-source-extraction";
+import { loadAnalysisReviewFeedback } from "./analysis-review-api";
 
 export type ProductionEnv = {
   ASSETS?: Fetcher;
@@ -58,6 +59,10 @@ export type ProductionManifest = {
   fidelityResult?: string;
   analysisAcceptedAt?: string;
   analysisAcceptedBy?: string;
+  analysisAttempt?: number;
+  analysisLastGeneratedAt?: string;
+  analysisReviewId?: string;
+  analysisReviewUrl?: string;
   metadata: GeneratedPackage["metadata"];
   resources: Array<{ kind: string; title: string; storageKey: string; previewUrl: string }>;
   reviewUrl?: string;
@@ -78,6 +83,7 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
   const url = new URL(request.url);
   const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
   const analysisMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/analysis$/);
+  const analysisRetryMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/analysis\/retry$/);
   const generateMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/generate$/);
   const sourceMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/sources\/([^/]+)$/);
   const logoMatch = url.pathname.match(/^\/api\/resource-assets\/([a-z0-9]+(?:-[a-z0-9]+)*)\/logo$/);
@@ -116,8 +122,10 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     if (!manifest) return json({ error: "Production job not found." }, 404);
     const analysis = await loadAnalysis(env.BUCKET, manifest);
     if (!analysis) return json({ error: "Sermon analysis is unavailable for this production job." }, 404);
-    return json({ analysis });
+    return json({ analysis, analysisReviewUrl: manifest.analysisReviewUrl || "", feedback: await loadAnalysisReviewFeedback(env.BUCKET, manifest.analysisReviewId) });
   }
+
+  if (analysisRetryMatch && request.method === "POST") return retryProductionJobAnalysis(request, env, analysisRetryMatch[1]);
 
   if (sourceMatch && (request.method === "GET" || request.method === "HEAD")) {
     if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
@@ -346,11 +354,71 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
     analysisStorageKey: analysisKey,
     analysisId: analysis.analysis_id,
     fidelityResult: analysis.fidelity_audit.result,
+    analysisAttempt: 1,
+    analysisLastGeneratedAt: new Date().toISOString(),
     metadata: metadataFromAnalysis(analysis),
     resources: [],
   };
   await saveManifest(env.BUCKET, manifest);
   return json({ ok: true, job: manifest }, 201);
+}
+
+async function retryProductionJobAnalysis(request: Request, env: ProductionEnv, jobId: string) {
+  if (!env.BUCKET) return json({ error: "Production storage is not configured." }, 503);
+  if (!env.OPENAI_API_KEY) return json({ error: "OPENAI_API_KEY is not configured for sermon analysis." }, 503);
+  const manifest = await loadManifest(env.BUCKET, jobId);
+  if (!manifest) return json({ error: "Production job not found." }, 404);
+  if (manifest.status !== "awaiting_analysis_review") {
+    return json({ error: "Analysis can only be retried before resources are generated." }, 409);
+  }
+  const currentAnalysis = await loadAnalysis(env.BUCKET, manifest);
+  if (!currentAnalysis) return json({ error: "The current sermon analysis is unavailable." }, 404);
+  const transcriptFile = manifest.sourceFiles?.find((source) => source.sourceType === "transcript");
+  if (!transcriptFile) return json({ error: "The saved sermon transcript is unavailable." }, 404);
+  const transcriptObject = await env.BUCKET.get(transcriptFile.storageKey);
+  if (!transcriptObject) return json({ error: "The saved sermon transcript is unavailable." }, 404);
+  const transcript = normalizeTranscript(await new Response(transcriptObject.body).text(), transcriptFile.filename);
+  const supplementalSources: NormalizedTeachingSource[] = [];
+  for (const source of manifest.sourceFiles?.filter((item) => item.sourceType !== "transcript") || []) {
+    const descriptor = currentAnalysis.source_bundle.supplemental_sources.find((item) => item.source_id === source.sourceId);
+    if (!descriptor || !source.normalizedStorageKey) continue;
+    const normalizedObject = await env.BUCKET.get(source.normalizedStorageKey);
+    if (!normalizedObject) continue;
+    supplementalSources.push({ descriptor, text: await new Response(normalizedObject.body).text() });
+  }
+  let analysis: CanonicalSermonAnalysis;
+  try {
+    analysis = await generateCanonicalSermonAnalysis(env, {
+      jobId: manifest.id,
+      churchSlug: manifest.churchSlug,
+      churchName: manifest.churchName,
+      weekOf: manifest.weekOf,
+      sourceFilename: manifest.sourceFilename,
+      transcript,
+      supplementalSources,
+      metadataOverrides: manifest.metadataOverrides || {},
+    });
+  } catch (error) {
+    console.error("sermon_analysis_retry_failed", { jobId, error });
+    return json({ error: error instanceof Error ? clean(error.message, 500) : "Sermon analysis retry failed." }, 502);
+  }
+  if (manifest.analysisReviewId) {
+    await env.BUCKET.delete(`production/analysis-review-manifests/${manifest.analysisReviewId}.json`);
+    await deleteR2Prefix(env.BUCKET, `production/analysis-reviews/${manifest.analysisReviewId}/`);
+  }
+  await env.BUCKET.put(manifest.analysisStorageKey || `production/jobs/${jobId}/sermon-analysis.json`, JSON.stringify(analysis, null, 2), {
+    httpMetadata: { contentType: "application/json; charset=utf-8" },
+  });
+  manifest.analysisStorageKey ||= `production/jobs/${jobId}/sermon-analysis.json`;
+  manifest.analysisId = analysis.analysis_id;
+  manifest.fidelityResult = analysis.fidelity_audit.result;
+  manifest.metadata = metadataFromAnalysis(analysis);
+  manifest.analysisAttempt = (manifest.analysisAttempt || 1) + 1;
+  manifest.analysisLastGeneratedAt = new Date().toISOString();
+  delete manifest.analysisReviewId;
+  delete manifest.analysisReviewUrl;
+  await saveManifest(env.BUCKET, manifest);
+  return json({ ok: true, job: manifest, analysis, analysisReviewUrl: "", feedback: [] });
 }
 
 async function generateProductionJobResources(request: Request, env: ProductionEnv, jobId: string) {
@@ -555,6 +623,14 @@ export function normalizeTranscript(input: string, filename: string) {
 
 async function saveManifest(bucket: R2Bucket, manifest: ProductionManifest) {
   await bucket.put(`production/manifests/${manifest.id}.json`, JSON.stringify(manifest, null, 2), { httpMetadata: { contentType: "application/json" } });
+}
+async function deleteR2Prefix(bucket: R2Bucket, prefix: string) {
+  let cursor: string | undefined;
+  do {
+    const listed = await bucket.list({ prefix, cursor, limit: 1000 });
+    if (listed.objects.length) await bucket.delete(listed.objects.map((item) => item.key));
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
 }
 function metadataFromAnalysis(analysis: CanonicalSermonAnalysis): GeneratedPackage["metadata"] {
   return {
