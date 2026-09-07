@@ -44,6 +44,7 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
   const [resetVersion, setResetVersion] = useState(0);
 
   return <form
+    id="teaching-sources-form"
     className="approval-create production-create teaching-sources-form"
     onSubmit={(event) => {
       event.preventDefault();
