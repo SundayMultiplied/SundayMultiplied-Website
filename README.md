@@ -33,7 +33,7 @@ Press `Ctrl+C` in the terminal to stop the local preview.
 3. In GitHub Desktop, review the changed files.
 4. Enter a short summary, choose **Commit to main**, and then **Push origin**.
 
-The repository is the editable master copy. The hosted ChatGPT Sites version remains private and is not automatically changed merely by editing or pushing this repository.
+The repository is the editable master copy. Production deployments run from GitHub Actions to the user-owned Cloudflare Worker.
 
 ## Build check
 
@@ -52,13 +52,17 @@ Cloudflare D1 stores packages, resources, feedback, and activity. R2 can serve p
 
 ### Required Cloudflare configuration
 
-1. Provision the `DB` D1 binding and `BUCKET` R2 binding. Both binding names are declared in `.openai/hosting.json`.
+1. Provision the `DB` D1 binding and `BUCKET` R2 binding. Both bindings are declared in `vite.config.ts` and verified in the generated Worker configuration.
 2. Apply the SQL migrations in `drizzle/` to the production D1 database.
 3. Configure `APPROVAL_ADMIN_EMAIL` as the email allowed to use `/approvals`.
 4. Configure `APPROVAL_NOTIFICATION_EMAIL` for approval and revision-decision notifications.
 5. Configure `APPROVAL_REVIEWER_EMAIL` for new-package review notifications. It defaults to `brian@sundaymultiplied.com`.
 6. Configure `APPROVAL_FAILURE_EMAIL` for failed review-notification alerts. It defaults to `atobdavis@gmail.com`.
 7. Add `BREVO_API_KEY` as a secret. Never commit it to this repository.
+
+### Production deployment
+
+Merges to `main` are validated and deployed by `.github/workflows/deploy-cloudflare-production.yml` to the existing `sunday-multiplied-website` Worker. Cloudflare owns the production D1 and R2 data; GitHub is the source of truth for application code. Runtime secrets remain in Cloudflare and are preserved during deployment.
 
 Package creation accepts an optional `reviewerEmail`. When present, it overrides the default for that package. A review-ready email is sent only after the package and all selected resource records have been written and verified.
 

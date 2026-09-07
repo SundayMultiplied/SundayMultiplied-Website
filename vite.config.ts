@@ -1,12 +1,8 @@
 import vinext from "vinext";
 import { defineConfig } from "vite";
-import hostingConfig from "./.openai/hosting.json";
-import { sites } from "./build/sites-vite-plugin";
 
 const configuredDatabaseId = "10522aad-f31e-4fb2-a848-a2563f015171";
 const configuredDatabaseName = "sunday-multiplied-approvals";
-
-const { d1, r2 } = hostingConfig;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
@@ -15,27 +11,23 @@ const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
   version_metadata: { binding: "CF_VERSION_METADATA" },
-  d1_databases: d1
-    ? [
-        {
-          binding: d1,
-          database_name: configuredDatabaseName,
-          database_id: configuredDatabaseId,
-        },
-      ]
-    : [],
-  r2_buckets: r2
-    ? [
-        {
-          binding: r2,
-          bucket_name: "site-creator-r2",
-        },
-        {
-          binding: "CHURCH_ASSETS",
-          bucket_name: "sunday-multiplied-church-assets",
-        },
-      ]
-    : [],
+  d1_databases: [
+    {
+      binding: "DB",
+      database_name: configuredDatabaseName,
+      database_id: configuredDatabaseId,
+    },
+  ],
+  r2_buckets: [
+    {
+      binding: "BUCKET",
+      bucket_name: "site-creator-r2",
+    },
+    {
+      binding: "CHURCH_ASSETS",
+      bucket_name: "sunday-multiplied-church-assets",
+    },
+  ],
 };
 
 export default defineConfig(async () => {
@@ -58,7 +50,6 @@ export default defineConfig(async () => {
     },
     plugins: [
       vinext(),
-      sites(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
