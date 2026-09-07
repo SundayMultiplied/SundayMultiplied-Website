@@ -1,0 +1,90 @@
+name: Audit Cloudflare production resources
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/audit-cloudflare-production.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      HAS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
+      HAS_BREVO_API_KEY: ${{ secrets.BREVO_API_KEY != '' }}
+      HAS_APPROVAL_ADMIN_EMAIL: ${{ secrets.APPROVAL_ADMIN_EMAIL != '' }}
+      HAS_APPROVAL_NOTIFICATION_EMAIL: ${{ secrets.APPROVAL_NOTIFICATION_EMAIL != '' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Audit configured Cloudflare account
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p cloudflare-audit
+
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/services" \
+            > cloudflare-audit/workers-response.json
+
+          npx --yes wrangler@4.92.0 d1 list --json > cloudflare-audit/d1.json
+          npx --yes wrangler@4.92.0 r2 bucket list --json > cloudflare-audit/r2.json
+
+          node <<'NODE'
+          const fs = require("node:fs");
+          const workersResponse = JSON.parse(fs.readFileSync("cloudflare-audit/workers-response.json", "utf8"));
+          if (!workersResponse.success) throw new Error("Cloudflare Workers inventory request failed.");
+
+          const result = {
+            generatedAt: new Date().toISOString(),
+            workers: (workersResponse.result || []).map((item) => ({
+              name: item.id || item.name,
+              createdOn: item.created_on || null,
+              modifiedOn: item.modified_on || null,
+              environment: item.default_environment?.environment || null,
+            })),
+            d1: JSON.parse(fs.readFileSync("cloudflare-audit/d1.json", "utf8")).map((item) => ({
+              name: item.name,
+              uuid: item.uuid,
+              createdAt: item.created_at,
+              version: item.version,
+            })),
+            r2: JSON.parse(fs.readFileSync("cloudflare-audit/r2.json", "utf8")).map((item) => ({
+              name: item.name,
+              creationDate: item.creation_date,
+              location: item.location,
+              storageClass: item.storage_class,
+            })),
+            githubSecrets: {
+              CLOUDFLARE_API_TOKEN: Boolean(process.env.CLOUDFLARE_API_TOKEN),
+              CLOUDFLARE_ACCOUNT_ID: Boolean(process.env.CLOUDFLARE_ACCOUNT_ID),
+              OPENAI_API_KEY: process.env.HAS_OPENAI_API_KEY === "true",
+              BREVO_API_KEY: process.env.HAS_BREVO_API_KEY === "true",
+              APPROVAL_ADMIN_EMAIL: process.env.HAS_APPROVAL_ADMIN_EMAIL === "true",
+              APPROVAL_NOTIFICATION_EMAIL: process.env.HAS_APPROVAL_NOTIFICATION_EMAIL === "true",
+            },
+          };
+          fs.writeFileSync("cloudflare-audit/inventory.json", JSON.stringify(result, null, 2));
+          fs.rmSync("cloudflare-audit/workers-response.json");
+          fs.rmSync("cloudflare-audit/d1.json");
+          fs.rmSync("cloudflare-audit/r2.json");
+          NODE
+
+      - name: Upload sanitized inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-production-audit
+          path: cloudflare-audit/inventory.json
+          retention-days: 1
