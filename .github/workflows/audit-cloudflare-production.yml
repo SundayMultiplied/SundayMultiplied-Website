@@ -51,6 +51,22 @@ jobs:
             r2_access=true
           fi
 
+          curl --fail --silent --show-error \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/domains" \
+            > cloudflare-audit/domains-response.json || printf '{"success":false,"result":[]}' > cloudflare-audit/domains-response.json
+
+          mkdir -p cloudflare-audit/worker-details
+          for worker_name in sunday-multiplied-website sunday-multiplied-preview sunday-multiplied-onboarding; do
+            for endpoint in settings secrets deployments; do
+              curl --fail --silent --show-error \
+                --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+                "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${worker_name}/${endpoint}" \
+                > "cloudflare-audit/worker-details/${worker_name}-${endpoint}.json" \
+                || printf '{"success":false,"result":null}' > "cloudflare-audit/worker-details/${worker_name}-${endpoint}.json"
+            done
+          done
+
           export D1_ACCESS="${d1_access}"
           export R2_ACCESS="${r2_access}"
 
@@ -59,6 +75,35 @@ jobs:
           const workersResponse = JSON.parse(fs.readFileSync("cloudflare-audit/workers-response.json", "utf8"));
           if (!workersResponse.success) throw new Error("Cloudflare Workers inventory request failed.");
 
+          const read = (path) => JSON.parse(fs.readFileSync(path, "utf8"));
+          const workerDetails = {};
+          for (const name of ["sunday-multiplied-website", "sunday-multiplied-preview", "sunday-multiplied-onboarding"]) {
+            const settings = read(`cloudflare-audit/worker-details/${name}-settings.json`);
+            const secrets = read(`cloudflare-audit/worker-details/${name}-secrets.json`);
+            const deployments = read(`cloudflare-audit/worker-details/${name}-deployments.json`);
+            const bindings = Array.isArray(settings.result?.bindings) ? settings.result.bindings : [];
+            const secretList = Array.isArray(secrets.result) ? secrets.result : [];
+            const deploymentList = Array.isArray(deployments.result?.deployments)
+              ? deployments.result.deployments
+              : Array.isArray(deployments.result) ? deployments.result : [];
+            workerDetails[name] = {
+              settingsAccessible: settings.success === true,
+              bindings: bindings.map((item) => ({ name: item.name, type: item.type })),
+              secretsAccessible: secrets.success === true,
+              secretNames: secretList.map((item) => item.name),
+              latestDeployment: deploymentList[0]
+                ? {
+                    id: deploymentList[0].id,
+                    createdOn: deploymentList[0].created_on,
+                    source: deploymentList[0].source,
+                    strategy: deploymentList[0].strategy,
+                  }
+                : null,
+            };
+          }
+
+          const domainsResponse = read("cloudflare-audit/domains-response.json");
+
           const result = {
             generatedAt: new Date().toISOString(),
             workers: (workersResponse.result || []).map((item) => ({
@@ -66,6 +111,13 @@ jobs:
               createdOn: item.created_on || null,
               modifiedOn: item.modified_on || null,
               environment: item.default_environment?.environment || null,
+            })),
+            workerDetails,
+            domains: (domainsResponse.result || []).map((item) => ({
+              hostname: item.hostname,
+              service: item.service,
+              environment: item.environment,
+              zoneId: item.zone_id,
             })),
             knownD1: {
               name: "sunday-multiplied-approvals",
@@ -95,6 +147,8 @@ jobs:
           };
           fs.writeFileSync("cloudflare-audit/inventory.json", JSON.stringify(result, null, 2));
           fs.rmSync("cloudflare-audit/workers-response.json");
+          fs.rmSync("cloudflare-audit/domains-response.json");
+          fs.rmSync("cloudflare-audit/worker-details", { recursive: true });
           for (const path of ["cloudflare-audit/d1.json", "cloudflare-audit/d1-error.txt", "cloudflare-audit/r2.json", "cloudflare-audit/r2-error.txt"]) {
             if (fs.existsSync(path)) fs.rmSync(path);
           }
