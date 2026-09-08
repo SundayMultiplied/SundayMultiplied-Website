@@ -1,3 +1,5 @@
+import { callOpenAiStructured } from "./openai-client.ts";
+
 type AnalysisEnv = {
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
@@ -307,10 +309,10 @@ EVIDENCE RULES
 
 Return only the required structured JSON.`;
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({
+  const analysis = await callOpenAiStructured<CanonicalSermonAnalysis>({
+    apiKey: env.OPENAI_API_KEY,
+    operation: "Canonical sermon analysis",
+    body: {
       model: env.OPENAI_MODEL || "gpt-5.6-terra",
       input: [
         { role: "system", content: [{ type: "input_text", text: prompt }] },
@@ -326,14 +328,8 @@ Return only the required structured JSON.`;
         },
       ],
       text: { format: { type: "json_schema", name: "sermon_analysis_v3", strict: true, schema: canonicalSermonAnalysisSchema() } },
-    }),
+    },
   });
-
-  const data = await response.json() as { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string }> }>; error?: { message?: string } };
-  if (!response.ok) throw new Error(data.error?.message || "Canonical sermon analysis failed.");
-  const outputText = data.output_text || (data.output || []).flatMap((item) => item.content || []).filter((item) => item.type === "output_text").map((item) => item.text || "").join("");
-  if (!outputText) throw new Error("Canonical sermon analysis returned no output.");
-  const analysis = JSON.parse(outputText) as CanonicalSermonAnalysis;
   analysis.source_authority = {
     policy: "transcript_led",
     transcript_available: true,

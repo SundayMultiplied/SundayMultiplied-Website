@@ -11,6 +11,7 @@ import {
   type FamilyWorshipPreferences,
   type FamilyWorshipSong,
 } from "./family-resource";
+import { callOpenAiStructured } from "./openai-client.ts";
 
 export type ProductionEnv = {
   ASSETS?: Fetcher;
@@ -599,23 +600,18 @@ Return only the requested JSON structure.`;
     },
     required: ["resources", "familyWorshipSong"],
   };
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({
+  const parsed = await callOpenAiStructured<{ resources: GeneratedPackage["resources"]; familyWorshipSong: FamilyWorshipSong }>({
+    apiKey: env.OPENAI_API_KEY,
+    operation: "Resource generation",
+    body: {
       model: env.OPENAI_MODEL || "gpt-5.6-terra",
       input: [
         { role: "system", content: [{ type: "input_text", text: prompt }] },
         { role: "user", content: [{ type: "input_text", text: JSON.stringify(analysis) }] },
       ],
       text: { format: { type: "json_schema", name: "sunday_multiplied_resources", strict: true, schema } },
-    }),
+    },
   });
-  const data = await response.json() as { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string }> }>; error?: { message?: string } };
-  if (!response.ok) throw new Error(data.error?.message || "Resource generation failed.");
-  const outputText = data.output_text || extractOutputText(data.output);
-  if (!outputText) throw new Error("Resource generation returned no output.");
-  const parsed = JSON.parse(outputText) as { resources: GeneratedPackage["resources"]; familyWorshipSong: FamilyWorshipSong };
   return { metadata, resources: parsed.resources, familyWorshipSong: parsed.familyWorshipSong };
 }
 
@@ -632,10 +628,6 @@ export function enforceResourceStyling(input: string, church: ChurchConfig, kind
     return classMatch ? `<body${attrs.replace(classMatch[0], nextClass)}>` : `<body${attrs} ${nextClass}>`;
   });
   return html;
-}
-
-export function extractOutputText(output: Array<{ content?: Array<{ type?: string; text?: string }> }> | undefined) {
-  return (output || []).flatMap((item) => item.content || []).filter((item) => item.type === "output_text" && typeof item.text === "string").map((item) => item.text || "").join("");
 }
 
 export function normalizeTranscript(input: string, filename: string) {
