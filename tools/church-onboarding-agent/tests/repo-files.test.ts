@@ -33,6 +33,8 @@ describe("repository structure", () => {
     ]);
     expect(files[0].content).toContain('"dashboardMode": "shared"');
     expect(files[0].content).toContain('"reviewerConfigured": true');
+    expect(files[0].content).toContain('"style": "blended"');
+    expect(files[0].content).toContain('"platform": "youtube"');
     expect(files[0].content).toContain('"publicStylesheet": "/resources/southside/church.css"');
     expect(files[0].content).toContain('"sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css"');
     expect(files[0].content).toContain('"logoUrl": "/api/resource-assets/southside/logo"');

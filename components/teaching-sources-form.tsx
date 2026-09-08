@@ -2,7 +2,9 @@
 
 import { useRef, useState } from "react";
 
-export type TeachingSourceChurch = { slug: string; name: string };
+type WorshipStyle = "contemporary" | "hymn" | "blended" | "none";
+type WorshipPlatform = "youtube" | "spotify" | "apple_music";
+export type TeachingSourceChurch = { slug: string; name: string; familyWorship?: { style: WorshipStyle; platform: WorshipPlatform } };
 
 type SourceInputProps = {
   accept: string;
@@ -42,6 +44,9 @@ function SourceInput({ accept, description, label, multiple = false, name, requi
 
 export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: TeachingSourceChurch[]; saving: boolean; onSubmit: (formData: FormData) => void }) {
   const [resetVersion, setResetVersion] = useState(0);
+  const [churchSlug, setChurchSlug] = useState("");
+  const selectedChurch = churches.find((church) => church.slug === churchSlug);
+  const worshipDefault = selectedChurch?.familyWorship || { style: "blended", platform: "youtube" };
 
   return <form
     id="teaching-sources-form"
@@ -50,7 +55,7 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
       event.preventDefault();
       if (!saving) onSubmit(new FormData(event.currentTarget));
     }}
-    onReset={() => setResetVersion((version) => version + 1)}
+    onReset={() => { setResetVersion((version) => version + 1); setChurchSlug(""); }}
   >
     <div className="approval-create-heading">
       <div><p className="approval-kicker">Step 1 · Teaching sources</p><h2>Create weekly source bundle</h2></div>
@@ -59,8 +64,17 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
     <fieldset className="teaching-source-section">
       <legend>Sermon identity</legend>
       <div className="approval-create-grid">
-        <label><span className="approval-field-label">Church</span><select name="churchSlug" required defaultValue=""><option value="" disabled>Select a church…</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
+        <label><span className="approval-field-label">Church</span><select name="churchSlug" required value={churchSlug} onChange={(event) => setChurchSlug(event.target.value)}><option value="" disabled>Select a church…</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
         <label><span className="approval-field-label">Sermon date</span><input name="weekOf" type="date" required /></label>
+      </div>
+    </fieldset>
+
+    <fieldset className="teaching-source-section">
+      <legend>Family worship</legend>
+      <p className="teaching-source-help">Use the church defaults or override the recommendation for this sermon package. The generated resource links families to the selected listening platform.</p>
+      <div className="approval-create-grid">
+        <label><span className="approval-field-label">Song style</span><select name="familyWorshipStyle" defaultValue=""><option value="">Church default — {worshipStyleLabel(worshipDefault.style)}</option><option value="contemporary">Contemporary worship</option><option value="hymn">Hymn</option><option value="blended">Contemporary or hymn</option><option value="none">No song recommendation</option></select></label>
+        <label><span className="approval-field-label">Listening platform</span><select name="familyWorshipPlatform" defaultValue=""><option value="">Church default — {worshipPlatformLabel(worshipDefault.platform)}</option><option value="youtube">YouTube</option><option value="spotify">Spotify</option><option value="apple_music">Apple Music</option></select></label>
       </div>
     </fieldset>
 
@@ -97,4 +111,17 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
     </div>
     {saving ? <div className="production-progress" role="status" aria-live="polite"><strong>Building the sermon analysis</strong><span>Teaching sources are being extracted and compared. Resource generation begins only after you accept the analysis.</span></div> : <small>Scanned PDFs need searchable text. Run OCR first or upload a TXT/DOCX version.</small>}
   </form>;
+}
+
+function worshipStyleLabel(style: WorshipStyle) {
+  if (style === "contemporary") return "Contemporary worship";
+  if (style === "hymn") return "Hymn";
+  if (style === "none") return "No song";
+  return "Contemporary or hymn";
+}
+
+function worshipPlatformLabel(platform: WorshipPlatform) {
+  if (platform === "spotify") return "Spotify";
+  if (platform === "apple_music") return "Apple Music";
+  return "YouTube";
 }

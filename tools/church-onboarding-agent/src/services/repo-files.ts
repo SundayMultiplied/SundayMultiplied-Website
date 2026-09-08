@@ -176,6 +176,7 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
     schemaVersion: 1,
     church: state.basics,
     resources: state.resources,
+    familyWorship: state.familyWorship || { style: "blended", platform: "youtube" },
     schedule: { serviceDay: state.serviceDay, deliveryDay: state.deliveryDay },
     approval: { reviewerConfigured: state.reviewers.length > 0, linkLifetimeDays: state.approvalWindowDays, draftRetentionDays: state.draftRetentionDays, dashboardMode: "shared" },
     brand: {

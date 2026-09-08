@@ -58,8 +58,11 @@ for (const entry of entries) {
   const baseCssUrl = String(brand.sharedStylesheet || defaultBaseCssUrl).trim() || defaultBaseCssUrl;
   const cssUrl = String(brand.publicStylesheet || `/resources/${slug}/church.css`).trim();
   const logoUrl = hasPrimaryLogo ? String(brand.logoUrl || primaryAsset?.publicUrl || `/api/resource-assets/${slug}/logo`).trim() : "";
+  const configuredFamilyWorship = manifest?.familyWorship || {};
+  const style = ["contemporary", "hymn", "blended", "none"].includes(configuredFamilyWorship.style) ? configuredFamilyWorship.style : "blended";
+  const platform = ["youtube", "spotify", "apple_music"].includes(configuredFamilyWorship.platform) ? configuredFamilyWorship.platform : "youtube";
 
-  churches.push({ slug, name, resources, baseCssUrl, cssUrl, logoUrl });
+  churches.push({ slug, name, resources, baseCssUrl, cssUrl, logoUrl, familyWorship: { style, platform } });
   if (primaryAsset) primaryLogoKeys[slug] = String(primaryAsset.r2Key).trim();
 }
 

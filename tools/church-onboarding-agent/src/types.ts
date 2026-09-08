@@ -7,6 +7,10 @@ export type LinkKind = "website" | "sermon_archive" | "youtube" | "facebook" | "
 export type ChurchLink = { kind: LinkKind; url: string; label: string; verifiedAt?: string };
 export type BrandAsset = { kind: "primary" | "reverse" | "mark" | "favicon"; filename: string; r2Key: string; contentType: string; uploadedAt: string };
 export type Reviewer = { name: string; email: string; role: string };
+export type FamilyWorshipPreferences = {
+  style: "contemporary" | "hymn" | "blended" | "none";
+  platform: "youtube" | "spotify" | "apple_music";
+};
 export type ChurchBasics = { name: string; slug: string; city: string; state: string; timezone: string; website: string };
 export type StyleTheme = "contemporary" | "traditional" | "modern" | "editorial";
 
@@ -117,6 +121,7 @@ export type OnboardingState = {
   assets: BrandAsset[];
   reviewers: Reviewer[];
   resources: ResourceType[];
+  familyWorship: FamilyWorshipPreferences;
   serviceDay: "sunday";
   deliveryDay: string;
   approvalWindowDays: number;
@@ -137,6 +142,7 @@ export const emptyState = (): OnboardingState => ({
   assets: [],
   reviewers: [],
   resources: ["monday", "group", "family"],
+  familyWorship: { style: "blended", platform: "youtube" },
   serviceDay: "sunday",
   deliveryDay: "Monday",
   approvalWindowDays: 30,

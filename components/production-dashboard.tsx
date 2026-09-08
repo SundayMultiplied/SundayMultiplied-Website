@@ -6,7 +6,7 @@ import { SermonAnalysisReview } from "./sermon-analysis-review";
 import type { CanonicalSermonAnalysis } from "../worker/sermon-analysis";
 import type { AnalysisReviewFeedback } from "../worker/analysis-review-api";
 
-type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string; reviewerEmail?: string };
+type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string; reviewerEmail?: string; familyWorship?: { style: "contemporary" | "hymn" | "blended" | "none"; platform: "youtube" | "spotify" | "apple_music" } };
 type ProductionJob = {
   id: string; churchSlug: string; churchName: string; weekOf: string; createdAt: string;
   status: "awaiting_analysis_review" | "ready_for_internal_review" | "sent_for_approval"; sourceFilename: string;

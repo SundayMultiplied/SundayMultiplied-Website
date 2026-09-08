@@ -13,6 +13,10 @@
     "group",
     "family"
   ],
+  "familyWorship": {
+    "style": "contemporary",
+    "platform": "youtube"
+  },
   "schedule": {
     "serviceDay": "sunday",
     "deliveryDay": "Sunday"

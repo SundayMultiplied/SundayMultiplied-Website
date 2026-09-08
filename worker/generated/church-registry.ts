@@ -10,7 +10,11 @@ export const PRODUCTION_CHURCHES = [
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/calvary-baptist-temple/church.css",
-    "logoUrl": "/api/resource-assets/calvary-baptist-temple/logo"
+    "logoUrl": "/api/resource-assets/calvary-baptist-temple/logo",
+    "familyWorship": {
+      "style": "blended",
+      "platform": "youtube"
+    }
   },
   {
     "slug": "cbc-savannah",
@@ -22,7 +26,27 @@ export const PRODUCTION_CHURCHES = [
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/cbc-savannah/church.css",
-    "logoUrl": "/api/resource-assets/cbc-savannah/logo"
+    "logoUrl": "/api/resource-assets/cbc-savannah/logo",
+    "familyWorship": {
+      "style": "blended",
+      "platform": "youtube"
+    }
+  },
+  {
+    "slug": "compass-bible-church",
+    "name": "Compass Bible Church",
+    "resources": [
+      "monday",
+      "group",
+      "family"
+    ],
+    "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
+    "cssUrl": "/resources/compass-bible-church/church.css",
+    "logoUrl": "/api/resource-assets/compass-bible-church/logo",
+    "familyWorship": {
+      "style": "contemporary",
+      "platform": "youtube"
+    }
   },
   {
     "slug": "sample-church",
@@ -34,7 +58,11 @@ export const PRODUCTION_CHURCHES = [
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/sample-church/church.css",
-    "logoUrl": "/api/resource-assets/sample-church/logo"
+    "logoUrl": "/api/resource-assets/sample-church/logo",
+    "familyWorship": {
+      "style": "blended",
+      "platform": "youtube"
+    }
   },
   {
     "slug": "skidaway-church",
@@ -46,7 +74,11 @@ export const PRODUCTION_CHURCHES = [
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/skidaway-church/church.css",
-    "logoUrl": "/api/resource-assets/skidaway-church/logo"
+    "logoUrl": "/api/resource-assets/skidaway-church/logo",
+    "familyWorship": {
+      "style": "blended",
+      "platform": "youtube"
+    }
   },
   {
     "slug": "southside-baptist",
@@ -58,6 +90,10 @@ export const PRODUCTION_CHURCHES = [
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/southside-baptist/church.css",
-    "logoUrl": "/api/resource-assets/southside-baptist/logo"
+    "logoUrl": "/api/resource-assets/southside-baptist/logo",
+    "familyWorship": {
+      "style": "blended",
+      "platform": "youtube"
+    }
   }
 ];
