@@ -56,9 +56,9 @@ export function ProductionDashboard() {
       fetch("/api/production/jobs", { cache: "no-store" }),
       fetch("/api/comparisons", { cache: "no-store" }),
     ]);
-    const churchData = await churchResponse.json() as { error?: string; churches?: ChurchConfig[] };
-    const jobsData = await jobsResponse.json() as { error?: string; jobs?: ProductionJob[] };
-    const comparisonsData = await comparisonsResponse.json() as { error?: string; comparisons?: ComparisonSet[] };
+    const churchData = await readApiJson<{ error?: string; churches?: ChurchConfig[] }>(churchResponse);
+    const jobsData = await readApiJson<{ error?: string; jobs?: ProductionJob[] }>(jobsResponse);
+    const comparisonsData = await readApiJson<{ error?: string; comparisons?: ComparisonSet[] }>(comparisonsResponse);
     if (!churchResponse.ok) throw new Error(churchData.error || "Unable to load configured churches.");
     if (!jobsResponse.ok) throw new Error(jobsData.error || "Unable to load production jobs.");
     if (!comparisonsResponse.ok) throw new Error(comparisonsData.error || "Unable to load comparison sets.");
@@ -70,7 +70,7 @@ export function ProductionDashboard() {
 
   async function loadRevisionStatus() {
     const response = await fetch("/api/revision-requests", { cache: "no-store" });
-    const data = await response.json() as { error?: string; revisions?: RevisionRequest[] };
+    const data = await readApiJson<{ error?: string; revisions?: RevisionRequest[] }>(response);
     if (!response.ok) throw new Error(data.error || "Unable to load revision status.");
     setRevisions(data.revisions || []);
   }
@@ -81,7 +81,7 @@ export function ProductionDashboard() {
     setSaving(true); setError(""); setActionMessage("");
     try {
       const response = await fetch("/api/production/jobs", { method: "POST", body: formData });
-      const data = await response.json() as { error?: string; job?: ProductionJob };
+      const data = await readApiJson<{ error?: string; job?: ProductionJob }>(response);
       if (!response.ok) throw new Error(data.error || "Unable to create sermon resources.");
       setActionMessage("Analysis created. Review and accept it before generating resources.");
       await loadProduction();
@@ -94,7 +94,7 @@ export function ProductionDashboard() {
     setLoadingAnalysisId(job.id); setError("");
     try {
       const response = await fetch(`/api/production/jobs/${encodeURIComponent(job.id)}/analysis`, { cache: "no-store" });
-      const data = await response.json() as { error?: string; analysis?: CanonicalSermonAnalysis; analysisReviewUrl?: string; feedback?: AnalysisReviewFeedback[] };
+      const data = await readApiJson<{ error?: string; analysis?: CanonicalSermonAnalysis; analysisReviewUrl?: string; feedback?: AnalysisReviewFeedback[] }>(response);
       if (!response.ok || !data.analysis) throw new Error(data.error || "Unable to load the sermon analysis.");
       setAnalysisJob({ ...job, analysisReviewUrl: data.analysisReviewUrl || job.analysisReviewUrl }); setAnalysis(data.analysis); setAnalysisShareUrl(data.analysisReviewUrl || job.analysisReviewUrl || ""); setAnalysisFeedback(data.feedback || []);
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to load the sermon analysis."); }
@@ -107,7 +107,7 @@ export function ProductionDashboard() {
     setSharingAnalysisId(analysisJob.id); setError("");
     try {
       const response = await fetch(`/api/production/jobs/${encodeURIComponent(analysisJob.id)}/analysis/share`, { method: "POST" });
-      const data = await response.json() as { error?: string; reviewUrl?: string };
+      const data = await readApiJson<{ error?: string; reviewUrl?: string }>(response);
       if (!response.ok || !data.reviewUrl) throw new Error(data.error || "Unable to create the analysis review link.");
       setAnalysisShareUrl(data.reviewUrl); setCreatedLink(data.reviewUrl); setActionMessage("Secure sermon analysis review link created.");
       await loadProduction();
@@ -121,7 +121,7 @@ export function ProductionDashboard() {
     setRetryingAnalysisId(analysisJob.id); setError(""); setActionMessage("");
     try {
       const response = await fetch(`/api/production/jobs/${encodeURIComponent(analysisJob.id)}/analysis/retry`, { method: "POST" });
-      const data = await response.json() as { error?: string; analysis?: CanonicalSermonAnalysis; job?: ProductionJob };
+      const data = await readApiJson<{ error?: string; analysis?: CanonicalSermonAnalysis; job?: ProductionJob }>(response);
       if (!response.ok || !data.analysis) throw new Error(data.error || "Unable to retry the sermon analysis.");
       setAnalysis(data.analysis); setAnalysisJob(data.job || analysisJob); setAnalysisShareUrl(""); setAnalysisFeedback([]); setActionMessage("Analysis regenerated from the same saved sources. Review the new result before continuing.");
       await loadProduction();
@@ -139,7 +139,7 @@ export function ProductionDashboard() {
     setGeneratingId(analysisJob.id); setError(""); setActionMessage("");
     try {
       const response = await fetch(`/api/production/jobs/${encodeURIComponent(analysisJob.id)}/generate`, { method: "POST" });
-      const data = await response.json() as { error?: string; job?: ProductionJob };
+      const data = await readApiJson<{ error?: string; job?: ProductionJob }>(response);
       if (!response.ok) throw new Error(data.error || "Unable to generate resources from this analysis.");
       setAnalysis(null); setAnalysisJob(null);
       setActionMessage("Analysis accepted. Resources are ready for internal review.");
@@ -156,7 +156,7 @@ export function ProductionDashboard() {
     setSendingId(job.id); setError(""); setActionMessage("");
     try {
       const response = await fetch(`/api/production/jobs/${encodeURIComponent(job.id)}/send`, { method: "POST" });
-      const data = await response.json() as { error?: string; reviewUrl?: string };
+      const data = await readApiJson<{ error?: string; reviewUrl?: string }>(response);
       if (!response.ok) throw new Error(data.error || "Unable to send this package for approval.");
       setCreatedLink(data.reviewUrl || "");
       setActionMessage("Approval request sent. The package is now in the approval workflow.");
@@ -171,7 +171,7 @@ export function ProductionDashboard() {
     setComparingId(job.id); setError(""); setActionMessage("");
     try {
       const response = await fetch("/api/comparisons", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jobId: job.id }) });
-      const data = await response.json() as { error?: string; comparison?: ComparisonSet };
+      const data = await readApiJson<{ error?: string; comparison?: ComparisonSet }>(response);
       if (!response.ok || !data.comparison) throw new Error(data.error || "Unable to create the comparison set.");
       setActionMessage("Blinded comparison created. The family review link is ready to share.");
       setCreatedLink(data.comparison.reviewUrl);
@@ -194,7 +194,7 @@ export function ProductionDashboard() {
     try {
       for (const jobId of selectedJobIds) {
         const response = await fetch(`/api/production/jobs/${encodeURIComponent(jobId)}`, { method: "DELETE" });
-        const data = await response.json() as { error?: string };
+        const data = await readApiJson<{ error?: string }>(response);
         if (!response.ok) throw new Error(data.error || "Unable to delete a production job.");
       }
       setSelectedJobIds([]); setActionMessage(`${selectedJobs.length === 1 ? "Production job" : `${selectedJobs.length} production jobs`} deleted.`); await loadProduction();
@@ -251,4 +251,19 @@ function ComparisonResults({ feedback }: { feedback: ComparisonFeedback[] }) {
     }
     return <div key={key}><span>{label}</span><b>A {counts.A}</b><b>B {counts.B}</b><b>C {counts.C}</b></div>;
   })}</div>;
+}
+
+async function readApiJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    const accessExpired = response.status === 401
+      || response.status === 403
+      || /cloudflare access|sign[ -]?in|login/i.test(text);
+    if (accessExpired) {
+      throw new Error("Your admin session expired. Refresh the page, sign in through Cloudflare Access, and try again.");
+    }
+    throw new Error(`The production service returned an HTML error page (HTTP ${response.status}). Nothing was generated; try again in a moment.`);
+  }
 }

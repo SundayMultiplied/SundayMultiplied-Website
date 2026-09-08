@@ -2,7 +2,6 @@ import type { CanonicalSermonAnalysis } from "./sermon-analysis";
 import {
   CHURCHES,
   enforceResourceStyling,
-  extractOutputText,
   generateResourcesFromAnalysis,
   normalizeTranscript,
   type ChurchConfig,
@@ -10,6 +9,7 @@ import {
   type ProductionEnv,
   type ProductionManifest,
 } from "./production-api";
+import { callOpenAiStructured } from "./openai-client.ts";
 import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
 import { injectWorshipSongUrl, resolveFamilyWorshipPreferences, validateFamilyV3Html } from "./family-resource";
 
@@ -397,16 +397,11 @@ Return only the required structured JSON.`;
 }
 
 async function callStructured(env: ProductionEnv, prompt: string, input: string, name: string, schema: Record<string, unknown>) {
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: { authorization: `Bearer ${env.OPENAI_API_KEY}`, "content-type": "application/json" },
-    body: JSON.stringify({ model: env.OPENAI_MODEL || "gpt-5.6-terra", input: [{ role: "system", content: [{ type: "input_text", text: prompt }] }, { role: "user", content: [{ type: "input_text", text: input }] }], text: { format: { type: "json_schema", name, strict: true, schema } } }),
+  return callOpenAiStructured<unknown>({
+    apiKey: env.OPENAI_API_KEY || "",
+    operation: name.replaceAll("_", " "),
+    body: { model: env.OPENAI_MODEL || "gpt-5.6-terra", input: [{ role: "system", content: [{ type: "input_text", text: prompt }] }, { role: "user", content: [{ type: "input_text", text: input }] }], text: { format: { type: "json_schema", name, strict: true, schema } } },
   });
-  const data = await response.json() as { output_text?: string; output?: Array<{ content?: Array<{ type?: string; text?: string }> }>; error?: { message?: string } };
-  if (!response.ok) throw new Error(data.error?.message || `${name} generation failed.`);
-  const output = data.output_text || extractOutputText(data.output);
-  if (!output) throw new Error(`${name} returned no output.`);
-  return JSON.parse(output) as unknown;
 }
 
 function packageSchema(includeMetadata: boolean) {
