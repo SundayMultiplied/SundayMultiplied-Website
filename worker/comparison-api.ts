@@ -11,6 +11,7 @@ import {
   type ProductionManifest,
 } from "./production-api";
 import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
+import { injectWorshipSongUrl, resolveFamilyWorshipPreferences, validateFamilyV3Html } from "./family-resource";
 
 type VariantLabel = "A" | "B" | "C";
 type RecipeVersion = "v1" | "v2" | "v3";
@@ -79,7 +80,7 @@ async function createComparison(request: Request, env: ProductionEnv) {
     const [v1, v2Analysis, v3] = await Promise.all([
       generateV1Resources(env, church, manifest.weekOf, transcript),
       generateV2Analysis(env, manifest, transcript, id),
-      generateResourcesFromAnalysis(env, church, manifest.weekOf, analysis),
+      generateResourcesFromAnalysis(env, church, manifest.weekOf, analysis, manifest.familyWorship),
     ]);
     const v2 = await generateV2Resources(env, church, manifest.weekOf, v2Analysis);
     await env.BUCKET.put(`production/comparisons/${id}/v2-analysis.json`, JSON.stringify(v2Analysis, null, 2), { httpMetadata: { contentType: "application/json; charset=utf-8" } });
@@ -96,6 +97,11 @@ async function createComparison(request: Request, env: ProductionEnv) {
         const rawHtml = generated.resources[kind];
         if (!rawHtml) continue;
         let html = enforceResourceStyling(rawHtml, church, kind);
+        if (kind === "family" && version === "v3") {
+          const preferences = resolveFamilyWorshipPreferences(church.familyWorship, manifest.familyWorship?.style, manifest.familyWorship?.platform);
+          validateFamilyV3Html(html, preferences);
+          if (generated.familyWorshipSong) html = injectWorshipSongUrl(html, generated.familyWorshipSong, preferences);
+        }
         if (kind === "group" || kind === "family") {
           const reference = generated.metadata.scripture || analysis.sermon.primary_passage || "";
           if (!reference) throw new Error(`${version.toUpperCase()} did not establish the primary Scripture needed for ${kind}.`);
