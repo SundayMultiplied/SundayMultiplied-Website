@@ -47,6 +47,7 @@ type ProductionManifest = {
   status: "ready_for_internal_review" | "sent_for_approval";
   metadata: { sermonTitle: string; seriesTitle: string; scripture: string };
   resources: Array<{ kind: string; title: string; previewUrl: string }>;
+  reviewPackageId?: string;
   reviewUrl?: string;
 };
 
@@ -128,12 +129,13 @@ const worker = {
         return json({ error: `Approval handoff returned an unexpected ${approvalResponse.status} response.` }, 502);
       }
 
-      const data = await approvalResponse.json() as { error?: string; reviewUrl?: string };
+      const data = await approvalResponse.json() as { error?: string; packageId?: string; reviewUrl?: string };
       if (!approvalResponse.ok) {
         return json({ error: data.error || "Unable to send this package for approval." }, approvalResponse.status);
       }
 
       manifest.status = "sent_for_approval";
+      manifest.reviewPackageId = data.packageId;
       manifest.reviewUrl = data.reviewUrl;
       await env.BUCKET.put(`production/manifests/${manifest.id}.json`, JSON.stringify(manifest, null, 2), {
         httpMetadata: { contentType: "application/json" },
