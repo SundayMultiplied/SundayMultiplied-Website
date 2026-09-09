@@ -82,6 +82,15 @@ async function updateProductionMetadata(
   };
   manifest.metadata = { ...manifest.metadata, sermonTitle, seriesTitle, speaker };
   manifest.metadataOverrides = { ...manifest.metadataOverrides, sermonTitle, seriesTitle, speaker };
+  const warnings: string[] = [];
+
+  // Commit the authoritative correction before attempting any linked-package or
+  // archive propagation. Preview routes read this manifest dynamically, so the
+  // corrected resource header is immediately available even if an older linked
+  // artifact needs a later retry.
+  await env.BUCKET.put(manifestKey, JSON.stringify(manifest, null, 2), {
+    httpMetadata: { contentType: "application/json; charset=utf-8" },
+  });
 
   if (manifest.analysisStorageKey) {
     const analysisObject = await env.BUCKET.get(manifest.analysisStorageKey);
@@ -94,7 +103,7 @@ async function updateProductionMetadata(
         });
       } catch (error) {
         console.error("production_metadata_analysis_update_failed", { jobId: manifest.id, error });
-        return json({ error: "The saved sermon analysis could not be updated safely." }, 500);
+        warnings.push("The production details were saved, but the canonical analysis copy could not be updated.");
       }
     }
   }
@@ -107,7 +116,10 @@ async function updateProductionMetadata(
         const share = await shareObject.json<Record<string, unknown>>();
         share.sermonTitle = sermonTitle;
         await env.BUCKET.put(shareKey, JSON.stringify(share, null, 2), { httpMetadata: { contentType: "application/json; charset=utf-8" } });
-      } catch { /* The live shared analysis still reads the production manifest and canonical analysis. */ }
+      } catch (error) {
+        console.error("production_metadata_share_update_failed", { jobId: manifest.id, error });
+        warnings.push("The production details were saved, but the shared analysis label could not be updated.");
+      }
     }
   }
 
@@ -115,34 +127,48 @@ async function updateProductionMetadata(
   const htmlKeys = new Set(manifest.resources.map((resource) => resource.storageKey).filter(Boolean));
   const archivePrefixes: string[] = [];
   if (env.DB) {
-    const previewPattern = `%/api/production/preview/${manifest.id}/%`;
-    const linked = await env.DB.prepare(`
-      SELECT DISTINCT p.id AS packageId
-      FROM review_packages p JOIN review_resources r ON r.package_id = p.id
-      WHERE r.preview_url LIKE ?
-    `).bind(previewPattern).all<{ packageId: string }>();
-    linkedPackageIds.push(...linked.results.map((item) => item.packageId));
+    try {
+      const previewPattern = `%/api/production/preview/${manifest.id}/%`;
+      const linked = await env.DB.prepare(`
+        SELECT DISTINCT p.id AS packageId
+        FROM review_packages p JOIN review_resources r ON r.package_id = p.id
+        WHERE r.preview_url LIKE ?
+      `).bind(previewPattern).all<{ packageId: string }>();
+      linkedPackageIds.push(...linked.results.map((item) => item.packageId));
 
-    const stored = await env.DB.prepare(`
-      SELECT DISTINCT r.storage_key AS storageKey
-      FROM review_resources r
-      WHERE r.preview_url LIKE ? AND r.storage_key IS NOT NULL
-    `).bind(previewPattern).all<{ storageKey: string }>();
-    for (const item of stored.results) if (item.storageKey) htmlKeys.add(item.storageKey);
+      const stored = await env.DB.prepare(`
+        SELECT DISTINCT r.storage_key AS storageKey
+        FROM review_resources r
+        WHERE r.preview_url LIKE ? AND r.storage_key IS NOT NULL
+      `).bind(previewPattern).all<{ storageKey: string }>();
+      for (const item of stored.results) if (item.storageKey) htmlKeys.add(item.storageKey);
 
-    const archives = await env.DB.prepare(`
-      SELECT DISTINCT a.archive_prefix AS archivePrefix
-      FROM review_package_archives a JOIN review_resources r ON r.package_id = a.package_id
-      WHERE r.preview_url LIKE ? AND a.archive_prefix IS NOT NULL
-    `).bind(previewPattern).all<{ archivePrefix: string }>();
-    archivePrefixes.push(...archives.results.map((item) => item.archivePrefix).filter(Boolean));
+      // This table is created lazily for installations that predate package
+      // archiving, so its absence must not block a basic metadata correction.
+      try {
+        const archives = await env.DB.prepare(`
+          SELECT DISTINCT a.archive_prefix AS archivePrefix
+          FROM review_package_archives a JOIN review_resources r ON r.package_id = a.package_id
+          WHERE r.preview_url LIKE ? AND a.archive_prefix IS NOT NULL
+        `).bind(previewPattern).all<{ archivePrefix: string }>();
+        archivePrefixes.push(...archives.results.map((item) => item.archivePrefix).filter(Boolean));
+      } catch (error) {
+        console.error("production_metadata_archive_lookup_failed", { jobId: manifest.id, error });
+      }
+    } catch (error) {
+      console.error("production_metadata_package_lookup_failed", { jobId: manifest.id, error });
+      warnings.push("The production details were saved, but linked approval-package discovery failed.");
+    }
   }
 
-  for (const key of htmlKeys) await rewriteResourceMetadata(env.BUCKET, key, manifest);
-  await env.BUCKET.put(manifestKey, JSON.stringify(manifest, null, 2), { httpMetadata: { contentType: "application/json" } });
+  const resourceUpdates = await Promise.allSettled([...htmlKeys].map((key) => rewriteResourceMetadata(env.BUCKET, key, manifest)));
+  if (resourceUpdates.some((result) => result.status === "rejected")) {
+    warnings.push("The production details were saved, but one or more stored HTML copies could not be rewritten.");
+  }
 
-  for (const prefix of archivePrefixes) {
-    await updateArchiveMetadata(env.BUCKET, prefix, manifest);
+  const archiveUpdates = await Promise.allSettled(archivePrefixes.map((prefix) => updateArchiveMetadata(env.BUCKET, prefix, manifest)));
+  if (archiveUpdates.some((result) => result.status === "rejected")) {
+    warnings.push("The production details were saved, but one or more archived copies could not be updated.");
   }
 
   if (env.DB && linkedPackageIds.length) {
@@ -156,10 +182,15 @@ async function updateProductionMetadata(
           .bind(crypto.randomUUID(), packageId, accessIdentityEmail(request), JSON.stringify({ previous, next: { sermonTitle, seriesTitle, speaker }, sourceJobId: manifest.id }), now),
       );
     }
-    await env.DB.batch(statements);
+    try {
+      await env.DB.batch(statements);
+    } catch (error) {
+      console.error("production_metadata_package_update_failed", { jobId: manifest.id, error });
+      warnings.push("The production details were saved, but the linked approval package could not be updated.");
+    }
   }
 
-  return json({ ok: true, job: manifest, linkedApprovalPackages: linkedPackageIds.length });
+  return json({ ok: true, job: manifest, linkedApprovalPackages: linkedPackageIds.length, warnings });
 }
 
 function applyAnalysisMetadata(analysis: CanonicalSermonAnalysis, values: { sermonTitle: string; seriesTitle: string; speaker: string }) {
