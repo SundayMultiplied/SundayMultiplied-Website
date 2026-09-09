@@ -186,7 +186,7 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     if (!object) return new Response("Resource not found.", { status: 404 });
     let body: ReadableStream | string = object.body;
     const manifest = await loadManifest(env.BUCKET, previewMatch[1]);
-    if (manifest?.metadata.seriesTitle) {
+    if (manifest) {
       body = injectResourceHeaderMetadata(await object.text(), manifest.metadata, manifest.weekOf);
     }
     return new Response(body, {

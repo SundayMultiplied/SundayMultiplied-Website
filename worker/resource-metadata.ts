@@ -6,20 +6,27 @@ export type ResourceHeaderMetadata = {
 };
 
 export function injectResourceHeaderMetadata(html: string, metadata: ResourceHeaderMetadata, weekOf: string) {
+  let result = html;
+  if (metadata.sermonTitle) {
+    const title = `<h1 class="sm-title">${escapeHtml(metadata.sermonTitle)}</h1>`;
+    const existingTitle = /<h1\b[^>]*class=["'][^"']*\bsm-title\b[^"']*["'][^>]*>[\s\S]*?<\/h1>/i;
+    if (existingTitle.test(result)) result = result.replace(existingTitle, title);
+  }
+
   const parts = [
     metadata.seriesTitle ? `Series: ${metadata.seriesTitle}` : "",
     metadata.scripture ? `Scripture: ${metadata.scripture}` : "",
     metadata.speaker ? `Speaker: ${metadata.speaker}` : "",
     formatSermonDate(weekOf),
   ].filter(Boolean);
-  if (!parts.length) return html;
+  if (!parts.length) return result;
 
   const meta = `<p class="sm-meta">${parts.map(escapeHtml).join(" · ")}</p>`;
   const existing = /<p\b[^>]*class=["'][^"']*\bsm-meta\b[^"']*["'][^>]*>[\s\S]*?<\/p>/i;
-  if (existing.test(html)) return html.replace(existing, meta);
+  if (existing.test(result)) return result.replace(existing, meta);
 
   const headerEnd = /<\/header>/i;
-  return headerEnd.test(html) ? html.replace(headerEnd, `${meta}\n</header>`) : html;
+  return headerEnd.test(result) ? result.replace(headerEnd, `${meta}\n</header>`) : result;
 }
 
 function formatSermonDate(value: string) {
