@@ -18,6 +18,9 @@ export const DEFAULT_SCRIPTURE_PREFERENCES: ScripturePreferences = {
   provider: "bible_gateway",
 };
 
+export const AUTOMATIC_SCRIPTURE_VERSE_LIMIT = 12;
+export const AUTOMATIC_SCRIPTURE_CHARACTER_LIMIT = 3_000;
+
 const BOOK_IDS: Record<string, string> = {
   genesis: "GEN", gen: "GEN", exodus: "EXO", exod: "EXO", ex: "EXO", leviticus: "LEV", lev: "LEV",
   numbers: "NUM", num: "NUM", deuteronomy: "DEU", deut: "DEU", dt: "DEU", joshua: "JOS", josh: "JOS",
@@ -100,8 +103,12 @@ export async function resolveBsbPassage(reference: string): Promise<BsbPassage> 
   return { reference: parsed.reference, translation: "BSB", verses };
 }
 
-export function injectBsbScripture(html: string, passage: BsbPassage) {
-  const section = `<section class="sm-section sm-section--scripture" data-sm-scripture="primary">\n<h2>Scripture</h2>\n${scriptureHtml(passage)}\n</section>`;
+export function injectBsbScripture(
+  html: string,
+  passage: BsbPassage,
+  preferences: ScripturePreferences = DEFAULT_SCRIPTURE_PREFERENCES,
+) {
+  const section = `<section class="sm-section sm-section--scripture" data-sm-scripture="primary">\n<h2>Scripture</h2>\n${scriptureHtml(passage, preferences)}\n</section>`;
   const existing = /<section\b[^>]*class=["'][^"']*sm-section--scripture[^"']*["'][^>]*>[\s\S]*?<\/section>/i;
   if (existing.test(html)) return html.replace(existing, section);
 
@@ -114,7 +121,18 @@ export function injectBsbScripture(html: string, passage: BsbPassage) {
   throw new Error("Generated resource is missing the Sunday Multiplied document structure required for Scripture injection.");
 }
 
-export function scriptureHtml(passage: BsbPassage) {
+export function scriptureHtml(
+  passage: BsbPassage,
+  preferences: ScripturePreferences = DEFAULT_SCRIPTURE_PREFERENCES,
+) {
+  const showFullText = shouldDisplayFullScripture(passage, preferences);
+  const gatewayUrl = bibleGatewayPassageUrl(passage.reference, preferences.translation);
+  const gatewayLink = `<a class="sm-scripture-link" href="${escapeHtml(gatewayUrl)}" target="_blank" rel="noopener noreferrer">Read ${escapeHtml(passage.reference)} in ${escapeHtml(preferences.translation)} on Bible Gateway</a>`;
+
+  if (!showFullText) {
+    return `<p class="sm-scripture-reference">${escapeHtml(passage.reference)} · ${escapeHtml(preferences.translation)}</p>\n${gatewayLink}`;
+  }
+
   const spansChapters = passage.verses.some((verse) => verse.chapter !== passage.verses[0]?.chapter);
   const paragraphs: string[] = [];
   let current = "";
@@ -131,7 +149,23 @@ export function scriptureHtml(passage: BsbPassage) {
   if (current) paragraphs.push(current.trim());
 
   const body = paragraphs.map((paragraph) => `<p class="sm-scripture-paragraph">${paragraph}</p>`).join("\n");
-  return `<p class="sm-scripture-reference">${escapeHtml(passage.reference)} · Berean Standard Bible (BSB)</p>\n<div class="sm-scripture-text">\n${body}\n</div>\n<p class="sm-scripture-attribution">Scripture quotations are from the Berean Standard Bible (BSB), dedicated to the public domain.</p>`;
+  return `<p class="sm-scripture-reference">${escapeHtml(passage.reference)} · Berean Standard Bible (BSB)</p>\n<div class="sm-scripture-text">\n${body}\n</div>\n<p class="sm-scripture-attribution">Scripture quotations are from the Berean Standard Bible (BSB), dedicated to the public domain.</p>\n${gatewayLink}`;
+}
+
+export function shouldDisplayFullScripture(passage: BsbPassage, preferences: ScripturePreferences) {
+  if (preferences.displayMode === "full_text") return true;
+  if (preferences.displayMode === "reference_link") return false;
+  return passage.verses.length <= AUTOMATIC_SCRIPTURE_VERSE_LIMIT
+    && scriptureCharacterCount(passage) <= AUTOMATIC_SCRIPTURE_CHARACTER_LIMIT;
+}
+
+export function scriptureCharacterCount(passage: BsbPassage) {
+  return passage.verses.reduce((total, verse, index) => total + verse.text.length + (index ? 1 : 0), 0);
+}
+
+export function bibleGatewayPassageUrl(reference: string, translation: ScriptureTranslation) {
+  const search = new URLSearchParams({ search: reference, version: translation });
+  return `https://www.biblegateway.com/passage/?${search.toString()}`;
 }
 
 function parseReference(input: string): ParsedReference | null {

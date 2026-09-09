@@ -87,6 +87,8 @@ body.sm-resource {
 .sm-scripture-paragraph:last-child { margin-bottom: 0; }
 .sm-verse-number { margin-right: .18em; color: var(--sm-color-accent); font-family: var(--sm-font-body); font-size: .6em; font-weight: 800; vertical-align: super; }
 .sm-scripture-attribution { color: color-mix(in srgb, var(--sm-color-text) 65%, transparent); font-size: 12px !important; }
+.sm-scripture-link { display: inline-block; margin-top: 14px; padding: 11px 18px; color: #fff; background: var(--sm-color-primary); border-radius: var(--sm-corner-radius); font-size: 14px; font-weight: 800; text-decoration: none; }
+.sm-scripture-link:hover, .sm-scripture-link:focus-visible { background: var(--sm-color-accent); text-decoration: underline; }
 .sm-question-group, .sm-practice-scenario, .sm-practice-task, .sm-practice-share, .sm-practice-debrief {
   margin-top: 18px; padding: 20px 24px; border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent); border-radius: var(--sm-corner-radius); background: color-mix(in srgb, var(--sm-color-background) 96%, var(--sm-color-secondary));
 }
