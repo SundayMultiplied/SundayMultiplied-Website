@@ -49,8 +49,7 @@ export function validateFamilyV3Html(html: string, preferences: FamilyWorshipPre
   const ageLabels = ["Pre-K & Kindergarten", "Elementary", "Middle School", "High School"];
   const groups = html.match(/<article\b[^>]*class=["'][^"']*sm-family-age-group[^"']*["'][^>]*>[\s\S]*?<\/article>/gi) || [];
   for (const label of ageLabels) {
-    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const group = groups.find((item) => new RegExp(`<h3[^>]*>\\s*${escaped}\\s*<\\/h3>`, "i").test(item));
+    const group = groups.find((item) => normalizedHeadingText(item) === label.toLowerCase());
     if (!group) throw new Error(`Family V3 is missing the ${label} question group.`);
     const questions = group.match(/<li\b/gi)?.length || 0;
     if (questions < 1 || questions > 2) throw new Error(`Family V3 must include 1-2 questions for ${label}.`);
@@ -60,6 +59,18 @@ export function validateFamilyV3Html(html: string, preferences: FamilyWorshipPre
     if (!/sm-section--worship/.test(html)) throw new Error("Family V3 is missing the worship recommendation.");
     if (!html.includes("{{SM_WORSHIP_SONG_URL}}")) throw new Error("Family V3 is missing the controlled worship-song link.");
   }
+}
+
+function normalizedHeadingText(groupHtml: string) {
+  const heading = groupHtml.match(/<h3\b[^>]*>([\s\S]*?)<\/h3>/i)?.[1] || "";
+  return heading
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&#0*38;/gi, "&")
+    .replace(/&#x0*26;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 export function worshipPlatformLabel(platform: WorshipPlatformPreference): string {

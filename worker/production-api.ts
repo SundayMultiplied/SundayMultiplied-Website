@@ -478,36 +478,40 @@ async function generateProductionJobResources(request: Request, env: ProductionE
   }
 
   const origin = env.PUBLIC_SITE_ORIGIN || new URL(request.url).origin;
-  const resources: ProductionManifest["resources"] = [];
-  for (const kind of church.resources) {
-    const generatedHtml = generated.resources[kind];
-    if (!generatedHtml) continue;
-    let html = enforceResourceStyling(generatedHtml, church, kind);
-    if (kind === "family") {
-      const preferences = resolveFamilyWorshipPreferences(church.familyWorship, manifest.familyWorship?.style, manifest.familyWorship?.platform);
-      validateFamilyV3Html(html, preferences);
-      if (generated.familyWorshipSong) html = injectWorshipSongUrl(html, generated.familyWorshipSong, preferences);
-    }
-    if (scripturePassage && (kind === "group" || kind === "family")) {
-      try { html = injectBsbScripture(html, scripturePassage); }
-      catch (error) {
-        console.error("bsb_scripture_injection_failed", error);
-        return json({ error: error instanceof Error ? clean(error.message, 500) : "The exact BSB Scripture passage could not be inserted into the resource.", jobId }, 502);
+  try {
+    const preparedResources: Array<{ kind: "monday" | "group" | "family"; html: string }> = [];
+    for (const kind of church.resources) {
+      const generatedHtml = generated.resources[kind];
+      if (!generatedHtml) continue;
+      let html = enforceResourceStyling(generatedHtml, church, kind);
+      if (kind === "family") {
+        const preferences = resolveFamilyWorshipPreferences(church.familyWorship, manifest.familyWorship?.style, manifest.familyWorship?.platform);
+        validateFamilyV3Html(html, preferences);
+        if (generated.familyWorshipSong) html = injectWorshipSongUrl(html, generated.familyWorshipSong, preferences);
       }
+      if (scripturePassage && (kind === "group" || kind === "family")) html = injectBsbScripture(html, scripturePassage);
+      preparedResources.push({ kind, html });
     }
-    const storageKey = `production/jobs/${jobId}/${kind}.html`;
-    await env.BUCKET.put(storageKey, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
-    resources.push({ kind: titleCase(kind), title: `${titleCase(kind)} Multiplied`, storageKey, previewUrl: `${origin}/api/production/preview/${jobId}/${kind}` });
-  }
-  if (!resources.length) return json({ error: "No resources were generated.", jobId }, 502);
 
-  manifest.status = "ready_for_internal_review";
-  manifest.analysisAcceptedAt = new Date().toISOString();
-  manifest.analysisAcceptedBy = accessIdentityEmail(request);
-  manifest.metadata = generated.metadata;
-  manifest.resources = resources;
-  await saveManifest(env.BUCKET, manifest);
-  return json({ ok: true, job: manifest });
+    const resources: ProductionManifest["resources"] = [];
+    for (const resource of preparedResources) {
+      const storageKey = `production/jobs/${jobId}/${resource.kind}.html`;
+      await env.BUCKET.put(storageKey, resource.html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
+      resources.push({ kind: titleCase(resource.kind), title: `${titleCase(resource.kind)} Multiplied`, storageKey, previewUrl: `${origin}/api/production/preview/${jobId}/${resource.kind}` });
+    }
+    if (!resources.length) return json({ error: "No resources were generated.", jobId }, 502);
+
+    manifest.status = "ready_for_internal_review";
+    manifest.analysisAcceptedAt = new Date().toISOString();
+    manifest.analysisAcceptedBy = accessIdentityEmail(request);
+    manifest.metadata = generated.metadata;
+    manifest.resources = resources;
+    await saveManifest(env.BUCKET, manifest);
+    return json({ ok: true, job: manifest });
+  } catch (error) {
+    console.error("sermon_resource_finalization_failed", { jobId, error });
+    return json({ error: error instanceof Error ? clean(error.message, 500) : "Generated resources could not be validated and saved.", jobId }, 502);
+  }
 }
 
 async function serveChurchLogo(request: Request, env: ProductionEnv, slug: string) {

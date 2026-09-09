@@ -41,6 +41,17 @@ test("validates the four age groups and controlled worship link", () => {
   assert.throws(() => validateFamilyV3Html(html.replace("Middle School", "Older Kids"), { style: "contemporary", platform: "youtube" }), /Middle School/);
 });
 
+test("accepts valid HTML entity encoding and inline markup in age headings", () => {
+  const groups = [
+    '<article class="sm-family-age-group"><h3><span>Pre-K &amp; Kindergarten</span></h3><ol><li>A concrete question</li></ol></article>',
+    '<article class="sm-family-age-group"><h3>Elementary</h3><ol><li>A familiar-situation question</li></ol></article>',
+    '<article class="sm-family-age-group"><h3>Middle School</h3><ol><li>A reflection question</li></ol></article>',
+    '<article class="sm-family-age-group"><h3>High School</h3><ol><li>An application question</li></ol></article>',
+  ].join("");
+  const html = `<section class="sm-section sm-section--parent-note">Parent setup</section><section class="sm-section sm-section--family-questions">${groups}</section><section class="sm-section sm-section--worship"><a href="{{SM_WORSHIP_SONG_URL}}">Play</a></section>`;
+  assert.doesNotThrow(() => validateFamilyV3Html(html, { style: "contemporary", platform: "youtube" }));
+});
+
 test("V3 family contract assumes younger children did not hear the sermon", async () => {
   const production = await readFile(new URL("../worker/production-api.ts", import.meta.url), "utf8");
   for (const label of ["Pre-K & Kindergarten", "Elementary", "Middle School", "High School"]) assert.match(production, new RegExp(label.replace("&", "\\&")));
