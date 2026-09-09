@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { TeachingSourcesForm } from "./teaching-sources-form";
 import { SermonAnalysisReview } from "./sermon-analysis-review";
-import { filterAndSortProductionJobs, productionSeriesOptions, type ProductionQueueSort } from "./dashboard-sorting";
+import { filterAndSortProductionJobs, hasUnassignedProductionSeries, productionSeriesOptions, type ProductionQueueSort } from "./dashboard-sorting";
 import type { CanonicalSermonAnalysis } from "../worker/sermon-analysis";
 import type { AnalysisReviewFeedback } from "../worker/analysis-review-api";
 
@@ -55,11 +55,17 @@ export function ProductionDashboard() {
   const [seriesFilter, setSeriesFilter] = useState("");
   const [queueSort, setQueueSort] = useState<ProductionQueueSort>("newest");
 
-  const seriesOptions = useMemo(() => productionSeriesOptions(jobs), [jobs]);
+  const seriesOptions = useMemo(() => productionSeriesOptions(jobs, churchFilter), [jobs, churchFilter]);
+  const hasUnassignedSeries = useMemo(() => hasUnassignedProductionSeries(jobs, churchFilter), [jobs, churchFilter]);
   const visibleJobs = useMemo(
     () => filterAndSortProductionJobs(jobs, churchFilter, seriesFilter, queueSort),
     [jobs, churchFilter, seriesFilter, queueSort],
   );
+
+  useEffect(() => {
+    if (seriesFilter === "__none" && !hasUnassignedSeries) setSeriesFilter("");
+    else if (seriesFilter && seriesFilter !== "__none" && !seriesOptions.includes(seriesFilter)) setSeriesFilter("");
+  }, [seriesFilter, seriesOptions, hasUnassignedSeries]);
 
   async function loadProduction() {
     const [churchResponse, jobsResponse, comparisonsResponse] = await Promise.all([
@@ -230,15 +236,16 @@ export function ProductionDashboard() {
       <div className="approval-create-heading production-queue-heading"><div><h2>Production queue</h2><p>Review sermon analysis first, then preview generated resources before pastoral review.</p></div><button type="button" className="production-delete" onClick={() => void deleteSelectedJobs()} disabled={!selectedJobIds.length || deletingJobs}>{deletingJobs ? "Deleting…" : `Delete selected${selectedJobIds.length ? ` (${selectedJobIds.length})` : ""}`}</button></div>
       {jobs.length > 0 && <div className="production-queue-controls" aria-label="Production queue controls">
         <label>Church<select value={churchFilter} onChange={(event) => setChurchFilter(event.target.value)}><option value="">All churches</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
-        <label>Sermon series<select value={seriesFilter} onChange={(event) => setSeriesFilter(event.target.value)}><option value="">All series</option>{seriesOptions.map((series) => <option value={series} key={series}>{series}</option>)}<option value="__none">No series assigned</option></select></label>
+        <label>Sermon series<select value={seriesFilter} onChange={(event) => setSeriesFilter(event.target.value)}><option value="">All series</option>{seriesOptions.map((series) => <option value={series} key={series}>{series}</option>)}{hasUnassignedSeries && <option value="__none">No series assigned</option>}</select></label>
         <label>Sort by<select value={queueSort} onChange={(event) => setQueueSort(event.target.value as ProductionQueueSort)}><option value="newest">Newest sermon first</option><option value="oldest">Oldest sermon first</option><option value="church_asc">Church A–Z</option><option value="church_desc">Church Z–A</option><option value="series_asc">Series A–Z</option><option value="series_desc">Series Z–A</option></select></label>
         <div className="production-filter-summary"><strong>{visibleJobs.length}</strong><span>of {jobs.length} jobs</span>{(churchFilter || seriesFilter || queueSort !== "newest") && <button type="button" onClick={() => { setChurchFilter(""); setSeriesFilter(""); setQueueSort("newest"); }}>Clear</button>}</div>
       </div>}
       {jobs.length === 0 ? <p>No sermon production jobs yet.</p> : visibleJobs.length === 0 ? <div className="production-filter-empty"><strong>No matching production jobs</strong><p>Clear or change the church and sermon-series filters.</p></div> : <div className="approval-table production-job-table">
-        <div className="approval-table-row approval-table-labels"><span>Select</span><span>Church / Sermon</span><span>Date</span><span>Metadata</span><span>Resources</span><span>Action</span></div>
+        <div className="approval-table-row approval-table-labels"><span>Select</span><span>Church / Sermon</span><span>Series</span><span>Date</span><span>Metadata</span><span>Resources</span><span>Action</span></div>
         {visibleJobs.map((job) => { const revisionRequested = hasPendingRevision(job.id); return <div className="approval-table-row" key={job.id}>
           <span className="production-job-select"><input type="checkbox" aria-label={`Select ${job.churchName} ${job.metadata.sermonTitle || job.weekOf}`} checked={selectedJobIds.includes(job.id)} disabled={job.status === "sent_for_approval" || deletingJobs} onChange={() => toggleJobSelection(job)} /></span>
-          <span><strong>{job.churchName}</strong><small>{job.metadata.sermonTitle || "Title not detected"}</small>{job.metadata.seriesTitle && <small>{job.metadata.seriesTitle}</small>}<small className="production-job-id" title={job.id}>Job {job.id.slice(0, 8)}</small></span>
+          <span><strong>{job.churchName}</strong><small>{job.metadata.sermonTitle || "Title not detected"}</small><small className="production-job-id" title={job.id}>Job {job.id.slice(0, 8)}</small></span>
+          <span className="production-series-name">{job.metadata.seriesTitle || <small>No series assigned</small>}</span>
           <span>{job.weekOf}</span>
           <span className="approval-metadata"><strong>{job.metadata.scripture || "Passage not detected"}</strong><small>Confidence: {job.metadata.confidence}</small>{job.metadata.speaker && <small>{job.metadata.speaker}</small>}</span>
           <span className="approval-notification">{job.analysisStorageKey && <button type="button" className="analysis-open-button" onClick={() => void openAnalysis(job)} disabled={loadingAnalysisId === job.id}>{loadingAnalysisId === job.id ? "Loading analysis…" : "View analysis"}</button>}{job.resources.map((resource) => <a key={resource.kind} href={resource.previewUrl} target="_blank" rel="noreferrer">Preview {resource.kind}</a>)}</span>

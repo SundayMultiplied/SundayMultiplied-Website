@@ -39,8 +39,15 @@ export function sortChurchHistory<T extends ChurchHistoryItem>(packages: T[], so
   });
 }
 
-export function productionSeriesOptions(jobs: ProductionQueueItem[]) {
-  return [...new Set(jobs.map((job) => cleanText(job.metadata.seriesTitle)).filter(Boolean))].sort(collator.compare);
+export function productionSeriesOptions(jobs: ProductionQueueItem[], churchSlug = "") {
+  return [...new Set(jobs
+    .filter((job) => !churchSlug || job.churchSlug === churchSlug)
+    .map((job) => cleanText(job.metadata.seriesTitle))
+    .filter(Boolean))].sort(collator.compare);
+}
+
+export function hasUnassignedProductionSeries(jobs: ProductionQueueItem[], churchSlug = "") {
+  return jobs.some((job) => (!churchSlug || job.churchSlug === churchSlug) && !cleanText(job.metadata.seriesTitle));
 }
 
 function productionComparison(a: ProductionQueueItem, b: ProductionQueueItem, sort: ProductionQueueSort) {
