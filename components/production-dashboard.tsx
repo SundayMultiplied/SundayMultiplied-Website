@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { TeachingSourcesForm } from "./teaching-sources-form";
 import { SermonAnalysisReview } from "./sermon-analysis-review";
 import { filterAndSortProductionJobs, hasUnassignedProductionSeries, productionSeriesOptions, type ProductionQueueSort } from "./dashboard-sorting";
@@ -28,6 +28,7 @@ type ComparisonSet = {
   variants: Array<{ label: "A" | "B" | "C"; resources: Array<{ kind: string; previewUrl: string }> }>;
   feedback?: ComparisonFeedback[];
 };
+type MetadataDraft = { jobId: string; churchName: string; sermonTitle: string; seriesTitle: string; speaker: string };
 
 export function ProductionDashboard() {
   const [churches, setChurches] = useState<ChurchConfig[]>([]);
@@ -54,6 +55,8 @@ export function ProductionDashboard() {
   const [churchFilter, setChurchFilter] = useState("");
   const [seriesFilter, setSeriesFilter] = useState("");
   const [queueSort, setQueueSort] = useState<ProductionQueueSort>("newest");
+  const [metadataDraft, setMetadataDraft] = useState<MetadataDraft | null>(null);
+  const [savingMetadataId, setSavingMetadataId] = useState("");
 
   const seriesOptions = useMemo(() => productionSeriesOptions(jobs, churchFilter), [jobs, churchFilter]);
   const hasUnassignedSeries = useMemo(() => hasUnassignedProductionSeries(jobs, churchFilter), [jobs, churchFilter]);
@@ -198,6 +201,37 @@ export function ProductionDashboard() {
     finally { setComparingId(""); }
   }
 
+  function editMetadata(job: ProductionJob) {
+    setMetadataDraft({
+      jobId: job.id,
+      churchName: job.churchName,
+      sermonTitle: job.metadata.sermonTitle || "",
+      seriesTitle: job.metadata.seriesTitle || "",
+      speaker: job.metadata.speaker || "",
+    });
+  }
+
+  async function saveMetadata(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!metadataDraft) return;
+    setSavingMetadataId(metadataDraft.jobId); setError(""); setActionMessage("");
+    try {
+      const response = await fetch(`/api/production/jobs/${encodeURIComponent(metadataDraft.jobId)}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sermonTitle: metadataDraft.sermonTitle, seriesTitle: metadataDraft.seriesTitle, speaker: metadataDraft.speaker }),
+      });
+      const data = await readApiJson<{ error?: string; linkedApprovalPackages?: number }>(response);
+      if (!response.ok) throw new Error(data.error || "Unable to update sermon details.");
+      const linked = Number(data.linkedApprovalPackages || 0);
+      setMetadataDraft(null);
+      setActionMessage(`Sermon details updated across the production resources${linked ? ` and ${linked} linked approval package${linked === 1 ? "" : "s"}` : ""}.`);
+      await loadProduction();
+      if (analysisJob?.id === metadataDraft.jobId) await openAnalysis({ ...analysisJob, metadata: { ...analysisJob.metadata, sermonTitle: metadataDraft.sermonTitle, seriesTitle: metadataDraft.seriesTitle, speaker: metadataDraft.speaker } });
+    } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to update sermon details."); }
+    finally { setSavingMetadataId(""); }
+  }
+
   function toggleJobSelection(job: ProductionJob) {
     if (job.status === "sent_for_approval") return;
     setSelectedJobIds((current) => current.includes(job.id) ? current.filter((id) => id !== job.id) : [...current, job.id]);
@@ -232,6 +266,7 @@ export function ProductionDashboard() {
     {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
     {createdLink && <div className="approval-created-link"><strong>Secure review link</strong><input readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} /><small>The church notification uses this secure review page.</small></div>}
     {analysis && analysisJob && <SermonAnalysisReview analysis={analysis} job={analysisJob} generating={generatingId === analysisJob.id} retrying={retryingAnalysisId === analysisJob.id} sharing={sharingAnalysisId === analysisJob.id} shareUrl={analysisShareUrl} feedback={analysisFeedback} onClose={() => { setAnalysis(null); setAnalysisJob(null); setAnalysisShareUrl(""); setAnalysisFeedback([]); }} onGenerate={() => void acceptAnalysisAndGenerate()} onRetry={() => void retryAnalysis()} onReplaceSources={replaceAnalysisSources} onShare={() => void shareAnalysis()} />}
+    {metadataDraft && <div className="production-metadata-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !savingMetadataId) setMetadataDraft(null); }}><section className="production-metadata-dialog" role="dialog" aria-modal="true" aria-labelledby="production-metadata-title"><div className="production-metadata-head"><div><p className="approval-kicker">Correct sermon details</p><h2 id="production-metadata-title">Edit metadata</h2><p>{metadataDraft.churchName}</p></div><button type="button" aria-label="Close metadata editor" onClick={() => setMetadataDraft(null)} disabled={Boolean(savingMetadataId)}>×</button></div><form onSubmit={(event) => void saveMetadata(event)}><label>Sermon title<input required maxLength={240} value={metadataDraft.sermonTitle} onChange={(event) => setMetadataDraft({ ...metadataDraft, sermonTitle: event.target.value })} /></label><label>Speaker name<input maxLength={160} value={metadataDraft.speaker} onChange={(event) => setMetadataDraft({ ...metadataDraft, speaker: event.target.value })} /></label><label>Sermon series<input maxLength={240} value={metadataDraft.seriesTitle} onChange={(event) => setMetadataDraft({ ...metadataDraft, seriesTitle: event.target.value })} placeholder="Leave blank when this sermon is not in a series" /></label><p className="production-metadata-help">Saving updates the canonical analysis, generated resource headers, secure review package, church dashboard, and archived copies linked to this production job.</p><div className="production-metadata-actions"><button type="button" onClick={() => setMetadataDraft(null)} disabled={Boolean(savingMetadataId)}>Cancel</button><button className="approval-approve" disabled={Boolean(savingMetadataId)}>{savingMetadataId ? "Updating resources…" : "Save corrections"}</button></div></form></section></div>}
     <section className="approval-create production-queue">
       <div className="approval-create-heading production-queue-heading"><div><h2>Production queue</h2><p>Review sermon analysis first, then preview generated resources before pastoral review.</p></div><button type="button" className="production-delete" onClick={() => void deleteSelectedJobs()} disabled={!selectedJobIds.length || deletingJobs}>{deletingJobs ? "Deleting…" : `Delete selected${selectedJobIds.length ? ` (${selectedJobIds.length})` : ""}`}</button></div>
       {jobs.length > 0 && <div className="production-queue-controls" aria-label="Production queue controls">
@@ -249,7 +284,7 @@ export function ProductionDashboard() {
           <span>{job.weekOf}</span>
           <span className="approval-metadata"><strong>{job.metadata.scripture || "Passage not detected"}</strong><small>Confidence: {job.metadata.confidence}</small>{job.metadata.speaker && <small>{job.metadata.speaker}</small>}</span>
           <span className="approval-notification">{job.analysisStorageKey && <button type="button" className="analysis-open-button" onClick={() => void openAnalysis(job)} disabled={loadingAnalysisId === job.id}>{loadingAnalysisId === job.id ? "Loading analysis…" : "View analysis"}</button>}{job.resources.map((resource) => <a key={resource.kind} href={resource.previewUrl} target="_blank" rel="noreferrer">Preview {resource.kind}</a>)}</span>
-          <span className="production-action-stack">{job.status === "awaiting_analysis_review" ? <button type="button" className="approval-approve" onClick={() => void openAnalysis(job)} disabled={loadingAnalysisId === job.id}>{loadingAnalysisId === job.id ? "Loading…" : "Review analysis"}</button> : <>{revisionRequested ? <><a className="approval-status status-revision_requested production-revision-link" href="/revisions">revision requested</a>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : job.status === "sent_for_approval" ? <><strong className="notification-sent">sent for approval</strong>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : <button type="button" className="approval-approve" onClick={() => void sendForApproval(job)} disabled={sendingId === job.id}>{sendingId === job.id ? "Sending…" : "Send for approval"}</button>}<button type="button" className="comparison-create-button" onClick={() => void createComparison(job)} disabled={comparingId === job.id}>{comparingId === job.id ? "Generating A/B/C…" : "Create A/B/C comparison"}</button></>}</span>
+          <span className="production-action-stack"><button type="button" className="production-edit-metadata" onClick={() => editMetadata(job)}>Edit details</button>{job.status === "awaiting_analysis_review" ? <button type="button" className="approval-approve" onClick={() => void openAnalysis(job)} disabled={loadingAnalysisId === job.id}>{loadingAnalysisId === job.id ? "Loading…" : "Review analysis"}</button> : <>{revisionRequested ? <><a className="approval-status status-revision_requested production-revision-link" href="/revisions">revision requested</a>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : job.status === "sent_for_approval" ? <><strong className="notification-sent">sent for approval</strong>{job.reviewUrl && <a href={job.reviewUrl} target="_blank" rel="noreferrer">Open review</a>}</> : <button type="button" className="approval-approve" onClick={() => void sendForApproval(job)} disabled={sendingId === job.id}>{sendingId === job.id ? "Sending…" : "Send for approval"}</button>}<button type="button" className="comparison-create-button" onClick={() => void createComparison(job)} disabled={comparingId === job.id}>{comparingId === job.id ? "Generating A/B/C…" : "Create A/B/C comparison"}</button></>}</span>
         </div>; })}
       </div>}
     </section>
