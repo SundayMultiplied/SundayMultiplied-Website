@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./church-dashboard.module.css";
+import { sortChurchHistory, type ChurchHistorySort } from "./dashboard-sorting";
 
 type Resource = {
   id: string;
@@ -57,6 +58,7 @@ export function ChurchDashboard({ slug }: { slug: string }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [historyPage, setHistoryPage] = useState(1);
+  const [historySort, setHistorySort] = useState<ChurchHistorySort>("newest");
   const [canScrollHistoryRight, setCanScrollHistoryRight] = useState(false);
   const historyScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -87,12 +89,14 @@ export function ChurchDashboard({ slug }: { slug: string }) {
     [data],
   );
 
-  const totalHistoryPages = Math.max(1, Math.ceil((data?.packages.length || 0) / HISTORY_PAGE_SIZE));
+  const sortedPackages = useMemo(() => sortChurchHistory(data?.packages || [], historySort), [data, historySort]);
+  const totalHistoryPages = Math.max(1, Math.ceil(sortedPackages.length / HISTORY_PAGE_SIZE));
   const pagedPackages = useMemo(() => {
-    if (!data) return [];
     const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
-    return data.packages.slice(start, start + HISTORY_PAGE_SIZE);
-  }, [data, historyPage]);
+    return sortedPackages.slice(start, start + HISTORY_PAGE_SIZE);
+  }, [sortedPackages, historyPage]);
+
+  useEffect(() => { setHistoryPage(1); }, [historySort]);
 
   useEffect(() => {
     if (historyPage > totalHistoryPages) setHistoryPage(totalHistoryPages);
@@ -208,7 +212,7 @@ export function ChurchDashboard({ slug }: { slug: string }) {
       </section>
 
       <section className={styles.card} id="history">
-        <div className={styles.cardHeading}><div><p className={styles.kicker}>Archive</p><h2>Approval History & Resources</h2></div><span className={styles.count}>{data.packages.length} packages</span></div>
+        <div className={styles.cardHeading}><div><p className={styles.kicker}>Archive</p><h2>Approval History & Resources</h2></div><div className={styles.historyControls}><label><span>Sort history</span><select value={historySort} onChange={(event) => setHistorySort(event.target.value as ChurchHistorySort)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="series_asc">Series A–Z</option><option value="series_desc">Series Z–A</option></select></label><span className={styles.count}>{data.packages.length} packages</span></div></div>
         {data.packages.length === 0 ? <p className={styles.empty}>Your history will appear here once the first package is created.</p> : (
           <>
             <p className={styles.mobileScrollHint}>Swipe to see status, reviewer, and resources →</p>
