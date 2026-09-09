@@ -95,7 +95,7 @@ body.sm-resource {
 .sm-family-age-group { margin-top: 18px; padding: 20px 24px; border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent); border-radius: var(--sm-corner-radius); background: color-mix(in srgb, var(--sm-color-background) 96%, var(--sm-color-secondary)); }
 .sm-family-age-group h3 { margin-top: 0; }
 .sm-family-age-group p, .sm-family-age-group li { margin-top: 0; }
-.sm-section--worship { background: color-mix(in srgb, var(--sm-color-primary) 6%, var(--sm-color-background)); }
+.sm-section.sm-section--worship { padding: clamp(28px, 5vw, 46px) clamp(26px, 7vw, 64px); background: color-mix(in srgb, var(--sm-color-primary) 6%, var(--sm-color-background)); }
 .sm-worship-song { margin-bottom: 6px !important; color: var(--sm-color-primary); font-family: var(--sm-font-heading); font-size: 21px !important; font-weight: 700; }
 .sm-worship-connection { margin-top: 6px; }
 .sm-worship-link { display: inline-block; margin-top: 10px; padding: 11px 18px; color: #fff; background: var(--sm-color-primary); border-radius: var(--sm-corner-radius); font-size: 14px; font-weight: 800; text-decoration: none; }
@@ -110,10 +110,12 @@ body.sm-resource {
   .sm-document { box-shadow: none; }
   .sm-section--scripture, .sm-section--prayer, .sm-section--leader-tip, .sm-section--parent-note { border-left-width: 4px; }
   .sm-family-age-group { padding: 17px 18px; }
+  .sm-section.sm-section--worship { padding: 24px 22px; }
 }
 
 @media print {
   html, body { background: #fff; }
   .sm-document { width: 100%; box-shadow: none; }
   .sm-section { break-inside: avoid; }
+  .sm-section.sm-section--worship { padding: 12px 14px; }
 }

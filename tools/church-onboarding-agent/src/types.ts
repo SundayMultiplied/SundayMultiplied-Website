@@ -11,6 +11,11 @@ export type FamilyWorshipPreferences = {
   style: "contemporary" | "hymn" | "blended" | "none";
   platform: "youtube" | "spotify" | "apple_music";
 };
+export type ScripturePreferences = {
+  translation: "BSB" | "ESV" | "NIV" | "NLT" | "CSB" | "NASB" | "NKJV" | "KJV";
+  displayMode: "automatic" | "full_text" | "reference_link";
+  provider: "bible_gateway";
+};
 export type ChurchBasics = { name: string; slug: string; city: string; state: string; timezone: string; website: string };
 export type StyleTheme = "contemporary" | "traditional" | "modern" | "editorial";
 
@@ -122,6 +127,7 @@ export type OnboardingState = {
   reviewers: Reviewer[];
   resources: ResourceType[];
   familyWorship: FamilyWorshipPreferences;
+  scripture: ScripturePreferences;
   serviceDay: "sunday";
   deliveryDay: string;
   approvalWindowDays: number;
@@ -143,6 +149,7 @@ export const emptyState = (): OnboardingState => ({
   reviewers: [],
   resources: ["monday", "group", "family"],
   familyWorship: { style: "blended", platform: "youtube" },
+  scripture: { translation: "BSB", displayMode: "automatic", provider: "bible_gateway" },
   serviceDay: "sunday",
   deliveryDay: "Monday",
   approvalWindowDays: 30,

@@ -3,7 +3,7 @@ import { createOnboardingPullRequest, createThemeUpdatePullRequest, listChurchTh
 import { buildRepositoryFiles } from "./services/repo-files";
 import { syncOnboardingCrm, type CrmUpdate } from "./services/crm";
 import { inspectChurchWebsite, validatePublicUrl } from "./services/site-inspector";
-import { emptyState, normalizeBrandProfile, type BrandProfile, type ChurchBasics, type ChurchLink, type FamilyWorshipPreferences, type OnboardingState, type Reviewer, type ResourceType } from "./types";
+import { emptyState, normalizeBrandProfile, type BrandProfile, type ChurchBasics, type ChurchLink, type FamilyWorshipPreferences, type OnboardingState, type Reviewer, type ResourceType, type ScripturePreferences } from "./types";
 
 type AppEnv = Cloudflare.Env & {
   ASSETS: Fetcher;
@@ -87,10 +87,13 @@ export class ChurchOnboardingAgent extends Agent<AppEnv, OnboardingState> {
     if (!slugPattern.test(slug)) throw new Error("Enter a valid church slug.");
     validateThemeColors(brand); return createThemeUpdatePullRequest(this.githubConfig(), slug, normalizeBrandProfile(brand));
   }
-  @callable() async saveApproval(reviewers: Reviewer[], resources: ResourceType[], deliveryDay: string, familyWorship: FamilyWorshipPreferences) {
+  @callable() async saveApproval(reviewers: Reviewer[], resources: ResourceType[], deliveryDay: string, familyWorship: FamilyWorshipPreferences, scripture: ScripturePreferences) {
     if (!reviewers.length || reviewers.some((reviewer) => !reviewer.email.includes("@"))) throw new Error("At least one valid reviewer is required.");
     if (!resources.length) throw new Error("Select at least one resource.");
-    this.save({ reviewers, resources, deliveryDay, familyWorship, phase: "approval_ready", checklist: { ...this.state.checklist, reviewer: true } });
+    const allowedTranslations = ["BSB", "ESV", "NIV", "NLT", "CSB", "NASB", "NKJV", "KJV"];
+    const allowedDisplayModes = ["automatic", "full_text", "reference_link"];
+    if (!allowedTranslations.includes(scripture.translation) || !allowedDisplayModes.includes(scripture.displayMode) || scripture.provider !== "bible_gateway") throw new Error("Choose valid Scripture preferences.");
+    this.save({ reviewers, resources, deliveryDay, familyWorship, scripture, phase: "approval_ready", checklist: { ...this.state.checklist, reviewer: true } });
     return this.syncCrm({ stage: "Approval Setup" });
   }
   async onRequest(request: Request) {

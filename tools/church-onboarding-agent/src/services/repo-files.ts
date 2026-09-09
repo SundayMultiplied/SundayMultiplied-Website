@@ -140,6 +140,7 @@ ${splitRules}
 .sm-document--group .sm-section--midweek h2, .sm-document--group .sm-section--leader-tip h2 { color: ${b.calloutTextColor}; }
 .sm-section--prayer { padding: 22px 24px; border-radius: ${b.cornerRadius}; background: ${b.prayerBackgroundColor}; color: ${b.prayerTextColor}; }
 .sm-section--prayer h2, .sm-section--prayer h3 { color: ${b.prayerTextColor}; }
+.sm-section--worship { padding: 22px 24px; border-radius: ${b.cornerRadius}; background: color-mix(in srgb, ${b.primaryColor} 6%, ${b.backgroundColor}); }
 a { color: ${b.primaryColor}; font-weight: 700; text-underline-offset: 3px; }
 .sm-resource__button, .sm-theme-button { display: inline-block; border: 0; padding: 11px 18px; border-radius: ${buttonRadius}; background: ${b.primaryColor}; color: ${contrast("#ffffff", b.primaryColor) >= 4.5 ? "#ffffff" : b.textColor}; font-weight: 800; }
 ${structuralThemeCss(theme, b)}
@@ -177,6 +178,7 @@ export function buildRepositoryFiles(state: OnboardingState): RepositoryFile[] {
     church: state.basics,
     resources: state.resources,
     familyWorship: state.familyWorship || { style: "blended", platform: "youtube" },
+    scripture: state.scripture || { translation: "BSB", displayMode: "automatic", provider: "bible_gateway" },
     schedule: { serviceDay: state.serviceDay, deliveryDay: state.deliveryDay },
     approval: { reviewerConfigured: state.reviewers.length > 0, linkLifetimeDays: state.approvalWindowDays, draftRetentionDays: state.draftRetentionDays, dashboardMode: "shared" },
     brand: {

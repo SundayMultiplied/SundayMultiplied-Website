@@ -4,6 +4,20 @@ export type BsbPassage = {
   verses: Array<{ chapter: number; verse: number; text: string; paragraphBreakBefore: boolean }>;
 };
 
+export type ScriptureTranslation = "BSB" | "ESV" | "NIV" | "NLT" | "CSB" | "NASB" | "NKJV" | "KJV";
+export type ScriptureDisplayMode = "automatic" | "full_text" | "reference_link";
+export type ScripturePreferences = {
+  translation: ScriptureTranslation;
+  displayMode: ScriptureDisplayMode;
+  provider: "bible_gateway";
+};
+
+export const DEFAULT_SCRIPTURE_PREFERENCES: ScripturePreferences = {
+  translation: "BSB",
+  displayMode: "automatic",
+  provider: "bible_gateway",
+};
+
 const BOOK_IDS: Record<string, string> = {
   genesis: "GEN", gen: "GEN", exodus: "EXO", exod: "EXO", ex: "EXO", leviticus: "LEV", lev: "LEV",
   numbers: "NUM", num: "NUM", deuteronomy: "DEU", deut: "DEU", dt: "DEU", joshua: "JOS", josh: "JOS",

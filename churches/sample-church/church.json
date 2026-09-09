@@ -9,6 +9,7 @@
     "website": "https://sundaymultiplied.com/"
   },
   "resources": ["monday", "group", "family"],
+  "scripture": { "translation": "BSB", "displayMode": "automatic", "provider": "bible_gateway" },
   "schedule": { "serviceDay": "sunday", "deliveryDay": "Monday" },
   "approval": {
     "reviewerConfigured": true,

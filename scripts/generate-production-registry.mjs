@@ -61,8 +61,11 @@ for (const entry of entries) {
   const configuredFamilyWorship = manifest?.familyWorship || {};
   const style = ["contemporary", "hymn", "blended", "none"].includes(configuredFamilyWorship.style) ? configuredFamilyWorship.style : "blended";
   const platform = ["youtube", "spotify", "apple_music"].includes(configuredFamilyWorship.platform) ? configuredFamilyWorship.platform : "youtube";
+  const configuredScripture = manifest?.scripture || {};
+  const translation = ["BSB", "ESV", "NIV", "NLT", "CSB", "NASB", "NKJV", "KJV"].includes(configuredScripture.translation) ? configuredScripture.translation : "BSB";
+  const displayMode = ["automatic", "full_text", "reference_link"].includes(configuredScripture.displayMode) ? configuredScripture.displayMode : "automatic";
 
-  churches.push({ slug, name, resources, baseCssUrl, cssUrl, logoUrl, familyWorship: { style, platform } });
+  churches.push({ slug, name, resources, baseCssUrl, cssUrl, logoUrl, familyWorship: { style, platform }, scripture: { translation, displayMode, provider: "bible_gateway" } });
   if (primaryAsset) primaryLogoKeys[slug] = String(primaryAsset.r2Key).trim();
 }
 
