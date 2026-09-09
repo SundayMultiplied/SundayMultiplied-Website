@@ -226,12 +226,13 @@ export function ChurchDashboard({ slug }: { slug: string }) {
                 }}
               >
                 <table className={styles.table}>
-                  <thead><tr><th>Week</th><th>Package</th><th>Status</th><th>Reviewer</th><th>Resources</th></tr></thead>
+                  <thead><tr><th>Week</th><th>Series</th><th>Package</th><th>Status</th><th>Reviewer</th><th>Resources</th></tr></thead>
                   <tbody>
                     {pagedPackages.map((item) => (
                       <tr key={item.id}>
                         <td>{formatDate(item.weekOf)}</td>
-                        <td><strong>{item.title}</strong>{item.seriesTitle && <small>{item.seriesTitle}</small>}</td>
+                        <td>{item.seriesTitle || <small>Not assigned</small>}</td>
+                        <td><strong>{item.title}</strong></td>
                         <td><span className={`${styles.status} ${statusClass(item.status, styles)}`}>{formatStatus(item.status)}</span>{item.decidedAt && <small>{formatDate(item.decidedAt)}</small>}</td>
                         <td>{item.reviewerName || item.reviewerEmail || "—"}</td>
                         <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span key={resource.id}>{resource.kind}</span>)}</div></td>

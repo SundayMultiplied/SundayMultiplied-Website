@@ -536,7 +536,13 @@
 }
 
 .production-job-table .approval-table-row {
-  grid-template-columns: 54px minmax(190px,1.4fr) 110px minmax(170px,1fr) minmax(145px,.9fr) minmax(170px,.9fr);
+  grid-template-columns: 54px minmax(180px,1.3fr) minmax(150px,.9fr) 110px minmax(165px,1fr) minmax(140px,.9fr) minmax(170px,.9fr);
+}
+
+.production-series-name {
+  color: #40554b;
+  font-weight: 750;
+  line-height: 1.4;
 }
 
 .production-job-select {
@@ -808,7 +814,7 @@
   }
 
   .production-job-table .approval-table-row {
-    min-width: 980px;
+    min-width: 1130px;
   }
 
   .revision-detail-grid {

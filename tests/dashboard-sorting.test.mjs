@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   filterAndSortProductionJobs,
+  hasUnassignedProductionSeries,
   productionSeriesOptions,
   sortChurchHistory,
 } from "../components/dashboard-sorting.ts";
@@ -25,6 +26,10 @@ test("production queue sorts by church and series with unnamed series last", () 
 
 test("series filter options are unique and alphabetized", () => {
   assert.deepEqual(productionSeriesOptions([...jobs, { ...jobs[0], id: "4" }]), ["Beginnings", "The King and His Kingdom"]);
+  assert.deepEqual(productionSeriesOptions(jobs, "compass"), ["The King and His Kingdom"]);
+  assert.deepEqual(productionSeriesOptions(jobs, "sample"), ["Beginnings"]);
+  assert.equal(hasUnassignedProductionSeries(jobs, "compass"), true);
+  assert.equal(hasUnassignedProductionSeries(jobs, "sample"), false);
 });
 
 test("church history can be sorted by series while preserving newest-first within a series", () => {
