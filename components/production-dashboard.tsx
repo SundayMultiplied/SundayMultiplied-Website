@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TeachingSourcesForm } from "./teaching-sources-form";
 import { SermonAnalysisReview } from "./sermon-analysis-review";
+import { filterAndSortProductionJobs, productionSeriesOptions, type ProductionQueueSort } from "./dashboard-sorting";
 import type { CanonicalSermonAnalysis } from "../worker/sermon-analysis";
 import type { AnalysisReviewFeedback } from "../worker/analysis-review-api";
 
@@ -49,6 +50,16 @@ export function ProductionDashboard() {
   const [analysisFeedback, setAnalysisFeedback] = useState<AnalysisReviewFeedback[]>([]);
   const [comparisons, setComparisons] = useState<ComparisonSet[]>([]);
   const [comparingId, setComparingId] = useState("");
+  const [intakeExpanded, setIntakeExpanded] = useState(true);
+  const [churchFilter, setChurchFilter] = useState("");
+  const [seriesFilter, setSeriesFilter] = useState("");
+  const [queueSort, setQueueSort] = useState<ProductionQueueSort>("newest");
+
+  const seriesOptions = useMemo(() => productionSeriesOptions(jobs), [jobs]);
+  const visibleJobs = useMemo(
+    () => filterAndSortProductionJobs(jobs, churchFilter, seriesFilter, queueSort),
+    [jobs, churchFilter, seriesFilter, queueSort],
+  );
 
   async function loadProduction() {
     const [churchResponse, jobsResponse, comparisonsResponse] = await Promise.all([
@@ -131,6 +142,7 @@ export function ProductionDashboard() {
 
   function replaceAnalysisSources() {
     setAnalysis(null); setAnalysisJob(null); setAnalysisShareUrl(""); setAnalysisFeedback([]);
+    setIntakeExpanded(true);
     requestAnimationFrame(() => document.getElementById("teaching-sources-form")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
@@ -208,17 +220,23 @@ export function ProductionDashboard() {
   }
 
   return <main className="approval-dashboard">
-    <div className="approval-dashboard-head"><div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Resource Production</h1><p>Create a transcript-led teaching source bundle, generate the church&apos;s resources, review them internally, and release them into pastoral approval.</p></div></div>
-    <TeachingSourcesForm churches={churches} saving={saving} onSubmit={(formData) => void createSermonResources(formData)} />
+    <div className="approval-dashboard-head production-dashboard-head"><div><p className="approval-kicker">Sunday Multiplied operations</p><h1>Resource Production</h1><p>Create a transcript-led teaching source bundle, generate the church&apos;s resources, review them internally, and release them into pastoral approval.</p></div><button type="button" className="production-intake-toggle" aria-expanded={intakeExpanded} aria-controls="production-intake" onClick={() => setIntakeExpanded((expanded) => !expanded)}>{intakeExpanded ? "Collapse source intake" : "Create new source bundle"}<span aria-hidden="true">{intakeExpanded ? "−" : "+"}</span></button></div>
+    <div id="production-intake" hidden={!intakeExpanded}><TeachingSourcesForm churches={churches} saving={saving} onSubmit={(formData) => void createSermonResources(formData)} /></div>
     {error && <div className="approval-admin-error"><strong>Production unavailable</strong><p>{error}</p></div>}
     {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
     {createdLink && <div className="approval-created-link"><strong>Secure review link</strong><input readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} /><small>The church notification uses this secure review page.</small></div>}
     {analysis && analysisJob && <SermonAnalysisReview analysis={analysis} job={analysisJob} generating={generatingId === analysisJob.id} retrying={retryingAnalysisId === analysisJob.id} sharing={sharingAnalysisId === analysisJob.id} shareUrl={analysisShareUrl} feedback={analysisFeedback} onClose={() => { setAnalysis(null); setAnalysisJob(null); setAnalysisShareUrl(""); setAnalysisFeedback([]); }} onGenerate={() => void acceptAnalysisAndGenerate()} onRetry={() => void retryAnalysis()} onReplaceSources={replaceAnalysisSources} onShare={() => void shareAnalysis()} />}
     <section className="approval-create production-queue">
       <div className="approval-create-heading production-queue-heading"><div><h2>Production queue</h2><p>Review sermon analysis first, then preview generated resources before pastoral review.</p></div><button type="button" className="production-delete" onClick={() => void deleteSelectedJobs()} disabled={!selectedJobIds.length || deletingJobs}>{deletingJobs ? "Deleting…" : `Delete selected${selectedJobIds.length ? ` (${selectedJobIds.length})` : ""}`}</button></div>
-      {jobs.length === 0 ? <p>No sermon production jobs yet.</p> : <div className="approval-table production-job-table">
+      {jobs.length > 0 && <div className="production-queue-controls" aria-label="Production queue controls">
+        <label>Church<select value={churchFilter} onChange={(event) => setChurchFilter(event.target.value)}><option value="">All churches</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
+        <label>Sermon series<select value={seriesFilter} onChange={(event) => setSeriesFilter(event.target.value)}><option value="">All series</option>{seriesOptions.map((series) => <option value={series} key={series}>{series}</option>)}<option value="__none">No series assigned</option></select></label>
+        <label>Sort by<select value={queueSort} onChange={(event) => setQueueSort(event.target.value as ProductionQueueSort)}><option value="newest">Newest sermon first</option><option value="oldest">Oldest sermon first</option><option value="church_asc">Church A–Z</option><option value="church_desc">Church Z–A</option><option value="series_asc">Series A–Z</option><option value="series_desc">Series Z–A</option></select></label>
+        <div className="production-filter-summary"><strong>{visibleJobs.length}</strong><span>of {jobs.length} jobs</span>{(churchFilter || seriesFilter || queueSort !== "newest") && <button type="button" onClick={() => { setChurchFilter(""); setSeriesFilter(""); setQueueSort("newest"); }}>Clear</button>}</div>
+      </div>}
+      {jobs.length === 0 ? <p>No sermon production jobs yet.</p> : visibleJobs.length === 0 ? <div className="production-filter-empty"><strong>No matching production jobs</strong><p>Clear or change the church and sermon-series filters.</p></div> : <div className="approval-table production-job-table">
         <div className="approval-table-row approval-table-labels"><span>Select</span><span>Church / Sermon</span><span>Date</span><span>Metadata</span><span>Resources</span><span>Action</span></div>
-        {jobs.map((job) => { const revisionRequested = hasPendingRevision(job.id); return <div className="approval-table-row" key={job.id}>
+        {visibleJobs.map((job) => { const revisionRequested = hasPendingRevision(job.id); return <div className="approval-table-row" key={job.id}>
           <span className="production-job-select"><input type="checkbox" aria-label={`Select ${job.churchName} ${job.metadata.sermonTitle || job.weekOf}`} checked={selectedJobIds.includes(job.id)} disabled={job.status === "sent_for_approval" || deletingJobs} onChange={() => toggleJobSelection(job)} /></span>
           <span><strong>{job.churchName}</strong><small>{job.metadata.sermonTitle || "Title not detected"}</small>{job.metadata.seriesTitle && <small>{job.metadata.seriesTitle}</small>}<small className="production-job-id" title={job.id}>Job {job.id.slice(0, 8)}</small></span>
           <span>{job.weekOf}</span>

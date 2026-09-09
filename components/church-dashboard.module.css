@@ -342,6 +342,38 @@
   color: #78847d;
 }
 
+.historyControls {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.historyControls label {
+  display: grid;
+  gap: 6px;
+}
+
+.historyControls label > span {
+  color: #78847d;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.historyControls select {
+  min-height: 38px;
+  padding: 7px 32px 7px 10px;
+  border: 1px solid #d4dad5;
+  border-radius: 10px;
+  background: #f7f8f6;
+  color: #315143;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .mobileScrollHint {
   display: none;
 }
@@ -466,6 +498,18 @@
 
   .card {
     padding: 20px;
+  }
+
+  #history .cardHeading,
+  .historyControls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .historyControls,
+  .historyControls label,
+  .historyControls select {
+    width: 100%;
   }
 
   .mobileScrollHint {

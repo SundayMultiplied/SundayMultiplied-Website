@@ -400,6 +400,106 @@
   width: fit-content;
 }
 
+.production-dashboard-head {
+  align-items: flex-start;
+  gap: 30px;
+}
+
+.production-intake-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-width: 220px;
+  border: 1px solid rgba(23,48,40,.35) !important;
+  background: #fff;
+  color: #173028;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.production-intake-toggle span {
+  font-size: 20px;
+  line-height: .7;
+}
+
+.production-queue-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(170px, 1fr)) auto;
+  gap: 14px;
+  align-items: end;
+  margin: -4px 0 26px;
+  padding: 18px;
+  border: 1px solid rgba(23,48,40,.16);
+  background: rgba(255,255,255,.48);
+}
+
+.production-queue-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: #4f6057;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.production-queue-controls select {
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid rgba(23,48,40,.28);
+  background: #fff;
+  color: #173028;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.production-filter-summary {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  gap: 2px 6px;
+  min-width: 92px;
+  padding-bottom: 4px;
+  color: #59685f;
+  font-size: 11px;
+}
+
+.production-filter-summary strong {
+  color: #173028;
+  font-size: 20px;
+}
+
+.production-filter-summary button {
+  grid-column: 1 / -1;
+  width: fit-content;
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  color: #385643;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.production-filter-empty {
+  padding: 24px;
+  border: 1px dashed rgba(23,48,40,.28);
+  background: rgba(255,255,255,.42);
+}
+
+.production-filter-empty p {
+  margin: 6px 0 0;
+  color: #59685f;
+}
+
 .production-queue-heading,
 .revision-queue-heading {
   display: flex;
@@ -684,6 +784,7 @@
 }
 
 @media (max-width: 900px) {
+  .production-dashboard-head,
   .production-queue-heading,
   .revision-queue-heading,
   .approval-pagination,
@@ -692,6 +793,14 @@
   .revision-request-card footer {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .production-intake-toggle {
+    width: 100%;
+  }
+
+  .production-queue-controls {
+    grid-template-columns: 1fr;
   }
 
   .production-job-table {
