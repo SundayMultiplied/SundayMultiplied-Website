@@ -126,31 +126,44 @@ async function updateProductionMetadata(
   const linkedPackageIds: string[] = [];
   const htmlKeys = new Set(manifest.resources.map((resource) => resource.storageKey).filter(Boolean));
   const archivePrefixes: string[] = [];
-  if (env.DB) {
+  if (env.DB && (manifest.reviewPackageId || manifest.reviewUrl)) {
     try {
-      const previewPattern = `%/api/production/preview/${manifest.id}/%`;
-      const linked = await env.DB.prepare(`
-        SELECT DISTINCT p.id AS packageId
-        FROM review_packages p JOIN review_resources r ON r.package_id = p.id
-        WHERE r.preview_url LIKE ?
-      `).bind(previewPattern).all<{ packageId: string }>();
-      linkedPackageIds.push(...linked.results.map((item) => item.packageId));
+      let packageId = manifest.reviewPackageId || "";
+      if (!packageId && manifest.reviewUrl) {
+        const token = reviewToken(manifest.reviewUrl);
+        if (token) {
+          const tokenHash = await sha256(token);
+          const linked = await env.DB.prepare("SELECT id FROM review_packages WHERE token_hash = ? LIMIT 1")
+            .bind(tokenHash).first<{ id: string }>();
+          packageId = linked?.id || "";
+        }
+      }
+      if (packageId) {
+        linkedPackageIds.push(packageId);
+        manifest.reviewPackageId = packageId;
+        await env.BUCKET.put(manifestKey, JSON.stringify(manifest, null, 2), {
+          httpMetadata: { contentType: "application/json; charset=utf-8" },
+        });
+      }
 
-      const stored = await env.DB.prepare(`
-        SELECT DISTINCT r.storage_key AS storageKey
-        FROM review_resources r
-        WHERE r.preview_url LIKE ? AND r.storage_key IS NOT NULL
-      `).bind(previewPattern).all<{ storageKey: string }>();
-      for (const item of stored.results) if (item.storageKey) htmlKeys.add(item.storageKey);
+      if (packageId) {
+        const stored = await env.DB.prepare(`
+          SELECT DISTINCT storage_key AS storageKey
+          FROM review_resources
+          WHERE package_id = ? AND storage_key IS NOT NULL
+        `).bind(packageId).all<{ storageKey: string }>();
+        for (const item of stored.results) if (item.storageKey) htmlKeys.add(item.storageKey);
+      }
 
       // This table is created lazily for installations that predate package
       // archiving, so its absence must not block a basic metadata correction.
       try {
+        if (!packageId) throw new Error("No linked package ID is available.");
         const archives = await env.DB.prepare(`
-          SELECT DISTINCT a.archive_prefix AS archivePrefix
-          FROM review_package_archives a JOIN review_resources r ON r.package_id = a.package_id
-          WHERE r.preview_url LIKE ? AND a.archive_prefix IS NOT NULL
-        `).bind(previewPattern).all<{ archivePrefix: string }>();
+          SELECT DISTINCT archive_prefix AS archivePrefix
+          FROM review_package_archives
+          WHERE package_id = ? AND archive_prefix IS NOT NULL
+        `).bind(packageId).all<{ archivePrefix: string }>();
         archivePrefixes.push(...archives.results.map((item) => item.archivePrefix).filter(Boolean));
       } catch (error) {
         console.error("production_metadata_archive_lookup_failed", { jobId: manifest.id, error });
@@ -271,6 +284,20 @@ function accessIdentityEmail(request: Request) {
 
 function clean(value: string, max: number) {
   return value.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, max);
+}
+
+function reviewToken(reviewUrl: string) {
+  try {
+    const match = new URL(reviewUrl).pathname.match(/^\/review\/([^/]+)$/);
+    return match ? decodeURIComponent(match[1]) : "";
+  } catch {
+    return "";
+  }
+}
+
+async function sha256(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function json(body: unknown, status = 200) {

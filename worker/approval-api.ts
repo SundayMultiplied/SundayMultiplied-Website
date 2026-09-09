@@ -201,7 +201,7 @@ async function createPackage(request: Request, env: ApprovalEnv & { DB: D1Databa
     resources,
     clean(body.reviewerEmail, 200),
   );
-  return json({ ok: true, reviewUrl, notification }, 201);
+  return json({ ok: true, packageId, reviewUrl, notification }, 201);
 }
 
 async function findPackage(db: D1Database, tokenHash: string) {

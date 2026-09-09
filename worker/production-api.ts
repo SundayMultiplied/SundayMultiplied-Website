@@ -79,6 +79,7 @@ export type ProductionManifest = {
   analysisReviewUrl?: string;
   metadata: GeneratedPackage["metadata"];
   resources: Array<{ kind: string; title: string; storageKey: string; previewUrl: string }>;
+  reviewPackageId?: string;
   reviewUrl?: string;
 };
 
@@ -226,9 +227,10 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
         resources: manifest.resources.map((item) => ({ kind: item.kind, title: item.title, previewUrl: item.previewUrl })),
       }),
     });
-    const data = await response.json() as { error?: string; reviewUrl?: string };
+    const data = await response.json() as { error?: string; packageId?: string; reviewUrl?: string };
     if (!response.ok) return json({ error: data.error || "Unable to send this package for approval." }, response.status);
     manifest.status = "sent_for_approval";
+    manifest.reviewPackageId = data.packageId;
     manifest.reviewUrl = data.reviewUrl;
     await saveManifest(env.BUCKET, manifest);
     return json({ ok: true, reviewUrl: manifest.reviewUrl });
