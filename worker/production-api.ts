@@ -1,6 +1,6 @@
 import { PRODUCTION_CHURCHES } from "./generated/church-registry";
 import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type NormalizedTeachingSource, type TeachingSourceType } from "./sermon-analysis";
-import { injectBsbScripture, resolveBsbPassage } from "./scripture-service";
+import { injectBsbScripture, resolveBsbPassage, type ScripturePreferences } from "./scripture-service";
 import { extractTeachingSourceText, MAX_TOTAL_SUPPLEMENTAL_CHARACTERS } from "./teaching-source-extraction";
 import { loadAnalysisReviewFeedback } from "./analysis-review-api";
 import {
@@ -12,6 +12,7 @@ import {
   type FamilyWorshipSong,
 } from "./family-resource";
 import { callOpenAiStructured } from "./openai-client.ts";
+import { injectResourceHeaderMetadata } from "./resource-metadata.ts";
 
 export type ProductionEnv = {
   ASSETS?: Fetcher;
@@ -32,6 +33,7 @@ export type ChurchConfig = {
   logoUrl?: string;
   reviewerEmail?: string;
   familyWorship?: FamilyWorshipPreferences;
+  scripture?: ScripturePreferences;
 };
 
 export type GeneratedPackage = {
@@ -182,7 +184,12 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     if (!env.BUCKET) return new Response("Production storage is not configured.", { status: 503 });
     const object = await env.BUCKET.get(`production/jobs/${previewMatch[1]}/${previewMatch[2]}.html`);
     if (!object) return new Response("Resource not found.", { status: 404 });
-    return new Response(object.body, {
+    let body: ReadableStream | string = object.body;
+    const manifest = await loadManifest(env.BUCKET, previewMatch[1]);
+    if (manifest?.metadata.seriesTitle) {
+      body = injectResourceHeaderMetadata(await object.text(), manifest.metadata, manifest.weekOf);
+    }
+    return new Response(body, {
       headers: {
         "content-type": "text/html; charset=utf-8",
         "cache-control": "private, no-store",
@@ -616,7 +623,10 @@ Return only the requested JSON structure.`;
       text: { format: { type: "json_schema", name: "sunday_multiplied_resources", strict: true, schema } },
     },
   });
-  return { metadata, resources: parsed.resources, familyWorshipSong: parsed.familyWorshipSong };
+  const resources = Object.fromEntries(
+    Object.entries(parsed.resources).map(([kind, html]) => [kind, html ? injectResourceHeaderMetadata(html, metadata, weekOf) : html]),
+  ) as GeneratedPackage["resources"];
+  return { metadata, resources, familyWorshipSong: parsed.familyWorshipSong };
 }
 
 export function enforceResourceStyling(input: string, church: ChurchConfig, kind: "monday" | "group" | "family") {

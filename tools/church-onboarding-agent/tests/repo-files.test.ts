@@ -37,6 +37,9 @@ describe("repository structure", () => {
     expect(files[0].content).toContain('"platform": "youtube"');
     expect(files[0].content).toContain('"publicStylesheet": "/resources/southside/church.css"');
     expect(files[0].content).toContain('"sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css"');
+    expect(files[0].content).toContain('"translation": "BSB"');
+    expect(files[0].content).toContain('"displayMode": "automatic"');
+    expect(files[0].content).toContain('"provider": "bible_gateway"');
     expect(files[0].content).toContain('"logoUrl": "/api/resource-assets/southside/logo"');
     expect(files[0].content).toContain('"publicUrl": "/api/resource-assets/southside/logo"');
     expect(files[0].content).not.toContain("reviewer@example.com");

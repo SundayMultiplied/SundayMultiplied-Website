@@ -14,6 +14,11 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "scripture": {
+      "translation": "BSB",
+      "displayMode": "automatic",
+      "provider": "bible_gateway"
     }
   },
   {
@@ -30,6 +35,11 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "scripture": {
+      "translation": "BSB",
+      "displayMode": "automatic",
+      "provider": "bible_gateway"
     }
   },
   {
@@ -46,6 +56,11 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "contemporary",
       "platform": "youtube"
+    },
+    "scripture": {
+      "translation": "BSB",
+      "displayMode": "automatic",
+      "provider": "bible_gateway"
     }
   },
   {
@@ -62,6 +77,11 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "scripture": {
+      "translation": "BSB",
+      "displayMode": "automatic",
+      "provider": "bible_gateway"
     }
   },
   {
@@ -78,6 +98,11 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "scripture": {
+      "translation": "BSB",
+      "displayMode": "automatic",
+      "provider": "bible_gateway"
     }
   },
   {
@@ -94,6 +119,11 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "scripture": {
+      "translation": "BSB",
+      "displayMode": "automatic",
+      "provider": "bible_gateway"
     }
   }
 ];

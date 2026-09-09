@@ -13,6 +13,11 @@
     "group",
     "family"
   ],
+  "scripture": {
+    "translation": "BSB",
+    "displayMode": "automatic",
+    "provider": "bible_gateway"
+  },
   "schedule": {
     "serviceDay": "sunday",
     "deliveryDay": "Monday"
