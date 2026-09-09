@@ -221,11 +221,12 @@ export function ProductionDashboard() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ sermonTitle: metadataDraft.sermonTitle, seriesTitle: metadataDraft.seriesTitle, speaker: metadataDraft.speaker }),
       });
-      const data = await readApiJson<{ error?: string; linkedApprovalPackages?: number }>(response);
+      const data = await readApiJson<{ error?: string; linkedApprovalPackages?: number; warnings?: string[] }>(response);
       if (!response.ok) throw new Error(data.error || "Unable to update sermon details.");
       const linked = Number(data.linkedApprovalPackages || 0);
       setMetadataDraft(null);
-      setActionMessage(`Sermon details updated across the production resources${linked ? ` and ${linked} linked approval package${linked === 1 ? "" : "s"}` : ""}.`);
+      const warning = data.warnings?.length ? ` ${data.warnings.join(" ")}` : "";
+      setActionMessage(`Sermon details saved${linked ? ` and updated in ${linked} linked approval package${linked === 1 ? "" : "s"}` : ""}.${warning}`);
       await loadProduction();
       if (analysisJob?.id === metadataDraft.jobId) await openAnalysis({ ...analysisJob, metadata: { ...analysisJob.metadata, sermonTitle: metadataDraft.sermonTitle, seriesTitle: metadataDraft.seriesTitle, speaker: metadataDraft.speaker } });
     } catch (failure) { setError(failure instanceof Error ? failure.message : "Unable to update sermon details."); }
