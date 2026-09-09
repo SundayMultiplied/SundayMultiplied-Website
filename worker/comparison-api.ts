@@ -105,7 +105,7 @@ async function createComparison(request: Request, env: ProductionEnv) {
         if (kind === "group" || kind === "family") {
           const reference = generated.metadata.scripture || analysis.sermon.primary_passage || "";
           if (!reference) throw new Error(`${version.toUpperCase()} did not establish the primary Scripture needed for ${kind}.`);
-          html = injectBsbScripture(html, await resolveBsbPassage(reference));
+          html = injectBsbScripture(html, await resolveBsbPassage(reference), church.scripture);
         }
         await env.BUCKET.put(`production/comparisons/${id}/${label}/${kind}.html`, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
         resources.push({ kind, previewUrl: `${origin}/api/comparison-preview/${id}/${label}/${kind}` });

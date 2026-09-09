@@ -496,7 +496,7 @@ async function generateProductionJobResources(request: Request, env: ProductionE
         validateFamilyV3Html(html, preferences);
         if (generated.familyWorshipSong) html = injectWorshipSongUrl(html, generated.familyWorshipSong, preferences);
       }
-      if (scripturePassage && (kind === "group" || kind === "family")) html = injectBsbScripture(html, scripturePassage);
+      if (scripturePassage && (kind === "group" || kind === "family")) html = injectBsbScripture(html, scripturePassage, church.scripture);
       preparedResources.push({ kind, html });
     }
 
