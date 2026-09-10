@@ -34,7 +34,7 @@ export function ApprovalPackagesDashboard() {
 
   async function createPackage(formData: FormData) {
     setSaving(true); setError(""); setActionMessage("");
-    const resources = ["Monday", "Group", "Family"].map((kind) => ({ kind, title: `${kind} Multiplied`, previewUrl: String(formData.get(`${kind.toLowerCase()}Url`) || "") })).filter((item) => item.previewUrl);
+    const resources = ["Monday", "Group", "Family", "Midweek"].map((kind) => ({ kind, title: `${kind} Multiplied`, previewUrl: String(formData.get(`${kind.toLowerCase()}Url`) || "") })).filter((item) => item.previewUrl);
     const response = await fetch("/api/approvals", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ churchName: formData.get("churchName"), title: formData.get("title"), seriesTitle: formData.get("seriesTitle"), weekOf: formData.get("weekOf"), scripture: formData.get("scripture"), resources }) });
     const data = await response.json() as { error?: string; reviewUrl?: string };
     setSaving(false);
@@ -64,7 +64,7 @@ export function ApprovalPackagesDashboard() {
         <label>Church name<input name="churchName" required /></label><label>Week of<input name="weekOf" type="date" required /></label>
         <label>Package title<input name="title" required /></label><label>Series title<input name="seriesTitle" /></label>
         <label className="wide">Scripture<input name="scripture" /></label>
-        <label>Monday resource URL<input name="mondayUrl" type="url" /></label><label>Group resource URL<input name="groupUrl" type="url" /></label><label>Family resource URL<input name="familyUrl" type="url" /></label>
+        <label>Monday resource URL<input name="mondayUrl" type="url" /></label><label>Group resource URL<input name="groupUrl" type="url" /></label><label>Family resource URL<input name="familyUrl" type="url" /></label><label>Midweek resource URL<input name="midweekUrl" type="url" /></label>
       </div>
       <button className="approval-approve" disabled={saving}>{saving ? "Creating…" : "Create secure review"}</button>
     </form>}

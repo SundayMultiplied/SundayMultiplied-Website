@@ -121,6 +121,18 @@ export function injectBsbScripture(
   throw new Error("Generated resource is missing the Sunday Multiplied document structure required for Scripture injection.");
 }
 
+export function injectScriptureReferenceLink(
+  html: string,
+  reference: string,
+  preferences: ScripturePreferences = DEFAULT_SCRIPTURE_PREFERENCES,
+) {
+  const gatewayUrl = bibleGatewayPassageUrl(reference, preferences.translation);
+  const section = `<section class="sm-section sm-section--scripture" data-sm-scripture="primary">\n<h2>Return to the Word</h2>\n<p class="sm-scripture-reference">${escapeHtml(reference)} · ${escapeHtml(preferences.translation)}</p>\n<a class="sm-scripture-link" href="${escapeHtml(gatewayUrl)}" target="_blank" rel="noopener noreferrer">Read ${escapeHtml(reference)} in ${escapeHtml(preferences.translation)} on Bible Gateway</a>\n</section>`;
+  const existing = /<section\b[^>]*class=["'][^"']*sm-section--scripture[^"']*["'][^>]*>[\s\S]*?<\/section>/i;
+  if (existing.test(html)) return html.replace(existing, section);
+  throw new Error("Generated Midweek resource is missing its Scripture section.");
+}
+
 export function scriptureHtml(
   passage: BsbPassage,
   preferences: ScripturePreferences = DEFAULT_SCRIPTURE_PREFERENCES,

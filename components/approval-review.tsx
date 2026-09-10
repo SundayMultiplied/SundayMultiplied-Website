@@ -228,8 +228,12 @@ function sectionOptions(kind: string): Array<[string, string]> {
   if (normalized.includes("group")) return [
     ["big_idea", "Big Idea"], ["tension", "The Tension"], ["scripture", "Scripture"], ["sermon_snapshot", "Sermon Snapshot"],
     ["key_moments", "Key Moments"], ["discussion_questions", "Discussion questions"], ["practice", "Practice This Week"],
-    ["midweek", "Midweek reinforcement"], ["leader_tip", "Leader tip"], ["prayer", "Closing prayer"],
+    ["leader_tip", "Leader tip"], ["prayer", "Closing prayer"],
     ["tone_wording", "Tone / wording"], ["other", "Other"],
+  ];
+  if (normalized.includes("midweek")) return [
+    ["sermon_recap", "Remember Sunday"], ["scripture", "Scripture"], ["reflection", "Reflection question"],
+    ["practice", "Response for today"], ["prayer", "Prayer"], ["tone_wording", "Tone / wording"], ["other", "Other"],
   ];
   return [
     ["sermon_connection", "Sermon connection / recap"], ["scripture", "Scripture"], ["discussion_questions", "Family discussion questions"],

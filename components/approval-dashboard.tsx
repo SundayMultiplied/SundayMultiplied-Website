@@ -231,7 +231,7 @@ export function ApprovalDashboard() {
   async function createPackage(formData: FormData) {
     setSaving(true);
     setError("");
-    const resources = ["Monday", "Group", "Family"].map((kind) => ({
+    const resources = ["Monday", "Group", "Family", "Midweek"].map((kind) => ({
       kind,
       title: `${kind} Multiplied`,
       previewUrl: String(formData.get(`${kind.toLowerCase()}Url`) || ""),
@@ -311,7 +311,7 @@ export function ApprovalDashboard() {
           <label>Church name<input name="churchName" required /></label><label>Week of<input name="weekOf" type="date" required /></label>
           <label>Package title<input name="title" required /></label><label>Series title<input name="seriesTitle" /></label>
           <label className="wide">Scripture<input name="scripture" /></label>
-          <label>Monday resource URL<input name="mondayUrl" type="url" /></label><label>Group resource URL<input name="groupUrl" type="url" /></label><label>Family resource URL<input name="familyUrl" type="url" /></label>
+          <label>Monday resource URL<input name="mondayUrl" type="url" /></label><label>Group resource URL<input name="groupUrl" type="url" /></label><label>Family resource URL<input name="familyUrl" type="url" /></label><label>Midweek resource URL<input name="midweekUrl" type="url" /></label>
         </div>
         <button className="approval-approve" disabled={saving}>{saving ? "Creating…" : "Create secure review"}</button>
       </form>}

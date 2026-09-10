@@ -45,7 +45,6 @@ const SECTION_SELECTORS: Record<string, string[]> = {
   key_moments: [".sm-section--key-moments"],
   discussion_questions: [".sm-section--questions"],
   practice: [".sm-section--practice"],
-  midweek: [".sm-section--application"],
   leader_tip: [".sm-section--leader-tip"],
   sermon_connection: [".sm-section--family-remember", ".sm-section--summary", ".sm-section--big-idea"],
   scenario_activity: [".sm-section--practice", ".sm-section--application"],

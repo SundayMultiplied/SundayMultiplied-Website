@@ -6,6 +6,7 @@ import {
   AUTOMATIC_SCRIPTURE_VERSE_LIMIT,
   bibleGatewayPassageUrl,
   injectBsbScripture,
+  injectScriptureReferenceLink,
   scriptureHtml,
   shouldDisplayFullScripture,
 } from "../worker/scripture-service.ts";
@@ -71,4 +72,13 @@ test("Bible Gateway URLs preserve the full reference and selected translation", 
     bibleGatewayPassageUrl("Philippians 2:14-16", "NKJV"),
     "https://www.biblegateway.com/passage/?search=Philippians+2%3A14-16&version=NKJV",
   );
+});
+
+test("Midweek Scripture always uses a reference and church-preferred translation link", () => {
+  const source = '<main class="sm-document"><section class="sm-section sm-section--scripture"><p>Generated copy</p></section></main>';
+  const html = injectScriptureReferenceLink(source, "Philippians 2:14-16", preferences("full_text", "NIV"));
+
+  assert.doesNotMatch(html, /Generated copy|sm-scripture-text/);
+  assert.match(html, /Philippians 2:14-16 · NIV/);
+  assert.match(html, /search=Philippians\+2%3A14-16&amp;version=NIV/);
 });

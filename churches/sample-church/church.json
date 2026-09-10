@@ -8,7 +8,8 @@
     "timezone": "America/New_York",
     "website": "https://sundaymultiplied.com/"
   },
-  "resources": ["monday", "group", "family"],
+  "resources": ["monday", "group", "family", "midweek"],
+  "midweekDelivery": { "day": "wednesday", "channel": "email" },
   "scripture": { "translation": "BSB", "displayMode": "automatic", "provider": "bible_gateway" },
   "schedule": { "serviceDay": "sunday", "deliveryDay": "Monday" },
   "approval": {

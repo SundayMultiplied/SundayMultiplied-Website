@@ -6,7 +6,8 @@ export const PRODUCTION_CHURCHES = [
     "resources": [
       "monday",
       "group",
-      "family"
+      "family",
+      "midweek"
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/calvary-baptist-temple/church.css",
@@ -14,6 +15,10 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "midweekDelivery": {
+      "day": "wednesday",
+      "channel": "email"
     },
     "scripture": {
       "translation": "BSB",
@@ -27,7 +32,8 @@ export const PRODUCTION_CHURCHES = [
     "resources": [
       "monday",
       "group",
-      "family"
+      "family",
+      "midweek"
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/cbc-savannah/church.css",
@@ -35,6 +41,10 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "midweekDelivery": {
+      "day": "wednesday",
+      "channel": "email"
     },
     "scripture": {
       "translation": "BSB",
@@ -48,7 +58,8 @@ export const PRODUCTION_CHURCHES = [
     "resources": [
       "monday",
       "group",
-      "family"
+      "family",
+      "midweek"
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/compass-bible-church/church.css",
@@ -56,6 +67,10 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "contemporary",
       "platform": "youtube"
+    },
+    "midweekDelivery": {
+      "day": "wednesday",
+      "channel": "email"
     },
     "scripture": {
       "translation": "BSB",
@@ -69,7 +84,8 @@ export const PRODUCTION_CHURCHES = [
     "resources": [
       "monday",
       "group",
-      "family"
+      "family",
+      "midweek"
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/sample-church/church.css",
@@ -77,6 +93,10 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "midweekDelivery": {
+      "day": "wednesday",
+      "channel": "email"
     },
     "scripture": {
       "translation": "BSB",
@@ -90,7 +110,8 @@ export const PRODUCTION_CHURCHES = [
     "resources": [
       "monday",
       "group",
-      "family"
+      "family",
+      "midweek"
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/skidaway-church/church.css",
@@ -98,6 +119,10 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "midweekDelivery": {
+      "day": "wednesday",
+      "channel": "email"
     },
     "scripture": {
       "translation": "BSB",
@@ -111,7 +136,8 @@ export const PRODUCTION_CHURCHES = [
     "resources": [
       "monday",
       "group",
-      "family"
+      "family",
+      "midweek"
     ],
     "baseCssUrl": "/resources/_shared/sunday-multiplied-base.css",
     "cssUrl": "/resources/southside-baptist/church.css",
@@ -119,6 +145,10 @@ export const PRODUCTION_CHURCHES = [
     "familyWorship": {
       "style": "blended",
       "platform": "youtube"
+    },
+    "midweekDelivery": {
+      "day": "wednesday",
+      "channel": "email"
     },
     "scripture": {
       "translation": "BSB",

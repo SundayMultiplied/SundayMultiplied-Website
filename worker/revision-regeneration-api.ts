@@ -43,7 +43,6 @@ const SECTION_MODIFIERS: Record<string, string[]> = {
   key_moments: ["key-moments"],
   discussion_questions: ["questions"],
   practice: ["practice"],
-  midweek: ["application"],
   leader_tip: ["leader-tip"],
   sermon_connection: ["family-remember", "summary", "big-idea"],
   scenario_activity: ["practice", "application"],
@@ -304,7 +303,7 @@ function replaceSectionInner(html: string, modifier: string, innerHtml: string) 
 
 function productionSource(previewUrl: string | null) {
   if (!previewUrl) return null;
-  const match = previewUrl.match(/\/api\/production\/preview\/([^/]+)\/(monday|group|family)(?:$|[?#])/i);
+  const match = previewUrl.match(/\/api\/production\/preview\/([^/]+)\/(monday|group|family|midweek)(?:$|[?#])/i);
   return match ? { jobId: match[1], kind: match[2].toLowerCase() } : null;
 }
 
