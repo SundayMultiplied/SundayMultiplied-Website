@@ -8,7 +8,7 @@ const registryFile = path.join(outputDir, "church-registry.ts");
 const assetMapFile = path.join(outputDir, "church-assets.ts");
 const publicResourcesDir = path.join(root, "public", "resources");
 const defaultBaseCssUrl = "/resources/_shared/sunday-multiplied-base.css";
-const allowedResources = new Set(["monday", "group", "family"]);
+const allowedResources = new Set(["monday", "group", "family", "midweek"]);
 
 function repositoryPath(value) {
   const normalized = String(value || "").trim().replaceAll("\\", "/");
@@ -64,8 +64,11 @@ for (const entry of entries) {
   const configuredScripture = manifest?.scripture || {};
   const translation = ["BSB", "ESV", "NIV", "NLT", "CSB", "NASB", "NKJV", "KJV"].includes(configuredScripture.translation) ? configuredScripture.translation : "BSB";
   const displayMode = ["automatic", "full_text", "reference_link"].includes(configuredScripture.displayMode) ? configuredScripture.displayMode : "automatic";
+  const configuredMidweek = manifest?.midweekDelivery || {};
+  const midweekDay = ["wednesday", "thursday"].includes(configuredMidweek.day) ? configuredMidweek.day : "wednesday";
+  const midweekChannel = ["sms", "email", "push", "manual"].includes(configuredMidweek.channel) ? configuredMidweek.channel : "email";
 
-  churches.push({ slug, name, resources, baseCssUrl, cssUrl, logoUrl, familyWorship: { style, platform }, scripture: { translation, displayMode, provider: "bible_gateway" } });
+  churches.push({ slug, name, resources, baseCssUrl, cssUrl, logoUrl, familyWorship: { style, platform }, midweekDelivery: { day: midweekDay, channel: midweekChannel }, scripture: { translation, displayMode, provider: "bible_gateway" } });
   if (primaryAsset) primaryLogoKeys[slug] = String(primaryAsset.r2Key).trim();
 }
 

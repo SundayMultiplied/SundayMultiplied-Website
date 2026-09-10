@@ -11,8 +11,13 @@
   "resources": [
     "monday",
     "group",
-    "family"
+    "family",
+    "midweek"
   ],
+  "midweekDelivery": {
+    "day": "wednesday",
+    "channel": "email"
+  },
   "scripture": {
     "translation": "BSB",
     "displayMode": "automatic",

@@ -7,7 +7,7 @@ import { filterAndSortProductionJobs, hasUnassignedProductionSeries, productionS
 import type { CanonicalSermonAnalysis } from "../worker/sermon-analysis";
 import type { AnalysisReviewFeedback } from "../worker/analysis-review-api";
 
-type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string; reviewerEmail?: string; familyWorship?: { style: "contemporary" | "hymn" | "blended" | "none"; platform: "youtube" | "spotify" | "apple_music" } };
+type ChurchConfig = { slug: string; name: string; resources: string[]; cssUrl: string; logoUrl?: string; reviewerEmail?: string; familyWorship?: { style: "contemporary" | "hymn" | "blended" | "none"; platform: "youtube" | "spotify" | "apple_music" }; midweekDelivery?: { day: "wednesday" | "thursday"; channel: "sms" | "email" | "push" | "manual" } };
 type ProductionJob = {
   id: string; churchSlug: string; churchName: string; weekOf: string; createdAt: string;
   status: "awaiting_analysis_review" | "ready_for_internal_review" | "sent_for_approval"; sourceFilename: string;

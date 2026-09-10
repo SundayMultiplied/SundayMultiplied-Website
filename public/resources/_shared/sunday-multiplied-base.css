@@ -60,6 +60,7 @@ body.sm-resource {
 .sm-monday .sm-resource-label::after { content: "Monday Multiplied"; }
 .sm-group .sm-resource-label::after { content: "Group Multiplied"; }
 .sm-family .sm-resource-label::after { content: "Family Multiplied"; }
+.sm-midweek .sm-resource-label::after { content: "Midweek Multiplied"; }
 
 .sm-title { margin: 0; color: #fff; font-family: var(--sm-font-heading); font-size: clamp(36px, 7vw, 60px); font-weight: 400; line-height: 1.02; letter-spacing: -.035em; }
 .sm-document .sm-header .sm-title,
@@ -94,6 +95,8 @@ body.sm-resource {
 }
 .sm-question-group h3, .sm-practice-scenario h3, .sm-practice-task h3, .sm-practice-share h3, .sm-practice-debrief h3 { margin-top: 0; }
 .sm-section--leader-tip, .sm-section--parent-note { border-left: 6px solid var(--sm-color-secondary); }
+.sm-midweek .sm-section--reflection { background: color-mix(in srgb, var(--sm-color-secondary) 12%, var(--sm-color-background)); }
+.sm-midweek-question { color: var(--sm-color-primary); font-family: var(--sm-font-heading); font-size: clamp(20px, 3vw, 25px) !important; line-height: 1.45 !important; }
 .sm-family-age-group { margin-top: 18px; padding: 20px 24px; border: 1px solid color-mix(in srgb, var(--sm-color-primary) 18%, transparent); border-radius: var(--sm-corner-radius); background: color-mix(in srgb, var(--sm-color-background) 96%, var(--sm-color-secondary)); }
 .sm-family-age-group h3 { margin-top: 0; }
 .sm-family-age-group p, .sm-family-age-group li { margin-top: 0; }

@@ -69,6 +69,10 @@ async function createComparison(request: Request, env: ProductionEnv) {
   if (!manifest) return json({ error: "Production job not found." }, 404);
   const church = CHURCHES.find((item) => item.slug === manifest.churchSlug);
   if (!church) return json({ error: "Church configuration is unavailable." }, 409);
+  const comparisonChurch: ChurchConfig = {
+    ...church,
+    resources: church.resources.filter((kind): kind is ResourceKind => kind === "monday" || kind === "group" || kind === "family"),
+  };
   const transcript = await loadTranscript(env.BUCKET, manifest);
   if (!transcript) return json({ error: "The original transcript is unavailable for this job." }, 404);
   const analysis = await loadV3Analysis(env.BUCKET, manifest);
@@ -78,11 +82,11 @@ async function createComparison(request: Request, env: ProductionEnv) {
   const id = crypto.randomUUID();
   try {
     const [v1, v2Analysis, v3] = await Promise.all([
-      generateV1Resources(env, church, manifest.weekOf, transcript),
+      generateV1Resources(env, comparisonChurch, manifest.weekOf, transcript),
       generateV2Analysis(env, manifest, transcript, id),
-      generateResourcesFromAnalysis(env, church, manifest.weekOf, analysis, manifest.familyWorship),
+      generateResourcesFromAnalysis(env, comparisonChurch, manifest.weekOf, analysis, manifest.familyWorship),
     ]);
-    const v2 = await generateV2Resources(env, church, manifest.weekOf, v2Analysis);
+    const v2 = await generateV2Resources(env, comparisonChurch, manifest.weekOf, v2Analysis);
     await env.BUCKET.put(`production/comparisons/${id}/v2-analysis.json`, JSON.stringify(v2Analysis, null, 2), { httpMetadata: { contentType: "application/json; charset=utf-8" } });
 
     const origin = env.PUBLIC_SITE_ORIGIN || new URL(request.url).origin;
@@ -93,10 +97,10 @@ async function createComparison(request: Request, env: ProductionEnv) {
       const version = blindOrder[label];
       const generated = packages[version];
       const resources: ComparisonManifest["variants"][number]["resources"] = [];
-      for (const kind of church.resources) {
+      for (const kind of comparisonChurch.resources) {
         const rawHtml = generated.resources[kind];
         if (!rawHtml) continue;
-        let html = enforceResourceStyling(rawHtml, church, kind);
+        let html = enforceResourceStyling(rawHtml, comparisonChurch, kind);
         if (kind === "family" && version === "v3") {
           const preferences = resolveFamilyWorshipPreferences(church.familyWorship, manifest.familyWorship?.style, manifest.familyWorship?.platform);
           validateFamilyV3Html(html, preferences);

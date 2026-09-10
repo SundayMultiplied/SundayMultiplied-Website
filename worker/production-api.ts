@@ -1,6 +1,6 @@
 import { PRODUCTION_CHURCHES } from "./generated/church-registry";
 import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type NormalizedTeachingSource, type TeachingSourceType } from "./sermon-analysis";
-import { injectBsbScripture, resolveBsbPassage, type ScripturePreferences } from "./scripture-service";
+import { injectBsbScripture, injectScriptureReferenceLink, resolveBsbPassage, type ScripturePreferences } from "./scripture-service";
 import { extractTeachingSourceText, MAX_TOTAL_SUPPLEMENTAL_CHARACTERS } from "./teaching-source-extraction";
 import { loadAnalysisReviewFeedback } from "./analysis-review-api";
 import {
@@ -13,6 +13,7 @@ import {
 } from "./family-resource";
 import { callOpenAiStructured } from "./openai-client.ts";
 import { injectResourceHeaderMetadata } from "./resource-metadata.ts";
+import { resolveMidweekDeliveryPreferences, validateMidweekV3Html, type MidweekDeliveryPreferences } from "./midweek-resource.ts";
 
 export type ProductionEnv = {
   ASSETS?: Fetcher;
@@ -27,12 +28,13 @@ export type ProductionEnv = {
 export type ChurchConfig = {
   slug: string;
   name: string;
-  resources: Array<"monday" | "group" | "family">;
+  resources: Array<"monday" | "group" | "family" | "midweek">;
   baseCssUrl: string;
   cssUrl: string;
   logoUrl?: string;
   reviewerEmail?: string;
   familyWorship?: FamilyWorshipPreferences;
+  midweekDelivery?: MidweekDeliveryPreferences;
   scripture?: ScripturePreferences;
 };
 
@@ -44,7 +46,7 @@ export type GeneratedPackage = {
     speaker: string;
     confidence: "high" | "medium" | "low";
   };
-  resources: { monday?: string; group?: string; family?: string };
+  resources: { monday?: string; group?: string; family?: string; midweek?: string };
   familyWorshipSong?: FamilyWorshipSong;
 };
 
@@ -68,6 +70,7 @@ export type ProductionManifest = {
   }>;
   metadataOverrides?: { speaker?: string; sermonTitle?: string; seriesTitle?: string; primaryPassage?: string };
   familyWorship?: FamilyWorshipPreferences;
+  midweekDelivery?: MidweekDeliveryPreferences;
   analysisStorageKey?: string;
   analysisId?: string;
   fidelityResult?: string;
@@ -96,7 +99,7 @@ function effectiveReviewerEmail(church: ChurchConfig | undefined, env: Productio
 
 export async function handleProductionApi(request: Request, env: ProductionEnv): Promise<Response | null> {
   const url = new URL(request.url);
-  const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family)$/);
+  const previewMatch = url.pathname.match(/^\/api\/production\/preview\/([^/]+)\/(monday|group|family|midweek)$/);
   const analysisMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/analysis$/);
   const analysisRetryMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/analysis\/retry$/);
   const generateMatch = url.pathname.match(/^\/api\/production\/jobs\/([^/]+)\/generate$/);
@@ -285,6 +288,11 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
     optionalClean(form.get("familyWorshipStyle"), 40),
     optionalClean(form.get("familyWorshipPlatform"), 40),
   );
+  const midweekDelivery = resolveMidweekDeliveryPreferences(
+    church.midweekDelivery,
+    optionalClean(form.get("midweekDeliveryDay"), 20),
+    optionalClean(form.get("midweekDeliveryChannel"), 20),
+  );
 
   const transcriptBytes = await file.arrayBuffer();
   const transcript = normalizeTranscript(new TextDecoder().decode(transcriptBytes), transcriptFilename);
@@ -378,6 +386,7 @@ async function createProductionJob(request: Request, env: ProductionEnv) {
     sourceFiles: storedSourceFiles,
     metadataOverrides,
     familyWorship,
+    midweekDelivery,
     analysisStorageKey: analysisKey,
     analysisId: analysis.analysis_id,
     fidelityResult: analysis.fidelity_audit.result,
@@ -466,7 +475,7 @@ async function generateProductionJobResources(request: Request, env: ProductionE
 
   let generated: GeneratedPackage;
   try {
-    generated = await generateResourcesFromAnalysis(env, church, manifest.weekOf, analysis, manifest.familyWorship);
+    generated = await generateResourcesFromAnalysis(env, church, manifest.weekOf, analysis, manifest.familyWorship, manifest.midweekDelivery);
   } catch (error) {
     console.error("sermon_resource_generation_failed", error);
     return json({ error: error instanceof Error ? clean(error.message, 500) : "Resource generation failed.", jobId }, 502);
@@ -488,7 +497,7 @@ async function generateProductionJobResources(request: Request, env: ProductionE
 
   const origin = env.PUBLIC_SITE_ORIGIN || new URL(request.url).origin;
   try {
-    const preparedResources: Array<{ kind: "monday" | "group" | "family"; html: string }> = [];
+    const preparedResources: Array<{ kind: "monday" | "group" | "family" | "midweek"; html: string }> = [];
     for (const kind of church.resources) {
       const generatedHtml = generated.resources[kind];
       if (!generatedHtml) continue;
@@ -497,6 +506,10 @@ async function generateProductionJobResources(request: Request, env: ProductionE
         const preferences = resolveFamilyWorshipPreferences(church.familyWorship, manifest.familyWorship?.style, manifest.familyWorship?.platform);
         validateFamilyV3Html(html, preferences);
         if (generated.familyWorshipSong) html = injectWorshipSongUrl(html, generated.familyWorshipSong, preferences);
+      }
+      if (kind === "midweek") {
+        html = injectScriptureReferenceLink(html, generated.metadata.scripture, church.scripture);
+        validateMidweekV3Html(html);
       }
       if (scripturePassage && (kind === "group" || kind === "family")) html = injectBsbScripture(html, scripturePassage, church.scripture);
       preparedResources.push({ kind, html });
@@ -545,9 +558,10 @@ async function serveChurchLogo(request: Request, env: ProductionEnv, slug: strin
   return new Response(response.body, { status: response.status, headers });
 }
 
-export async function generateResourcesFromAnalysis(env: ProductionEnv, church: ChurchConfig, weekOf: string, analysis: CanonicalSermonAnalysis, familyWorshipOverride?: FamilyWorshipPreferences): Promise<GeneratedPackage> {
+export async function generateResourcesFromAnalysis(env: ProductionEnv, church: ChurchConfig, weekOf: string, analysis: CanonicalSermonAnalysis, familyWorshipOverride?: FamilyWorshipPreferences, midweekOverride?: MidweekDeliveryPreferences): Promise<GeneratedPackage> {
   const resourceList = church.resources.join(", ");
   const familyWorship = resolveFamilyWorshipPreferences(church.familyWorship, familyWorshipOverride?.style, familyWorshipOverride?.platform);
+  const midweekDelivery = resolveMidweekDeliveryPreferences(church.midweekDelivery, midweekOverride?.day, midweekOverride?.channel);
   const metadata: GeneratedPackage["metadata"] = {
     sermonTitle: analysis.sermon.sermon_title || "",
     seriesTitle: analysis.sermon.series_title || "",
@@ -579,6 +593,7 @@ Church logo: ${church.logoUrl || "none"}.
 Primary Scripture: ${metadata.scripture || "not established"}.
 Family worship preference: ${familyWorship.style}.
 Family listening platform: ${worshipPlatformLabel(familyWorship.platform)}.
+Preferred Midweek delivery: ${midweekDelivery.day} by ${midweekDelivery.channel}. This preference is operational metadata only; do not mention the channel or scheduled day inside the resource.
 
 CONTENT REQUIREMENTS
 - Monday: concise sermon recap preserving the whole arc, 2-3 distinct supported takeaways, one reflection question, short sermon-rooted prayer. Scripture reference only.
@@ -587,16 +602,18 @@ CONTENT REQUIREMENTS
 - Family questions: include four clearly labeled age groups in this order: Pre-K & Kindergarten, Elementary, Middle School, High School. Give each group 1-2 questions with a strong, explicit connection to the sermon's supported big idea, image, tension, or application. Questions must be genuinely developmentally appropriate, not the same abstract question with simpler vocabulary. Pre-K/Kindergarten questions should be concrete and answerable through an everyday example, choice, feeling, or action. Elementary questions should connect the introduced idea to a familiar situation. Middle School questions should invite honest reflection about relationships, pressures, habits, or choices. High School questions may engage motives, beliefs, tensions, and concrete application. Keep every group understandable even if the child did not attend the sermon.
 - Family flow: Parent Setup, Big Idea, Read Together, Choose Your Questions, Try It Together, Worship Together, Pray Together. Include exactly one Scripture section without passage text. The family practice must be supported by the analysis and usable by mixed ages.
 - Family worship: ${familyWorship.style === "none" ? "omit the Worship Together section and return blank familyWorshipSong fields" : `recommend one ${familyWorship.style === "blended" ? "contemporary worship song or established hymn" : familyWorship.style === "hymn" ? "established hymn" : "contemporary Christian worship song"} that meaningfully reinforces the sermon's supported major theme. Favor a familiar congregational song over a merely topical song. Return its title, artist or commonly recognized version, and one-sentence sermon connection in familyWorshipSong. Do not quote lyrics. In the family HTML, include one link with class sm-worship-link, href exactly {{SM_WORSHIP_SONG_URL}}, target _blank, and rel noreferrer. Its visible label must be Play on ${worshipPlatformLabel(familyWorship.platform)}.`}
+- Midweek: a self-contained one-minute churchwide reinforcement, not a small-group-leader assignment. Briefly reconnect the reader to one central supported sermon idea, provide the primary Scripture reference, ask exactly one personal reflection question, give one concrete response for today, and close with a one-sentence prayer. Aim for 90-160 total words and never exceed 220. Do not introduce a new teaching point, summarize every sermon movement, ask multiple questions, or refer to a group meeting. The resource must still make sense if opened Wednesday or Thursday.
 - Quotation marks may only be used for exact_quote or verified_short_phrase entries from the Pastor Language Bank.
 - Do not create filler merely to hit a preferred count.
 
 HTML CONTRACT
 - Complete standalone HTML; no inline styles.
 - Stylesheet links in order: ${church.baseCssUrl}, then ${church.cssUrl}.
-- Body classes: sm-resource sm-monday|sm-group|sm-family.
+- Body classes: sm-resource sm-monday|sm-group|sm-family|sm-midweek.
 - Wrapper: <main class="sm-document">.
 - Header: sm-header sm-header--with-logo > sm-header-content with sm-header-text, sm-eyebrow sm-resource-label, sm-title, sm-meta. Logo in sm-header-logo-wrap with img sm-church-logo sm-logo using ${church.logoUrl || ""} when present.
 - Every content section uses sm-section plus the appropriate established modifier: sm-section--scripture, --summary, --takeaways, --reflection, --big-idea, --tension, --key-moments, --questions, --application, --practice, --leader-tip, --parent-note, --family-remember, --family-questions, --worship, --prayer.
+- Midweek uses exactly five sections in this order: summary (Remember Sunday), scripture (placeholder content only; the system replaces it), reflection (one p.sm-midweek-question), practice (one concrete response), and prayer (one sentence).
 - Family age groups use article.sm-family-age-group and an h3 age label. Put each group's 1-2 questions in an ordered list so every question is one li element. The parent sermon summary uses sm-section--parent-note. The worship recommendation uses sm-worship-song, sm-worship-connection, and sm-worship-link.
 - Group/Family include exactly one sm-section sm-section--scripture. Scripture reference uses sm-scripture-reference.
 - Group question clusters use sm-question-group with Understand, Reflect, Apply headings.
@@ -608,7 +625,7 @@ Return only the requested JSON structure.`;
   const schema = {
     type: "object", additionalProperties: false,
     properties: {
-      resources: { type: "object", additionalProperties: false, properties: { monday: { type: "string" }, group: { type: "string" }, family: { type: "string" } }, required: ["monday", "group", "family"] },
+      resources: { type: "object", additionalProperties: false, properties: { monday: { type: "string" }, group: { type: "string" }, family: { type: "string" }, midweek: { type: "string" } }, required: ["monday", "group", "family", "midweek"] },
       familyWorshipSong: { type: "object", additionalProperties: false, properties: { title: { type: "string" }, artist: { type: "string" }, connection: { type: "string" } }, required: ["title", "artist", "connection"] },
     },
     required: ["resources", "familyWorshipSong"],
@@ -631,7 +648,7 @@ Return only the requested JSON structure.`;
   return { metadata, resources, familyWorshipSong: parsed.familyWorshipSong };
 }
 
-export function enforceResourceStyling(input: string, church: ChurchConfig, kind: "monday" | "group" | "family") {
+export function enforceResourceStyling(input: string, church: ChurchConfig, kind: "monday" | "group" | "family" | "midweek") {
   let html = input.trim();
   const stylesheetLinks = `<link rel="stylesheet" href="${church.baseCssUrl}">\n<link rel="stylesheet" href="${church.cssUrl}">`;
   html = html.replace(/<link\b[^>]*rel=["']stylesheet["'][^>]*>\s*/gi, "");

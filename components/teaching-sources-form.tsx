@@ -4,7 +4,14 @@ import { useRef, useState } from "react";
 
 type WorshipStyle = "contemporary" | "hymn" | "blended" | "none";
 type WorshipPlatform = "youtube" | "spotify" | "apple_music";
-export type TeachingSourceChurch = { slug: string; name: string; familyWorship?: { style: WorshipStyle; platform: WorshipPlatform } };
+type MidweekDay = "wednesday" | "thursday";
+type MidweekChannel = "sms" | "email" | "push" | "manual";
+export type TeachingSourceChurch = {
+  slug: string;
+  name: string;
+  familyWorship?: { style: WorshipStyle; platform: WorshipPlatform };
+  midweekDelivery?: { day: MidweekDay; channel: MidweekChannel };
+};
 
 type SourceInputProps = {
   accept: string;
@@ -47,6 +54,7 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
   const [churchSlug, setChurchSlug] = useState("");
   const selectedChurch = churches.find((church) => church.slug === churchSlug);
   const worshipDefault = selectedChurch?.familyWorship || { style: "blended", platform: "youtube" };
+  const midweekDefault = selectedChurch?.midweekDelivery || { day: "wednesday", channel: "email" };
 
   return <form
     id="teaching-sources-form"
@@ -66,6 +74,15 @@ export function TeachingSourcesForm({ churches, saving, onSubmit }: { churches: 
       <div className="approval-create-grid">
         <label><span className="approval-field-label">Church</span><select name="churchSlug" required value={churchSlug} onChange={(event) => setChurchSlug(event.target.value)}><option value="" disabled>Select a church…</option>{churches.map((church) => <option value={church.slug} key={church.slug}>{church.name}</option>)}</select></label>
         <label><span className="approval-field-label">Sermon date</span><input name="weekOf" type="date" required /></label>
+      </div>
+    </fieldset>
+
+    <fieldset className="teaching-source-section">
+      <legend>Midweek reinforcement</legend>
+      <p className="teaching-source-help">Create a separate one-minute sermon reinforcement. These preferences are retained for future delivery automation; this version produces the reviewable resource but does not send it to congregants.</p>
+      <div className="approval-create-grid">
+        <label><span className="approval-field-label">Preferred day</span><select name="midweekDeliveryDay" defaultValue=""><option value="">Church default — {titleCase(midweekDefault.day)}</option><option value="wednesday">Wednesday</option><option value="thursday">Thursday</option></select></label>
+        <label><span className="approval-field-label">Preferred channel</span><select name="midweekDeliveryChannel" defaultValue=""><option value="">Church default — {channelLabel(midweekDefault.channel)}</option><option value="sms">Text message</option><option value="email">Email</option><option value="push">Push notification</option><option value="manual">Manual / undecided</option></select></label>
       </div>
     </fieldset>
 
@@ -124,4 +141,15 @@ function worshipPlatformLabel(platform: WorshipPlatform) {
   if (platform === "spotify") return "Spotify";
   if (platform === "apple_music") return "Apple Music";
   return "YouTube";
+}
+
+function titleCase(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function channelLabel(channel: MidweekChannel) {
+  if (channel === "sms") return "Text message";
+  if (channel === "push") return "Push notification";
+  if (channel === "manual") return "Manual / undecided";
+  return "Email";
 }

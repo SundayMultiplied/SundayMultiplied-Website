@@ -175,7 +175,7 @@ async function copyOptional(bucket: R2Bucket, sourceKey: string, destinationKey:
 
 function productionSource(previewUrl: string | null) {
   if (!previewUrl) return null;
-  const match = previewUrl.match(/\/api\/production\/preview\/([^/]+)\/(monday|group|family)(?:$|[?#])/i);
+  const match = previewUrl.match(/\/api\/production\/preview\/([^/]+)\/(monday|group|family|midweek)(?:$|[?#])/i);
   return match ? { jobId: match[1], kind: match[2].toLowerCase() } : null;
 }
 
