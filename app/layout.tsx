@@ -5,6 +5,7 @@ import "./production-dashboard.css";
 import "./production-queue-consistency.css";
 import "./revision-inline-preview.css";
 import "./admin-operations.css";
+import "./admin-ui-consistency.css";
 import "./manual-production-import.css";
 import { SiteShell } from "../components/site-shell";
 
