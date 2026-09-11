@@ -1,0 +1,175 @@
+.production-job-table {
+  overflow-x: auto;
+}
+
+.production-job-table .approval-table-row {
+  grid-template-columns:
+    54px
+    minmax(150px, .9fr)
+    minmax(190px, 1.2fr)
+    minmax(150px, .9fr)
+    110px
+    minmax(165px, 1fr)
+    minmax(145px, .85fr)
+    minmax(185px, .95fr);
+  column-gap: 18px;
+}
+
+.production-church-cell,
+.production-sermon-cell {
+  min-width: 0;
+}
+
+.production-church-cell strong,
+.production-sermon-cell strong {
+  display: block;
+  color: #173028;
+  line-height: 1.35;
+}
+
+.production-church-cell strong {
+  font-size: 14px;
+}
+
+.production-sermon-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.production-sermon-cell strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.production-filter-summary {
+  display: flex;
+  min-width: 138px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+}
+
+.production-filter-summary > span {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: #59685f;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.production-filter-summary > span strong {
+  color: #173028;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.production-filter-summary > button {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  color: #385643;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.production-action-stack {
+  width: 100%;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.production-action-stack > button,
+.production-action-stack > a,
+.production-action-stack > strong {
+  width: 100%;
+  max-width: 190px;
+  box-sizing: border-box;
+}
+
+.production-edit-metadata,
+.production-action-stack .comparison-create-button,
+.production-primary-action {
+  min-height: 40px;
+  padding: 10px 13px;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+}
+
+.production-edit-metadata {
+  border: 1px solid rgba(23,48,40,.32);
+  background: #fff;
+  color: #385643;
+  text-decoration: none;
+}
+
+.production-action-stack .comparison-create-button {
+  border: 1px solid #78917f;
+  background: transparent;
+  color: #285d47;
+}
+
+.production-primary-action {
+  border: 1px solid #173028;
+  background: #173028;
+  color: #fff;
+  text-decoration: none;
+}
+
+.production-edit-metadata:hover,
+.production-edit-metadata:focus-visible,
+.production-action-stack .comparison-create-button:hover,
+.production-action-stack .comparison-create-button:focus-visible {
+  border-color: #385643;
+  background: #eef3ef;
+}
+
+.production-primary-action:hover,
+.production-primary-action:focus-visible {
+  border-color: #284c3e;
+  background: #284c3e;
+}
+
+.production-edit-metadata:focus-visible,
+.production-action-stack .comparison-create-button:focus-visible,
+.production-primary-action:focus-visible,
+.production-filter-summary > button:focus-visible {
+  outline: 3px solid rgba(47,91,71,.2);
+  outline-offset: 2px;
+}
+
+.production-edit-metadata:disabled,
+.production-action-stack .comparison-create-button:disabled,
+.production-primary-action:disabled {
+  cursor: wait;
+  opacity: .58;
+}
+
+.production-action-stack .notification-sent {
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 1px solid rgba(47,91,71,.18);
+  border-radius: 3px;
+  background: #e7eee9;
+  color: #285d47;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+@media (max-width: 1180px) {
+  .production-job-table .approval-table-row {
+    min-width: 1240px;
+  }
+}
