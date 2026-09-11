@@ -185,7 +185,7 @@ export function ChurchDashboard({ slug }: { slug: string }) {
                     Open {resource.title} ↗
                   </a>
                 ) : (
-                  <span className={styles.resourceUnavailable} key={resource.id}>{resource.title}<small>Not available yet</small></span>
+                  <div className={styles.empty} key={resource.id}>{resource.title} · Not available yet</div>
                 ))}
               </div>
               {!["approved", "revision_requested"].includes(current.status) && (
@@ -237,22 +237,18 @@ export function ChurchDashboard({ slug }: { slug: string }) {
                         <td><strong>{item.title}</strong></td>
                         <td><span className={`${styles.status} ${statusClass(item.status, styles)}`}>{formatStatus(item.status)}</span>{item.decidedAt && <small>{formatDate(item.decidedAt)}</small>}</td>
                         <td>{item.reviewerName || item.reviewerEmail || "—"}</td>
-                        <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span className={styles.archiveUnavailable} key={resource.id}>{resource.kind}<small>Unavailable</small></span>)}</div></td>
+                        <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <small key={resource.id}>{resource.kind} unavailable</small>)}</div></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
-            <div className={styles.historyFooter}>
-              <span className={styles.historyRange}>Showing {historyStart}–{historyEnd} of {sortedPackages.length}</span>
-              {totalHistoryPages > 1 && (
-                <div className={styles.pagination} aria-label="Approval history pagination">
-                  <button type="button" onClick={() => setHistoryPage((page) => Math.max(1, page - 1))} disabled={historyPage === 1}>Previous</button>
-                  <span>Page {historyPage} of {totalHistoryPages}</span>
-                  <button type="button" onClick={() => setHistoryPage((page) => Math.min(totalHistoryPages, page + 1))} disabled={historyPage === totalHistoryPages}>Next</button>
-                </div>
-              )}
+            <div className={styles.pagination} aria-label="Approval history pagination">
+              <span>Showing {historyStart}–{historyEnd} of {sortedPackages.length}</span>
+              {totalHistoryPages > 1 && <button type="button" onClick={() => setHistoryPage((page) => Math.max(1, page - 1))} disabled={historyPage === 1}>Previous</button>}
+              {totalHistoryPages > 1 && <span>Page {historyPage} of {totalHistoryPages}</span>}
+              {totalHistoryPages > 1 && <button type="button" onClick={() => setHistoryPage((page) => Math.min(totalHistoryPages, page + 1))} disabled={historyPage === totalHistoryPages}>Next</button>}
             </div>
           </>
         )}
