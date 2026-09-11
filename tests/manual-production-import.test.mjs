@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateManualProductionImport } from "../worker/manual-production-import.ts";
+import { strToU8, zipSync } from "fflate";
+import { parseManualProductionZip, validateManualProductionImport } from "../worker/manual-production-import.ts";
 
 const church = {
   slug: "southside-baptist",
@@ -58,7 +59,7 @@ const shell = (kind, content) => `<!doctype html><html><head>${styles}</head><bo
 const monday = shell("monday", '<section class="sm-section sm-section--summary">Summary</section>');
 const group = shell("group", '<section class="sm-section sm-section--scripture">Scripture</section><section class="sm-section sm-section--questions">Questions</section>');
 const ageGroups = ["Pre-K & Kindergarten", "Elementary", "Middle School", "High School"].map((label) => `<article class="sm-family-age-group"><h3>${label}</h3><ol><li>Question</li></ol></article>`).join("");
-const family = shell("family", `<section class="sm-section sm-section--parent-note">Parent setup</section><section class="sm-section sm-section--scripture">Scripture</section><section class="sm-section sm-section--family-questions">${ageGroups}</section><section class="sm-section sm-section--worship"><a class="sm-worship-link" href="{{SM_WORSHIP_SONG_URL}}">Play</a></section>`);
+const family = shell("family", `<section class="sm-section sm-section--parent-note">Parent setup</section><section class="sm-section sm-section--scripture">Scripture</section><section class="sm-section sm-section--family-questions">${ageGroups}</section><section class="sm-section sm-section--worship"><a class="sm-worship-link" href="https://www.youtube.com/results?search_query=Yet%20Not%20I">Play</a></section>`);
 const midweek = shell("midweek", '<section class="sm-section sm-section--summary">Remember</section><section class="sm-section sm-section--scripture">Scripture</section><section class="sm-section sm-section--reflection"><p class="sm-midweek-question">Question?</p></section><section class="sm-section sm-section--practice">Practice</section><section class="sm-section sm-section--prayer">Prayer</section>');
 
 function validInput() {
@@ -71,6 +72,55 @@ function validInput() {
     resources: { monday, group, family, midweek },
   };
 }
+
+function packagedZip() {
+  const id = "source-job-id";
+  const manifest = {
+    id,
+    churchSlug: "southside-baptist",
+    churchName: "Southside Baptist Church",
+    weekOf: "2026-08-23",
+    createdAt: "2026-09-11T12:00:00.000Z",
+    status: "ready_for_internal_review",
+    sourceFilename: "SBC_08232026.txt",
+    sourceFiles: [{
+      sourceId: "transcript-manual-test",
+      sourceType: "transcript",
+      filename: "SBC_08232026.txt",
+      storageKey: `production/jobs/${id}/sources/transcript-manual-test/SBC_08232026.txt`,
+      status: "analyzed",
+    }],
+    analysisStorageKey: `production/jobs/${id}/sermon-analysis.json`,
+    analysisId: "analysis-manual-test",
+    fidelityResult: "pass",
+    metadata: { sermonTitle: "Marriage and Divorce", seriesTitle: "The King and His Kingdom", scripture: "Matthew 19:1-12", speaker: "Stuart Doyle", confidence: "high" },
+    resources: ["monday", "group", "family", "midweek"].map((kind) => ({
+      kind: kind[0].toUpperCase() + kind.slice(1),
+      title: `${kind} Multiplied`,
+      storageKey: `production/jobs/${id}/${kind}.html`,
+      previewUrl: `/api/production/preview/${id}/${kind}`,
+    })),
+  };
+  return zipSync({
+    [`r2/production/manifests/${id}.json`]: strToU8(JSON.stringify(manifest)),
+    [`r2/production/jobs/${id}/sermon-analysis.json`]: strToU8(JSON.stringify(analysis())),
+    [`r2/production/jobs/${id}/sources/transcript-manual-test/SBC_08232026.txt`]: strToU8("sermon transcript ".repeat(80)),
+    [`r2/production/jobs/${id}/monday.html`]: strToU8(monday),
+    [`r2/production/jobs/${id}/group.html`]: strToU8(group),
+    [`r2/production/jobs/${id}/family.html`]: strToU8(family),
+    [`r2/production/jobs/${id}/midweek.html`]: strToU8(midweek),
+  });
+}
+
+test("parses the packaged R2 layout from a single ZIP", () => {
+  const parsed = parseManualProductionZip(packagedZip());
+  assert.equal(parsed.churchSlug, "southside-baptist");
+  assert.equal(parsed.weekOf, "2026-08-23");
+  assert.equal(parsed.transcriptFilename, "SBC_08232026.txt");
+  assert.equal(parsed.analysis.analysis_id, "analysis-manual-test");
+  assert.match(parsed.resources.family, /sm-family-age-group/);
+  assert.deepEqual(validateManualProductionImport(parsed, church), { ok: true });
+});
 
 test("accepts a current-contract manual production package", () => {
   assert.deepEqual(validateManualProductionImport(validInput(), church), { ok: true });
