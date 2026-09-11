@@ -6,9 +6,10 @@ import { handleApprovalListApi } from "./approval-list-api";
 import { handleAnalysisReviewApi } from "./analysis-review-api";
 import { handleChurchAssetApi } from "./church-asset-api";
 import { handleComparisonApi } from "./comparison-api";
+import { handleManualProductionImport } from "./manual-production-import";
 import { finalizeApprovedPackage } from "./package-finalization";
 import { handlePackageFinalizationApi } from "./package-finalization-api";
-import { handleProductionApi } from "./production-api";
+import { CHURCHES, handleProductionApi } from "./production-api";
 import { handleProductionJobAdminApi } from "./production-job-admin-api";
 import { handleRevisionApi } from "./revision-api";
 import { handleRevisionCommitApi } from "./revision-commit-api";
@@ -79,6 +80,13 @@ const worker = {
 
     const churchAssetResponse = await handleChurchAssetApi(request, env);
     if (churchAssetResponse) return churchAssetResponse;
+
+    if (url.pathname === "/api/production/import" && request.method === "POST") {
+      const email = accessIdentityEmail(request);
+      const adminEmail = env.APPROVAL_ADMIN_EMAIL?.trim() || "brian@sundaymultiplied.com";
+      if (!email || email.toLowerCase() !== adminEmail.toLowerCase()) return json({ error: "Unauthorized." }, 401);
+      return handleManualProductionImport(request, env, CHURCHES);
+    }
 
     const productionJobAdminResponse = await handleProductionJobAdminApi(request, env);
     if (productionJobAdminResponse) return productionJobAdminResponse;
@@ -210,6 +218,18 @@ async function finalizeDecisionIfApproved(request: Request, env: Env, response: 
     console.error("package_finalization_failed", error);
   }
   return response;
+}
+
+function accessIdentityEmail(request: Request) {
+  const headerEmail = request.headers.get("cf-access-authenticated-user-email") ?? request.headers.get("oai-authenticated-user-email");
+  if (headerEmail) return headerEmail.trim();
+  const payload = request.headers.get("cf-access-jwt-assertion")?.split(".")[1];
+  if (!payload) return "";
+  try {
+    const base64 = payload.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const claims = JSON.parse(atob(base64)) as { email?: unknown };
+    return typeof claims.email === "string" ? claims.email.trim() : "";
+  } catch { return ""; }
 }
 
 async function sha256(value: string) {
