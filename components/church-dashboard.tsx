@@ -95,6 +95,8 @@ export function ChurchDashboard({ slug }: { slug: string }) {
     const start = (historyPage - 1) * HISTORY_PAGE_SIZE;
     return sortedPackages.slice(start, start + HISTORY_PAGE_SIZE);
   }, [sortedPackages, historyPage]);
+  const historyStart = sortedPackages.length === 0 ? 0 : (historyPage - 1) * HISTORY_PAGE_SIZE + 1;
+  const historyEnd = Math.min(historyPage * HISTORY_PAGE_SIZE, sortedPackages.length);
 
   useEffect(() => { setHistoryPage(1); }, [historySort]);
 
@@ -116,7 +118,7 @@ export function ChurchDashboard({ slug }: { slug: string }) {
   }, [data, historyPage]);
 
   if (loading) {
-    return <main className={styles.shell}><div className={styles.stateCard}>Loading church dashboard…</div></main>;
+    return <main className={styles.shell}><div className={styles.stateCard} role="status">Loading church dashboard…</div></main>;
   }
 
   if (error || !data) {
@@ -177,17 +179,17 @@ export function ChurchDashboard({ slug }: { slug: string }) {
                 {current.scripture && <div><span>Scripture</span><strong>{current.scripture}</strong></div>}
               </div>
               <h3>{current.title}</h3>
-              <div className={styles.resourceButtons}>
+              <div className={styles.resourceButtons} aria-label="Current package resources">
                 {current.resources.map((resource) => resource.previewUrl ? (
                   <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">
                     Open {resource.title} ↗
                   </a>
                 ) : (
-                  <span key={resource.id}>{resource.title}</span>
+                  <span className={styles.resourceUnavailable} key={resource.id}>{resource.title}<small>Not available yet</small></span>
                 ))}
               </div>
               {!["approved", "revision_requested"].includes(current.status) && (
-                <p className={styles.reviewNote}>Approval decisions still use the secure review link sent by email. This dashboard intentionally does not expose or recreate that private token.</p>
+                <p className={styles.reviewNote}>To approve these resources or request changes, use the secure review link sent to you by email.</p>
               )}
             </>
           )}
@@ -235,20 +237,23 @@ export function ChurchDashboard({ slug }: { slug: string }) {
                         <td><strong>{item.title}</strong></td>
                         <td><span className={`${styles.status} ${statusClass(item.status, styles)}`}>{formatStatus(item.status)}</span>{item.decidedAt && <small>{formatDate(item.decidedAt)}</small>}</td>
                         <td>{item.reviewerName || item.reviewerEmail || "—"}</td>
-                        <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span key={resource.id}>{resource.kind}</span>)}</div></td>
+                        <td><div className={styles.archiveLinks}>{item.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">{resource.kind}</a> : <span className={styles.archiveUnavailable} key={resource.id}>{resource.kind}<small>Unavailable</small></span>)}</div></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </div>
-            {totalHistoryPages > 1 && (
-              <div className={styles.pagination} aria-label="Approval history pagination">
-                <button type="button" onClick={() => setHistoryPage((page) => Math.max(1, page - 1))} disabled={historyPage === 1}>Previous</button>
-                <span>Page {historyPage} of {totalHistoryPages}</span>
-                <button type="button" onClick={() => setHistoryPage((page) => Math.min(totalHistoryPages, page + 1))} disabled={historyPage === totalHistoryPages}>Next</button>
-              </div>
-            )}
+            <div className={styles.historyFooter}>
+              <span className={styles.historyRange}>Showing {historyStart}–{historyEnd} of {sortedPackages.length}</span>
+              {totalHistoryPages > 1 && (
+                <div className={styles.pagination} aria-label="Approval history pagination">
+                  <button type="button" onClick={() => setHistoryPage((page) => Math.max(1, page - 1))} disabled={historyPage === 1}>Previous</button>
+                  <span>Page {historyPage} of {totalHistoryPages}</span>
+                  <button type="button" onClick={() => setHistoryPage((page) => Math.min(totalHistoryPages, page + 1))} disabled={historyPage === totalHistoryPages}>Next</button>
+                </div>
+              )}
+            </div>
           </>
         )}
       </section>
@@ -257,7 +262,13 @@ export function ChurchDashboard({ slug }: { slug: string }) {
 }
 
 function formatStatus(value: string) {
-  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const labels: Record<string, string> = {
+    approved: "Approved",
+    revision_requested: "Changes requested",
+    ready_for_review: "Ready for review",
+    sent_for_approval: "Awaiting approval",
+  };
+  return labels[value] || value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function formatDate(value: string) {
