@@ -51,6 +51,7 @@
 .portalBrand:focus-visible,
 .resourceButtons a:focus-visible,
 .archiveLinks a:focus-visible,
+.reviewLaunch:focus-visible,
 .historyControls select:focus-visible,
 .pagination button:focus-visible {
   outline: 3px solid rgba(49, 81, 67, 0.22);
@@ -124,6 +125,22 @@
 .nextStep p { margin: 5px 0 0; color: #637168; line-height: 1.5; }
 .nextStepAttention { background: #eef4fb; border-color: #d5e2f0; }
 .nextStepAttention strong { color: #284f75; }
+.reviewLaunch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  margin-top: 13px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: #284f75;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 120ms ease, transform 120ms ease;
+}
+.reviewLaunch:hover { background: #1f4264; transform: translateY(-1px); }
 
 .activityList { display: grid; gap: 2px; }
 .activityItem { display: grid; grid-template-columns: 12px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid #edf0ed; }
@@ -161,6 +178,7 @@
   .viewer { align-items: flex-start; flex-direction: column; gap: 2px; }
   .metrics, .grid, .currentMeta { grid-template-columns: 1fr; }
   .card { padding: 20px; }
+  .reviewLaunch { width: 100%; }
   #history .cardHeading, .historyControls { align-items: flex-start; flex-direction: column; }
   .historyControls, .historyControls label, .historyControls select { width: 100%; }
   .desktopHistory { display: none; }
