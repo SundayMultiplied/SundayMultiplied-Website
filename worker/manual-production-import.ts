@@ -93,10 +93,10 @@ export async function handleManualProductionImport(
   const origin = env.PUBLIC_SITE_ORIGIN || new URL(request.url).origin;
   const manifestResources: ProductionManifest["resources"] = [];
   for (const kind of church.resources) {
-    const html = input.resources[kind];
-    if (!html) continue;
+    const resourceHtml = input.resources[kind];
+    if (!resourceHtml) continue;
     const storageKey = `production/jobs/${id}/${kind}.html`;
-    await env.BUCKET.put(storageKey, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
+    await env.BUCKET.put(storageKey, resourceHtml, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
     manifestResources.push({
       kind: titleCase(kind),
       title: `${titleCase(kind)} Multiplied`,
@@ -174,43 +174,70 @@ export function validateManualProductionImport(input: ManualProductionImport, ch
   return { ok: true };
 }
 
-function validateResourceHtml(kind: ManualImportResourceKind, html: string, church: ChurchConfig): string | null {
-  if (!/<main\b[^>]*class=["'][^"']*sm-document\b/i.test(html)) return `${titleCase(kind)} HTML is missing the sm-document wrapper.`;
-  if (!new RegExp(`<body\\b[^>]*class=["'][^"']*sm-${kind}\\b`, "i").test(html)) return `${titleCase(kind)} HTML is missing the sm-${kind} body class.`;
-  if (!/sm-header/.test(html) || !/sm-footer/.test(html)) return `${titleCase(kind)} HTML is missing the required Sunday Multiplied header or footer.`;
-  if (!html.includes(church.baseCssUrl) || !html.includes(church.cssUrl)) return `${titleCase(kind)} HTML must link the current shared and church stylesheets.`;
+function validateResourceHtml(kind: ManualImportResourceKind, resourceHtml: string, church: ChurchConfig): string | null {
+  if (!/<main\b[^>]*class=["'][^"']*sm-document\b/i.test(resourceHtml)) return `${titleCase(kind)} HTML is missing the sm-document wrapper.`;
+  if (!new RegExp(`<body\\b[^>]*class=["'][^"']*sm-${kind}\\b`, "i").test(resourceHtml)) return `${titleCase(kind)} HTML is missing the sm-${kind} body class.`;
+  if (!/sm-header/.test(resourceHtml) || !/sm-footer/.test(resourceHtml)) return `${titleCase(kind)} HTML is missing the required Sunday Multiplied header or footer.`;
+  if (!resourceHtml.includes(church.baseCssUrl) || !resourceHtml.includes(church.cssUrl)) return `${titleCase(kind)} HTML must link the current shared and church stylesheets.`;
 
-  const scriptureSections = html.match(/sm-section--scripture\b/gi)?.length || 0;
+  const scriptureSections = resourceHtml.match(/sm-section--scripture\b/gi)?.length || 0;
   if ((kind === "group" || kind === "family") && scriptureSections !== 1) return `${titleCase(kind)} HTML must include exactly one Scripture section.`;
-  if (kind === "group" && /Midweek Reinforcement/i.test(html)) return "Group HTML must not contain an embedded Midweek Reinforcement section.";
+  if (kind === "group" && /Midweek Reinforcement/i.test(resourceHtml)) return "Group HTML must not contain an embedded Midweek Reinforcement section.";
   if (kind === "family") {
-    try { validateFamilyV3Html(html, resolveFamilyWorshipPreferences(church.familyWorship)); }
+    const preferences = resolveFamilyWorshipPreferences(church.familyWorship);
+    const normalized = normalizeFinalFamilyForValidation(resourceHtml, preferences.platform, preferences.style !== "none");
+    if (!normalized.ok) return normalized.error;
+    try { validateFamilyV3Html(normalized.html, preferences); }
     catch (error) { return error instanceof Error ? error.message : "Family HTML failed the current Family V3 contract."; }
   }
   if (kind === "midweek") {
-    try { validateMidweekV3Html(html); }
+    try { validateMidweekV3Html(resourceHtml); }
     catch (error) { return error instanceof Error ? error.message : "Midweek HTML failed the current Midweek V3 contract."; }
   }
   return null;
 }
 
+function normalizeFinalFamilyForValidation(
+  resourceHtml: string,
+  platform: "youtube" | "spotify" | "apple_music",
+  worshipRequired: boolean,
+): { ok: true; html: string } | { ok: false; error: string } {
+  if (!worshipRequired || resourceHtml.includes("{{SM_WORSHIP_SONG_URL}}")) return { ok: true, html: resourceHtml };
+  const link = resourceHtml.match(/<a\b[^>]*class=["'][^"']*sm-worship-link\b[^"']*["'][^>]*href=["']([^"']+)["'][^>]*>/i)
+    || resourceHtml.match(/<a\b[^>]*href=["']([^"']+)["'][^>]*class=["'][^"']*sm-worship-link\b[^"']*["'][^>]*>/i);
+  if (!link?.[1]) return { ok: false, error: "Family V3 is missing the controlled worship-song link." };
+
+  let url: URL;
+  try { url = new URL(link[1]); }
+  catch { return { ok: false, error: "Family worship link is invalid." }; }
+  const allowedHost = platform === "spotify" ? "open.spotify.com" : platform === "apple_music" ? "music.apple.com" : "www.youtube.com";
+  if (url.protocol !== "https:" || url.hostname !== allowedHost) return { ok: false, error: `Family worship link must use the configured ${platform} provider.` };
+
+  const html = resourceHtml.replace(link[1], "{{SM_WORSHIP_SONG_URL}}");
+  return { ok: true, html };
+}
+
 async function findDuplicateManifest(bucket: R2Bucket, churchSlug: string, weekOf: string): Promise<ProductionManifest | null> {
-  const listed = await bucket.list({ prefix: "production/manifests/", limit: 1000 });
-  for (const object of listed.objects) {
-    const stored = await bucket.get(object.key);
-    if (!stored) continue;
-    try {
-      const manifest = await stored.json<ProductionManifest>();
-      if (manifest.churchSlug === churchSlug && manifest.weekOf === weekOf) return manifest;
-    } catch {
-      // Ignore malformed historical manifests instead of blocking a valid manual import.
+  let cursor: string | undefined;
+  do {
+    const listed = await bucket.list({ prefix: "production/manifests/", cursor, limit: 1000 });
+    for (const object of listed.objects) {
+      const stored = await bucket.get(object.key);
+      if (!stored) continue;
+      try {
+        const manifest = await stored.json<ProductionManifest>();
+        if (manifest.churchSlug === churchSlug && manifest.weekOf === weekOf) return manifest;
+      } catch {
+        // Ignore malformed historical manifests instead of blocking a valid manual import.
+      }
     }
-  }
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
   return null;
 }
 
 function accessIdentityEmail(request: Request) {
-  return clean(request.headers.get("cf-access-authenticated-user-email") || request.headers.get("x-auth-request-email") || "", 320);
+  return clean(request.headers.get("cf-access-authenticated-user-email") || request.headers.get("oai-authenticated-user-email") || "", 320);
 }
 
 function safeStorageName(value: string) {
