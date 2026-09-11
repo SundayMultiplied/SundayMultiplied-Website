@@ -176,7 +176,7 @@ export function RevisionQueue({ standalone = false }: Props) {
           <p>Generate only the sections the pastor requested. Original approved/reviewed content stays intact while revised versions wait for your internal review.</p>
         </div>
         <div className="revision-workspace-actions">
-          {standalone && <a className="approval-approve" href="/approvals">← Production dashboard</a>}
+          {standalone && <a className="approval-approve" href="/approvals">← Approvals</a>}
           <button type="button" className="revision-refresh" onClick={() => void loadRevisions()} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</button>
         </div>
       </div>
@@ -278,7 +278,6 @@ function actionLabel(value: string) {
   const labels: Record<string, string> = { revise_existing: "Revise existing content", new_set: "Create a completely new set", new_scenario: "Create a different scenario / activity", more_practical: "Make it more practical", more_discussion_oriented: "Make it more discussion-oriented", simplify: "Make it clearer / more accessible", tone_wording: "Adjust tone or wording", other: "Other request" };
   return labels[value] || value.replaceAll("_", " ");
 }
-
 function sectionLabel(value: string) { return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()); }
 function formatAdminDate(value: string) { const date = new Date(value); if (Number.isNaN(date.getTime())) return value; return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date); }
 function escapeHtml(value: string) { return value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"); }
