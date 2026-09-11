@@ -153,5 +153,7 @@ test("rejects obsolete Group and Family formats", () => {
 
   const oldFamily = validInput();
   oldFamily.resources.family = shell("family", '<section class="sm-section sm-section--scripture">Scripture</section><section>Talk About It</section>');
-  assert.match(validateManualProductionImport(oldFamily, church).error, /parent sermon setup|Pre-K/i);
+  const familyResult = validateManualProductionImport(oldFamily, church);
+  assert.equal(familyResult.ok, false);
+  assert.match(familyResult.error, /Family V3|parent sermon setup|Pre-K|worship-song link/i);
 });
