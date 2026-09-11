@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 export const dynamic = "force-dynamic";
 
 const DASHBOARD_ACCESS_ERROR = "This dashboard isn't available for your account. Check the link or contact Sunday Multiplied if you believe you should have access.";
+const ACTIVE_REVIEW_STATUSES = new Set(["ready_for_review", "viewed", "revised"]);
 
 export async function GET(
   _request: Request,
@@ -29,15 +30,8 @@ export async function GET(
     const adminEmail = env.APPROVAL_ADMIN_EMAIL?.trim() || "brian@sundaymultiplied.com";
     const isAdmin = email.toLowerCase() === adminEmail.toLowerCase();
 
-    if (!isAdmin) {
-      const membership = await env.DB.prepare(`
-        SELECT id
-        FROM review_packages
-        WHERE church_id = ? AND lower(reviewer_email) = ?
-        LIMIT 1
-      `).bind(church.id, email.toLowerCase()).first<{ id: string }>();
-
-      if (!membership) return json({ error: DASHBOARD_ACCESS_ERROR }, 403);
+    if (!isAdmin && !(await hasChurchReviewAccess(env.DB, church.id, email))) {
+      return json({ error: DASHBOARD_ACCESS_ERROR }, 403);
     }
 
     const packagesResult = await env.DB.prepare(`
@@ -95,16 +89,72 @@ export async function GET(
       resources: resourcesByPackage.get(String(item.id || "")) || [],
     }));
 
+    const currentPackage = packagesWithResources[0] || null;
+    let canReviewCurrent = false;
+    if (currentPackage && ACTIVE_REVIEW_STATUSES.has(String(currentPackage.status || ""))) {
+      const assignedEmail = await assignedReviewerEmail(
+        env.DB,
+        String(currentPackage.id || ""),
+        String(currentPackage.reviewerEmail || ""),
+      );
+      canReviewCurrent = Boolean(assignedEmail && assignedEmail.toLowerCase() === email.toLowerCase());
+    }
+
     return json({
       church,
       viewer: { email, isAdmin },
-      currentPackage: packagesWithResources[0] || null,
+      currentPackage,
+      canReviewCurrent,
       packages: packagesWithResources,
       activity,
     });
   } catch (error) {
     console.error("church_dashboard_query_failed", error);
     return json({ error: "Unable to load the church dashboard." }, 500);
+  }
+}
+
+async function hasChurchReviewAccess(db: D1Database, churchId: string, email: string) {
+  const normalized = email.toLowerCase();
+  const direct = await db.prepare(`
+    SELECT id
+    FROM review_packages
+    WHERE church_id = ? AND lower(reviewer_email) = ?
+    LIMIT 1
+  `).bind(churchId, normalized).first<{ id: string }>();
+  if (direct) return true;
+
+  const notifications = await db.prepare(`
+    SELECT a.details
+    FROM review_activity a
+    JOIN review_packages p ON p.id = a.package_id
+    WHERE p.church_id = ? AND a.event_type LIKE 'review_ready_notification_%'
+    ORDER BY a.created_at DESC
+    LIMIT 100
+  `).bind(churchId).all<{ details: string | null }>();
+
+  return notifications.results.some((item) => notificationRecipient(item.details).toLowerCase() === normalized);
+}
+
+async function assignedReviewerEmail(db: D1Database, packageId: string, persistedReviewerEmail: string) {
+  if (persistedReviewerEmail.trim()) return persistedReviewerEmail.trim();
+  const notification = await db.prepare(`
+    SELECT details
+    FROM review_activity
+    WHERE package_id = ? AND event_type LIKE 'review_ready_notification_%'
+    ORDER BY created_at DESC
+    LIMIT 1
+  `).bind(packageId).first<{ details: string | null }>();
+  return notificationRecipient(notification?.details || "");
+}
+
+function notificationRecipient(value: unknown) {
+  if (typeof value !== "string" || !value) return "";
+  try {
+    const parsed = JSON.parse(value) as { recipient?: unknown };
+    return typeof parsed.recipient === "string" ? parsed.recipient.trim() : "";
+  } catch {
+    return "";
   }
 }
 
