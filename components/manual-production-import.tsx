@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
+type ResourceKind = "monday" | "group" | "family" | "midweek";
 type ChurchConfig = {
   slug: string;
   name: string;
-  resources: Array<"monday" | "group" | "family" | "midweek">;
+  resources: ResourceKind[];
 };
 
 type ImportedJob = {
@@ -16,12 +17,13 @@ type ImportedJob = {
   metadata: { sermonTitle: string };
 };
 
-const resourceLabels = {
+const ALL_RESOURCE_KINDS: ResourceKind[] = ["monday", "group", "family", "midweek"];
+const resourceLabels: Record<ResourceKind, string> = {
   monday: "Monday Multiplied HTML",
   group: "Group Multiplied HTML",
   family: "Family Multiplied HTML",
   midweek: "Midweek Multiplied HTML",
-} as const;
+};
 
 export function ManualProductionImport() {
   const [churches, setChurches] = useState<ChurchConfig[]>([]);
@@ -32,6 +34,7 @@ export function ManualProductionImport() {
   const [job, setJob] = useState<ImportedJob | null>(null);
 
   const selectedChurch = useMemo(() => churches.find((church) => church.slug === churchSlug), [churches, churchSlug]);
+  const visibleResourceKinds = selectedChurch?.resources || ALL_RESOURCE_KINDS;
 
   useEffect(() => {
     void (async () => {
@@ -65,7 +68,7 @@ export function ManualProductionImport() {
       if (!response.ok || !data.job) throw new Error(data.error || "Unable to import the manual production package.");
       setJob(data.job);
       event.currentTarget.reset();
-      setChurchSlug(data.job ? churches.find((church) => church.name === data.job?.churchName)?.slug || "" : "");
+      setChurchSlug(churches.find((church) => church.name === data.job?.churchName)?.slug || "");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to import the manual production package.");
     } finally {
@@ -126,7 +129,7 @@ export function ManualProductionImport() {
         </div>
 
         <div className="production-source-grid">
-          {(selectedChurch?.resources || ["monday", "group", "family", "midweek"]).map((kind) => <label key={kind}>{resourceLabels[kind]}
+          {visibleResourceKinds.map((kind) => <label key={kind}>{resourceLabels[kind]}
             <input name={kind} type="file" accept=".html,.htm,text/html" required={Boolean(selectedChurch?.resources.includes(kind))} disabled={saving} />
           </label>)}
         </div>
