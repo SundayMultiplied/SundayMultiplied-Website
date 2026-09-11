@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "bash scripts/build-verified.sh",
     "start": "vinext start",
-    "test": "npm run build && node --test tests/dashboard-sorting.test.mjs tests/manual-production-import.test.mjs tests/midweek-resource.test.mjs tests/rendered-html.test.mjs tests/scripture-display-policy.test.mjs",
+    "test": "npm run build && node --test tests/dashboard-sorting.test.mjs tests/church-dashboard-review-launch.test.mjs tests/manual-production-import.test.mjs tests/midweek-resource.test.mjs tests/rendered-html.test.mjs tests/scripture-display-policy.test.mjs",
     "test:sermon-schema": "node --test tests/sermon-analysis-schema.test.mjs",
     "test:teaching-sources": "node --test tests/teaching-source-extraction.test.mjs",
     "test:openai-client": "node --test tests/openai-client.test.mjs",
