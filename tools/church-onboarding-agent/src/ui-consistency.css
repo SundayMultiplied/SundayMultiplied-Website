@@ -1,0 +1,124 @@
+/* UI consistency layer shared by onboarding and Theme Editor.
+   Keeps native controls recognizable and aligns action hierarchy with Admin. */
+
+button,
+a,
+input,
+select,
+textarea {
+  transition: border-color .16s ease, background-color .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(43,112,91,.2);
+  outline-offset: 2px;
+}
+
+.primary {
+  border-color: #153f35;
+  background: #153f35;
+  color: #fff;
+}
+
+.primary:hover:not(:disabled) {
+  border-color: #24604f;
+  background: #24604f;
+}
+
+.secondary,
+.reset {
+  border: 1px solid #587066;
+  background: #fff;
+  color: #153f35;
+}
+
+.secondary:hover:not(:disabled),
+.reset:hover:not(:disabled) {
+  border-color: #153f35;
+  background: #edf3ef;
+}
+
+.text:hover:not(:disabled) {
+  color: #153f35;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+nav button:hover:not(.active):not(:disabled) {
+  background: #e4e9e5;
+  color: #203d34;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+/* Make all logo/document upload controls look clickable instead of body copy. */
+input[type="file"] {
+  min-height: 48px;
+  padding: 6px;
+  border: 1px solid #bdcbc4;
+  background: #f8faf7;
+  color: #586b62;
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+  min-height: 34px;
+  margin-right: 10px;
+  padding: 8px 12px;
+  border: 1px solid #2b705b;
+  border-radius: 5px;
+  background: #fff;
+  color: #1f624e;
+  font: inherit;
+  font-size: .75rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+input[type="file"]:hover {
+  border-color: #2b705b;
+  background: #fff;
+}
+
+input[type="file"]:hover::file-selector-button,
+input[type="file"]:focus-visible::file-selector-button {
+  background: #e9f1ed;
+}
+
+.remove-logo {
+  width: fit-content;
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid rgba(129,43,34,.3);
+  border-radius: 5px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.remove-logo:hover:not(:disabled) {
+  border-color: #812b22;
+  background: #fff0ee;
+}
+
+.theme-save .primary,
+footer .primary,
+footer .secondary,
+.topbar-actions .reset {
+  min-height: 42px;
+}
+
+@media (max-width: 560px) {
+  footer .primary,
+  footer .secondary,
+  .theme-save .primary,
+  .topbar-actions .reset {
+    width: 100%;
+    text-align: center;
+  }
+}

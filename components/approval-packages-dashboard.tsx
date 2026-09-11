@@ -53,8 +53,11 @@ export function ApprovalPackagesDashboard() {
     await loadPackages(page, pageSize);
   }
 
+  const firstShown = pagination.total === 0 ? 0 : ((pagination.page - 1) * pagination.pageSize) + 1;
+  const lastShown = pagination.total === 0 ? 0 : Math.min(firstShown + packages.length - 1, pagination.total);
+
   return <main className="approval-dashboard">
-    <div className="approval-dashboard-head"><div><p className="approval-kicker">Church review</p><h1>Approval Packages</h1><p>Track pastoral review status, notification history, approvals, and revision requests.</p></div><button type="button" className="approval-approve" onClick={() => setShowManualCreate((value) => !value)}>{showManualCreate ? "Close manual form" : "Manual package"}</button></div>
+    <div className="approval-dashboard-head"><div><p className="approval-kicker">Church review</p><h1>Approval Packages</h1><p>Track pastoral review status, notification history, approvals, and revision requests.</p></div><button type="button" className="approval-secondary-action" onClick={() => setShowManualCreate((value) => !value)}>{showManualCreate ? "Close manual form" : "Manual package"}</button></div>
     {error && <div className="approval-admin-error"><strong>Approval history unavailable</strong><p>{error}</p></div>}
     {actionMessage && <div className="approval-notice" role="status">{actionMessage}</div>}
     {createdLink && <div className="approval-created-link"><strong>Secure review link</strong><input readOnly value={createdLink} onFocus={(event) => event.currentTarget.select()} /></div>}
@@ -69,23 +72,23 @@ export function ApprovalPackagesDashboard() {
       <button className="approval-approve" disabled={saving}>{saving ? "Creating…" : "Create secure review"}</button>
     </form>}
     {!error && <>
-      <p className="approval-kicker">{pagination.total} total packages</p>
-      <div className="approval-table">
-        <div className="approval-table-row approval-table-labels"><span>Church / Package</span><span>Week of</span><span>Resources</span><span>Status</span><span>Notification</span></div>
+      <p className="approval-list-summary">Showing {firstShown}–{lastShown} of {pagination.total}</p>
+      {packages.length === 0 ? <div className="revision-empty"><strong>No approval packages yet.</strong><span>Packages sent from Production will appear here.</span></div> : <div className="approval-table approval-package-table">
+        <div className="approval-table-row approval-table-labels"><span>Church</span><span>Package</span><span>Week of</span><span>Resources</span><span>Status</span><span>Notification</span></div>
         {packages.map((item) => <div className="approval-table-row" key={item.id}>
-          <span><strong>{item.churchName}</strong><small>{item.title}</small></span><span>{item.weekOf}</span><span>{item.resourceCount}</span><span className={`approval-status status-${item.status}`}>{item.status.replaceAll("_", " ")}</span>
+          <span><strong>{item.churchName}</strong></span><span className="approval-package-title"><strong>{item.title}</strong></span><span>{item.weekOf}</span><span>{item.resourceCount}</span><span className={`approval-status status-${item.status}`}>{item.status.replaceAll("_", " ")}</span>
           <span className="approval-notification">
             <span className="approval-notification-stage"><small>Review request</small><strong className={`notification-${item.reviewNotificationStatus}`}>{item.reviewNotificationStatus.replaceAll("_", " ")}</strong>{item.reviewNotificationMessage && <small>{item.reviewNotificationMessage}</small>}</span>
             <span className="approval-notification-stage"><small>Decision</small><strong className={`notification-${item.decisionNotificationStatus}`}>{item.decisionNotificationStatus.replaceAll("_", " ")}</strong>{item.decisionNotificationMessage && <small>{item.decisionNotificationMessage}</small>}{["approved", "revision_requested"].includes(item.status) && <button type="button" onClick={() => void retryNotification(item)} disabled={retryingId === item.id}>{retryingId === item.id ? "Sending…" : "Retry decision email"}</button>}</span>
           </span>
         </div>)}
-      </div>
-      <div className="approval-pagination" aria-label="Approval package pagination">
+      </div>}
+      {pagination.total > 0 && <div className="approval-pagination" aria-label="Approval package pagination">
         <button type="button" disabled={pagination.page <= 1} onClick={() => void loadPackages(pagination.page - 1, pageSize)}>Previous</button>
         <span>Page {pagination.page} of {pagination.totalPages}</span>
         <label>Rows <select value={pageSize} onChange={(event) => void loadPackages(1, Number(event.target.value))}><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option></select></label>
         <button type="button" disabled={pagination.page >= pagination.totalPages} onClick={() => void loadPackages(pagination.page + 1, pageSize)}>Next</button>
-      </div>
+      </div>}
     </>}
   </main>;
 }
