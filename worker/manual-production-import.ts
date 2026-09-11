@@ -1,3 +1,4 @@
+import { strFromU8, unzipSync } from "fflate";
 import { validateFamilyV3Html, resolveFamilyWorshipPreferences } from "./family-resource.ts";
 import { validateMidweekV3Html } from "./midweek-resource.ts";
 import type { CanonicalSermonAnalysis } from "./sermon-analysis.ts";
@@ -30,59 +31,39 @@ export async function handleManualProductionImport(
     return json({ error: "Invalid manual import form." }, 400);
   }
 
-  const churchSlug = clean(String(form.get("churchSlug") || ""), 120);
-  const weekOf = clean(String(form.get("weekOf") || ""), 10);
-  const church = churches.find((item) => item.slug === churchSlug);
-  if (!church) return json({ error: "Choose a configured church." }, 400);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekOf)) return json({ error: "Choose a valid sermon date." }, 400);
-
-  const transcriptFile = form.get("transcript");
-  const analysisFile = form.get("analysis");
-  if (!(transcriptFile instanceof File) || transcriptFile.size === 0) return json({ error: "Upload the saved sermon transcript." }, 400);
-  if (!(analysisFile instanceof File) || analysisFile.size === 0) return json({ error: "Upload the canonical sermon-analysis JSON file." }, 400);
-  if (!/\.(txt|vtt)$/i.test(transcriptFile.name)) return json({ error: "Transcript must be a .txt or .vtt file." }, 400);
-  if (!/\.json$/i.test(analysisFile.name)) return json({ error: "Sermon analysis must be a .json file." }, 400);
-  if (transcriptFile.size > 5_000_000) return json({ error: "Transcript is too large. Maximum upload is 5 MB." }, 413);
-  if (analysisFile.size > 5_000_000) return json({ error: "Sermon analysis is too large. Maximum upload is 5 MB." }, 413);
-
-  let analysis: CanonicalSermonAnalysis;
-  try {
-    analysis = JSON.parse(await analysisFile.text()) as CanonicalSermonAnalysis;
-  } catch {
-    return json({ error: "Sermon analysis JSON is malformed." }, 400);
+  let input: ManualProductionImport;
+  const packageFile = form.get("package");
+  if (packageFile instanceof File && packageFile.size > 0) {
+    if (!/\.zip$/i.test(packageFile.name)) return json({ error: "Manual production package must be a .zip file." }, 400);
+    if (packageFile.size > 25_000_000) return json({ error: "Manual production package is too large. Maximum upload is 25 MB." }, 413);
+    try {
+      input = parseManualProductionZip(new Uint8Array(await packageFile.arrayBuffer()));
+    } catch (error) {
+      return json({ error: error instanceof Error ? clean(error.message, 500) : "Manual production package could not be read." }, 422);
+    }
+  } else {
+    const parsed = await parseIndividualImportForm(form);
+    if (parsed instanceof Response) return parsed;
+    input = parsed;
   }
 
-  const resources: Partial<Record<ManualImportResourceKind, string>> = {};
-  for (const kind of RESOURCE_KINDS) {
-    const value = form.get(kind);
-    if (!(value instanceof File) || value.size === 0) continue;
-    if (!/\.html?$/i.test(value.name)) return json({ error: `${titleCase(kind)} resource must be an HTML file.` }, 400);
-    if (value.size > 2_000_000) return json({ error: `${titleCase(kind)} resource is too large. Maximum upload is 2 MB.` }, 413);
-    resources[kind] = await value.text();
-  }
-
-  const input: ManualProductionImport = {
-    churchSlug,
-    weekOf,
-    transcriptFilename: clean(transcriptFile.name, 180),
-    transcriptText: await transcriptFile.text(),
-    analysis,
-    resources,
-  };
+  const church = churches.find((item) => item.slug === input.churchSlug);
+  if (!church) return json({ error: `The package references an unconfigured church: ${input.churchSlug || "unknown"}.` }, 400);
 
   const validation = validateManualProductionImport(input, church);
   if (!validation.ok) return json({ error: validation.error }, 422);
 
-  const duplicate = await findDuplicateManifest(env.BUCKET, churchSlug, weekOf);
+  const duplicate = await findDuplicateManifest(env.BUCKET, input.churchSlug, input.weekOf);
   if (duplicate) {
     return json({
-      error: `A production job already exists for ${church.name} on ${weekOf}. Delete that job first if you intend to replace it.`,
+      error: `A production job already exists for ${church.name} on ${input.weekOf}. Delete that job first if you intend to replace it.`,
       existingJobId: duplicate.id,
     }, 409);
   }
 
   const id = crypto.randomUUID();
   const createdAt = new Date().toISOString();
+  const analysis = input.analysis;
   const controllingSourceId = analysis.source_authority?.controlling_source_id || `transcript-${id}`;
   const transcriptKey = `production/jobs/${id}/sources/${controllingSourceId}/${safeStorageName(input.transcriptFilename)}`;
   const analysisKey = `production/jobs/${id}/sermon-analysis.json`;
@@ -117,7 +98,7 @@ export async function handleManualProductionImport(
     id,
     churchSlug: church.slug,
     churchName: church.name,
-    weekOf,
+    weekOf: input.weekOf,
     createdAt,
     status: "ready_for_internal_review",
     sourceFilename: input.transcriptFilename,
@@ -151,6 +132,87 @@ export async function handleManualProductionImport(
   return json({ ok: true, job: manifest }, 201);
 }
 
+async function parseIndividualImportForm(form: FormData): Promise<ManualProductionImport | Response> {
+  const churchSlug = clean(String(form.get("churchSlug") || ""), 120);
+  const weekOf = clean(String(form.get("weekOf") || ""), 10);
+  if (!churchSlug) return json({ error: "Choose a configured church." }, 400);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekOf)) return json({ error: "Choose a valid sermon date." }, 400);
+
+  const transcriptFile = form.get("transcript");
+  const analysisFile = form.get("analysis");
+  if (!(transcriptFile instanceof File) || transcriptFile.size === 0) return json({ error: "Upload the saved sermon transcript." }, 400);
+  if (!(analysisFile instanceof File) || analysisFile.size === 0) return json({ error: "Upload the canonical sermon-analysis JSON file." }, 400);
+  if (!/\.(txt|vtt)$/i.test(transcriptFile.name)) return json({ error: "Transcript must be a .txt or .vtt file." }, 400);
+  if (!/\.json$/i.test(analysisFile.name)) return json({ error: "Sermon analysis must be a .json file." }, 400);
+  if (transcriptFile.size > 5_000_000) return json({ error: "Transcript is too large. Maximum upload is 5 MB." }, 413);
+  if (analysisFile.size > 5_000_000) return json({ error: "Sermon analysis is too large. Maximum upload is 5 MB." }, 413);
+
+  let analysis: CanonicalSermonAnalysis;
+  try { analysis = JSON.parse(await analysisFile.text()) as CanonicalSermonAnalysis; }
+  catch { return json({ error: "Sermon analysis JSON is malformed." }, 400); }
+
+  const resources: Partial<Record<ManualImportResourceKind, string>> = {};
+  for (const kind of RESOURCE_KINDS) {
+    const value = form.get(kind);
+    if (!(value instanceof File) || value.size === 0) continue;
+    if (!/\.html?$/i.test(value.name)) return json({ error: `${titleCase(kind)} resource must be an HTML file.` }, 400);
+    if (value.size > 2_000_000) return json({ error: `${titleCase(kind)} resource is too large. Maximum upload is 2 MB.` }, 413);
+    resources[kind] = await value.text();
+  }
+
+  return {
+    churchSlug,
+    weekOf,
+    transcriptFilename: clean(transcriptFile.name, 180),
+    transcriptText: await transcriptFile.text(),
+    analysis,
+    resources,
+  };
+}
+
+export function parseManualProductionZip(bytes: Uint8Array): ManualProductionImport {
+  let entries: Record<string, Uint8Array>;
+  try { entries = unzipSync(bytes); }
+  catch { throw new Error("The ZIP file is invalid or corrupted."); }
+
+  const paths = Object.keys(entries).filter((path) => !path.endsWith("/"));
+  const manifestPaths = paths.filter((path) => /(?:^|\/)r2\/production\/manifests\/[^/]+\.json$/i.test(path) || /(?:^|\/)production\/manifests\/[^/]+\.json$/i.test(path));
+  if (manifestPaths.length !== 1) throw new Error("The ZIP package must contain exactly one production manifest under r2/production/manifests/. ");
+
+  let sourceManifest: ProductionManifest;
+  try { sourceManifest = JSON.parse(readZipText(entries, manifestPaths[0])) as ProductionManifest; }
+  catch { throw new Error("The packaged production manifest is malformed JSON."); }
+
+  if (!sourceManifest.churchSlug || !sourceManifest.weekOf || !sourceManifest.analysisStorageKey) throw new Error("The packaged production manifest is missing church, date, or analysis storage metadata.");
+  const rootPrefix = manifestPaths[0].slice(0, manifestPaths[0].indexOf("production/manifests/"));
+  const analysisPath = `${rootPrefix}${sourceManifest.analysisStorageKey}`;
+  const analysisText = readZipText(entries, analysisPath);
+  let analysis: CanonicalSermonAnalysis;
+  try { analysis = JSON.parse(analysisText) as CanonicalSermonAnalysis; }
+  catch { throw new Error("The packaged sermon-analysis.json is malformed JSON."); }
+
+  const transcriptSource = sourceManifest.sourceFiles?.find((source) => source.sourceType === "transcript");
+  if (!transcriptSource?.storageKey) throw new Error("The packaged production manifest does not identify a transcript source.");
+  const transcriptPath = `${rootPrefix}${transcriptSource.storageKey}`;
+  const transcriptText = readZipText(entries, transcriptPath);
+
+  const resources: Partial<Record<ManualImportResourceKind, string>> = {};
+  for (const kind of RESOURCE_KINDS) {
+    const packaged = sourceManifest.resources.find((resource) => resource.kind.toLowerCase() === kind);
+    if (!packaged?.storageKey) continue;
+    resources[kind] = readZipText(entries, `${rootPrefix}${packaged.storageKey}`);
+  }
+
+  return {
+    churchSlug: clean(sourceManifest.churchSlug, 120),
+    weekOf: clean(sourceManifest.weekOf, 10),
+    transcriptFilename: clean(transcriptSource.filename || sourceManifest.sourceFilename || "sermon-transcript.txt", 180),
+    transcriptText,
+    analysis,
+    resources,
+  };
+}
+
 export function validateManualProductionImport(input: ManualProductionImport, church: ChurchConfig): { ok: true } | { ok: false; error: string } {
   if (input.churchSlug !== church.slug) return { ok: false, error: "Imported church does not match the selected church." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.weekOf)) return { ok: false, error: "Imported sermon date is invalid." };
@@ -159,7 +221,7 @@ export function validateManualProductionImport(input: ManualProductionImport, ch
 
   const analysis = input.analysis as CanonicalSermonAnalysis | undefined;
   if (!analysis || analysis.schema_version !== "3.0") return { ok: false, error: "Manual import requires a Canonical Sermon Analysis v3 file." };
-  if (!analysis.analysis_id || !analysis.sermon || !analysis.source_authority || !analysis.fidelity_audit) return { ok: false, error: "Canonical sermon analysis is missing required production fields." };
+  if (!analysis.analysis_id || !analysis.sermon || !analysis.source_authority || !analysis.source_quality || !analysis.fidelity_audit) return { ok: false, error: "Canonical sermon analysis is missing required production fields." };
   if (analysis.sermon.church_id !== church.slug) return { ok: false, error: `Analysis church_id must be ${church.slug}.` };
   if (analysis.sermon.sermon_date !== input.weekOf) return { ok: false, error: `Analysis sermon_date must be ${input.weekOf}.` };
   if (!analysis.source_authority.transcript_available || !analysis.source_authority.controlling_source_id) return { ok: false, error: "Canonical analysis must identify an available controlling transcript source." };
@@ -234,6 +296,12 @@ async function findDuplicateManifest(bucket: R2Bucket, churchSlug: string, weekO
     cursor = listed.truncated ? listed.cursor : undefined;
   } while (cursor);
   return null;
+}
+
+function readZipText(entries: Record<string, Uint8Array>, path: string) {
+  const exact = entries[path] || entries[path.replace(/^\.\//, "")];
+  if (!exact) throw new Error(`The ZIP package is missing ${path}.`);
+  return strFromU8(exact);
 }
 
 function accessIdentityEmail(request: Request) {
