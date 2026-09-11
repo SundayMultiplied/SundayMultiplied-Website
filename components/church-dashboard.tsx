@@ -7,9 +7,10 @@ import { sortChurchHistory, type ChurchHistorySort } from "./dashboard-sorting";
 type Resource = { id: string; packageId: string; kind: string; title: string; version: number; previewUrl: string | null; sortOrder: number; createdAt: string };
 type PackageItem = { id: string; title: string; seriesTitle: string | null; weekOf: string; scripture: string | null; status: string; reviewerName: string | null; reviewerEmail: string | null; viewedAt: string | null; decidedAt: string | null; createdAt: string; updatedAt: string; resourceCount: number; resources: Resource[] };
 type ActivityItem = { id: string; packageId: string; eventType: string; actorName: string | null; details: unknown; createdAt: string; packageTitle: string; weekOf: string };
-type DashboardData = { church: { id: string; name: string; slug: string }; viewer: { email: string; isAdmin: boolean }; currentPackage: PackageItem | null; packages: PackageItem[]; activity: ActivityItem[] };
+type DashboardData = { church: { id: string; name: string; slug: string }; viewer: { email: string; isAdmin: boolean }; currentPackage: PackageItem | null; canReviewCurrent: boolean; packages: PackageItem[]; activity: ActivityItem[] };
 
 const HISTORY_PAGE_SIZE = 10;
+const ACTIVE_REVIEW_STATUSES = new Set(["ready_for_review", "viewed", "revised"]);
 
 export function ChurchDashboard({ slug }: { slug: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -52,7 +53,8 @@ export function ChurchDashboard({ slug }: { slug: string }) {
 
   const current = data.currentPackage;
   const logoUrl = `/api/resource-assets/${encodeURIComponent(data.church.slug)}/logo`;
-  const nextStep = current ? packageNextStep(current.status) : null;
+  const nextStep = current ? packageNextStep(current.status, data.canReviewCurrent) : null;
+  const reviewLaunchUrl = `/api/church-dashboard/${encodeURIComponent(data.church.slug)}/review-current`;
 
   return (
     <main className={styles.shell}>
@@ -101,7 +103,7 @@ export function ChurchDashboard({ slug }: { slug: string }) {
               <div className={styles.resourceButtons} aria-label="Current package resources">
                 {current.resources.map((resource) => resource.previewUrl ? <a key={resource.id} href={resource.previewUrl} target="_blank" rel="noreferrer">Open {resource.title} ↗</a> : <span className={styles.unavailableResource} key={resource.id}>{resource.title} · Not available yet</span>)}
               </div>
-              {nextStep && <div className={`${styles.nextStep} ${nextStep.tone === "attention" ? styles.nextStepAttention : ""}`}><strong>{nextStep.title}</strong><p>{nextStep.body}</p></div>}
+              {nextStep && <div className={`${styles.nextStep} ${nextStep.tone === "attention" ? styles.nextStepAttention : ""}`}><strong>{nextStep.title}</strong><p>{nextStep.body}</p>{data.canReviewCurrent && ACTIVE_REVIEW_STATUSES.has(current.status) && <a className={styles.reviewLaunch} href={reviewLaunchUrl}>Review current package →</a>}</div>}
             </>
           )}
         </article>
@@ -130,12 +132,13 @@ export function ChurchDashboard({ slug }: { slug: string }) {
 }
 
 function formatStatus(value: string) {
-  const labels: Record<string, string> = { approved: "Approved", revision_requested: "Changes requested", ready_for_review: "Ready to review", sent_for_approval: "Awaiting approval" };
+  const labels: Record<string, string> = { approved: "Approved", revision_requested: "Changes requested", ready_for_review: "Ready to review", viewed: "Review in progress", revised: "Revised resources ready", sent_for_approval: "Awaiting approval" };
   return labels[value] || value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function packageNextStep(status: string) {
-  if (["ready_for_review", "sent_for_approval"].includes(status)) return { tone: "attention", title: "Your review is the next step", body: "Open the resources above, then use the secure review link sent to you by email to approve them or request changes." };
+function packageNextStep(status: string, canReviewCurrent: boolean) {
+  if (ACTIVE_REVIEW_STATUSES.has(status)) return { tone: "attention", title: canReviewCurrent ? "Your review is the next step" : "This package is ready for review", body: canReviewCurrent ? "Open the resources above, then launch the secure review here to approve them or request changes." : "The assigned reviewer can launch the secure review from their church dashboard or use the review link sent by email." };
+  if (status === "sent_for_approval") return { tone: "attention", title: "Awaiting review", body: "The assigned reviewer can use the secure review link sent by email." };
   if (status === "revision_requested") return { tone: "neutral", title: "Changes are in progress", body: "Your requested changes have been received. Updated resources will appear here when they are ready." };
   if (status === "approved") return { tone: "neutral", title: "This package is approved", body: "These resources are ready to use. You can return to any previous week from the history below." };
   return null;
@@ -144,5 +147,5 @@ function packageNextStep(status: string) {
 function formatDate(value: string) { const date = new Date(`${value.slice(0, 10)}T12:00:00`); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date); }
 function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(date); }
 function activityLabel(eventType: string) { const labels: Record<string, string> = { created: "Weekly package prepared", viewed: "Review opened", approved: "Resources approved", revision_requested: "Changes requested", notification_sent: "Follow-up sent", review_ready_notification_sent: "Review invitation sent" }; return labels[eventType] || formatStatus(eventType); }
-function statusClass(status: string, sheet: Record<string, string>) { if (status === "approved") return sheet.approved || ""; if (status === "revision_requested") return sheet.revision || ""; if (["ready_for_review", "sent_for_approval"].includes(status)) return sheet.pending || ""; return sheet.neutral || ""; }
+function statusClass(status: string, sheet: Record<string, string>) { if (status === "approved") return sheet.approved || ""; if (status === "revision_requested") return sheet.revision || ""; if (["ready_for_review", "viewed", "revised", "sent_for_approval"].includes(status)) return sheet.pending || ""; return sheet.neutral || ""; }
 function churchInitials(name: string) { return name.split(/\s+/).filter(Boolean).slice(0, 3).map((part) => part[0]?.toUpperCase() || "").join("") || "SM"; }
