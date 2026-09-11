@@ -16,6 +16,7 @@ interface D1Database {
 }
 
 interface R2ObjectMetadata {
+  key?: string;
   httpEtag: string;
   size: number;
   range?: { offset?: number; length?: number; suffix?: number };
@@ -24,11 +25,23 @@ interface R2ObjectMetadata {
 
 interface R2ObjectBody extends R2ObjectMetadata {
   body: ReadableStream;
+  json<T = unknown>(): Promise<T>;
+}
+
+interface R2ListedObject {
+  key: string;
+}
+
+interface R2Objects {
+  objects: R2ListedObject[];
+  truncated: boolean;
+  cursor?: string;
 }
 
 interface R2Bucket {
   head(key: string): Promise<R2ObjectMetadata | null>;
   get(key: string, options?: { range?: Headers }): Promise<R2ObjectBody | null>;
+  list(options?: { prefix?: string; cursor?: string; limit?: number }): Promise<R2Objects>;
 }
 
 interface Fetcher {
@@ -52,5 +65,6 @@ declare namespace Cloudflare {
     BREVO_API_KEY?: string;
     APPROVAL_ADMIN_EMAIL?: string;
     APPROVAL_NOTIFICATION_EMAIL?: string;
+    PUBLIC_SITE_ORIGIN?: string;
   }
 }
