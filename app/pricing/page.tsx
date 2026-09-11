@@ -45,6 +45,7 @@ export default function PricingPage() {
           <details><summary>Who distributes the weekly resources?<span>+</span></summary><p>Sunday Multiplied delivers the finished files to your church staff. Your team decides how and where to share them.</p></details>
           <details><summary>Can we start with only Group Multiplied?<span>+</span></summary><p>Yes. Group Multiplied is a complete standalone weekly service and a practical place to begin.</p></details>
           <details><summary>Are these generic Bible-study templates?<span>+</span></summary><p>No. Each guide is built from the actual sermon and reflects the pastor’s emphasis, language, illustrations, and application.</p></details>
+          <details><summary>Is Sunday Multiplied software our staff has to operate?<span>+</span></summary><p>No. Sunday Multiplied is a managed weekly service. We handle sermon analysis, resource production, formatting, and the review workflow. Your team reviews the material, requests changes if needed, and decides where approved resources should be shared.</p></details>
           <details><summary>What does the pilot help us learn?<span>+</span></summary><p>It lets your team test production timing, distribution, staff workflow, audience response, and the right mix of weekly touchpoints before a longer engagement.</p></details>
         </div>
       </section>
