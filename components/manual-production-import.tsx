@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-
-type ResourceKind = "monday" | "group" | "family" | "midweek";
-type ChurchConfig = {
-  slug: string;
-  name: string;
-  resources: ResourceKind[];
-};
+import { useState, type FormEvent } from "react";
 
 type ImportedJob = {
   id: string;
@@ -17,41 +10,10 @@ type ImportedJob = {
   metadata: { sermonTitle: string };
 };
 
-const ALL_RESOURCE_KINDS: ResourceKind[] = ["monday", "group", "family", "midweek"];
-const resourceLabels: Record<ResourceKind, string> = {
-  monday: "Monday Multiplied HTML",
-  group: "Group Multiplied HTML",
-  family: "Family Multiplied HTML",
-  midweek: "Midweek Multiplied HTML",
-};
-
 export function ManualProductionImport() {
-  const [churches, setChurches] = useState<ChurchConfig[]>([]);
-  const [churchSlug, setChurchSlug] = useState("");
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [job, setJob] = useState<ImportedJob | null>(null);
-
-  const selectedChurch = useMemo(() => churches.find((church) => church.slug === churchSlug), [churches, churchSlug]);
-  const visibleResourceKinds = selectedChurch?.resources || ALL_RESOURCE_KINDS;
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const response = await fetch("/api/production/churches", { cache: "no-store" });
-        const data = await response.json() as { error?: string; churches?: ChurchConfig[] };
-        if (!response.ok) throw new Error(data.error || "Unable to load configured churches.");
-        const configured = data.churches || [];
-        setChurches(configured);
-        if (configured.length === 1) setChurchSlug(configured[0].slug);
-      } catch (failure) {
-        setError(failure instanceof Error ? failure.message : "Unable to load configured churches.");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,7 +30,6 @@ export function ManualProductionImport() {
       if (!response.ok || !data.job) throw new Error(data.error || "Unable to import the manual production package.");
       setJob(data.job);
       event.currentTarget.reset();
-      setChurchSlug(churches.find((church) => church.name === data.job?.churchName)?.slug || "");
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to import the manual production package.");
     } finally {
@@ -81,7 +42,7 @@ export function ManualProductionImport() {
       <div>
         <p className="approval-kicker">Sunday Multiplied operations</p>
         <h1>Manual Production Import</h1>
-        <p>Load a completed sermon analysis and finished resources directly into Production without running an OpenAI generation.</p>
+        <p>Load a completed production package directly into the normal internal-review queue without running an OpenAI generation.</p>
       </div>
       <Link className="production-intake-toggle" href="/production">Back to Production</Link>
     </div>
@@ -89,8 +50,8 @@ export function ManualProductionImport() {
     <section className="approval-create">
       <div className="approval-create-heading">
         <div>
-          <h2>Import a review-ready package</h2>
-          <p>The importer validates the current Canonical Analysis v3 and resource HTML contracts before anything is written to production storage.</p>
+          <h2>Import a review-ready ZIP</h2>
+          <p>Upload the ZIP produced by the manual Sunday Multiplied workflow. The importer reads its packaged R2 manifest, transcript, Canonical Sermon Analysis v3, and final resource HTML automatically.</p>
         </div>
       </div>
 
@@ -100,45 +61,15 @@ export function ManualProductionImport() {
       </div>}
 
       <form id="manual-production-import-form" className="production-source-form" onSubmit={(event) => void submit(event)}>
-        <div className="production-source-grid">
-          <label>Church
-            <select name="churchSlug" required disabled={loading || saving} value={churchSlug} onChange={(event) => setChurchSlug(event.target.value)}>
-              <option value="">Choose a church</option>
-              {churches.map((church) => <option key={church.slug} value={church.slug}>{church.name}</option>)}
-            </select>
-          </label>
-          <label>Sermon date
-            <input name="weekOf" type="date" required disabled={saving} />
-          </label>
-        </div>
-
-        <div className="production-source-grid">
-          <label>Saved transcript (.txt or .vtt)
-            <input name="transcript" type="file" accept=".txt,.vtt,text/plain,text/vtt" required disabled={saving} />
-          </label>
-          <label>Canonical Sermon Analysis v3 (.json)
-            <input name="analysis" type="file" accept=".json,application/json" required disabled={saving} />
-          </label>
-        </div>
-
-        <div className="approval-create-heading">
-          <div>
-            <h3>Finished resource HTML</h3>
-            <p>Upload every resource subscribed for the selected church. These files are stored exactly as supplied after contract validation.</p>
-          </div>
-        </div>
-
-        <div className="production-source-grid">
-          {visibleResourceKinds.map((kind) => <label key={kind}>{resourceLabels[kind]}
-            <input name={kind} type="file" accept=".html,.htm,text/html" required={Boolean(selectedChurch?.resources.includes(kind))} disabled={saving} />
-          </label>)}
-        </div>
+        <label>Manual production package (.zip)
+          <input name="package" type="file" accept=".zip,application/zip" required disabled={saving} />
+        </label>
 
         <div className="approval-notice">
-          <strong>No AI call is made.</strong> The importer rejects blocked fidelity audits, church/date mismatches, missing subscribed resources, old Family/Midweek formats, embedded Group midweek sections, and duplicate church/date jobs.
+          <strong>No AI call is made.</strong> The importer derives the church and sermon date from the package and rejects malformed packages, blocked fidelity audits, church/date mismatches, missing subscribed resources, obsolete Family/Midweek formats, embedded Group midweek sections, invalid worship links, and duplicate church/date jobs.
         </div>
 
-        <button type="submit" className="approval-approve" disabled={saving || loading || !selectedChurch}>{saving ? "Validating and importing…" : "Import into Production"}</button>
+        <button type="submit" className="approval-approve" disabled={saving}>{saving ? "Validating and importing…" : "Import into Production"}</button>
       </form>
     </section>
   </main>;
