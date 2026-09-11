@@ -14,7 +14,8 @@ export default function Home() {
       <div className="hero-copy">
         <p className="eyebrow light">Cultivating fruit beyond Sunday</p>
         <h1>The sermon is<br /><em>not the finish line.</em></h1>
-        <p className="hero-lead">Sunday Multiplied helps churches turn one faithful message into intentional rhythms that carry God’s Word into the other 167 hours.</p>
+        <p className="hero-lead">Sunday Multiplied turns what your church actually heard Sunday into a coordinated week of remembering, discussing, and practicing God’s Word.</p>
+        <p><strong>You preach. We prepare the week.</strong></p>
         <div className="hero-actions">
           <Link className="button button-light" href="/contact">Explore what your week could become <span>↗</span></Link>
           <Link className="text-link light" href="#approach">See the approach <span>↓</span></Link>
@@ -23,13 +24,13 @@ export default function Home() {
       <div className="hero-orbit" aria-hidden="true">
         <div className="orbit orbit-one" /><div className="orbit orbit-two" />
         <div className="orbit-center"><strong>1</strong><span>sermon</span></div>
-        <span className="orbit-label label-one">Remember</span><span className="orbit-label label-two">Discuss</span><span className="orbit-label label-three">Practice</span><span className="orbit-label label-four">Share</span>
+        <span className="orbit-label label-one">Remember</span><span className="orbit-label label-two">Discuss</span><span className="orbit-label label-three">Practice</span><span className="orbit-label label-four">Reinforce</span>
       </div>
       <div className="hero-index"><span>01</span><span>Mission</span></div>
     </section>
 
     <section className="hybrid-proof" aria-label="What churches receive">
-      <p>Built from your actual sermon</p><p>Church-branded</p><p>Ready for staff to share</p><p>PDF + mobile-friendly HTML</p>
+      <p>Built from what your church actually heard</p><p>Church-branded</p><p>Ready for staff to share</p><p>PDF + mobile-friendly HTML</p>
     </section>
 
     <section className="tension section-pad" id="approach">
@@ -38,19 +39,19 @@ export default function Home() {
     </section>
 
     <section className="rhythm section-pad">
-      <div className="section-heading"><p className="eyebrow light">One sermon. Multiple touchpoints.</p><h2>A weekly rhythm built from what your church actually heard.</h2><p>Pastoral in tone. Branded for your church. Designed for formation, not content volume.</p></div>
+      <div className="section-heading"><p className="eyebrow light">One sermon. One coordinated week.</p><h2>A discipleship rhythm built from what your church actually heard.</h2><p>Each resource has a different job—but they all carry the same pastoral direction into the week. Designed for formation, not content volume.</p></div>
       <div className="resource-grid">{resources.map(([name,moment,copy],index)=><article className="resource-card" key={name}><div className="resource-top"><span>0{index+1}</span><span>{moment}</span></div><h3>{name}</h3><p>{copy}</p><div className="resource-line" /></article>)}</div>
       <Link className="text-link light hybrid-section-link" href="/services">Explore the complete weekly rhythm ↗</Link>
     </section>
 
     <section className="hybrid-benefits section-pad">
-      <div><p className="eyebrow">Strengthen what already exists</p><h2>Support the ministry rhythm your church already has.</h2><p>Sunday Multiplied acts as connective tissue between the sermon and the environments where discipleship continues.</p></div>
+      <div><p className="eyebrow">Strengthen what already exists</p><h2>Support the ministry rhythm your church already has.</h2><p>Sunday Multiplied acts as connective tissue between the sermon and the environments where discipleship continues.</p><p>And unlike another software tool, Sunday Multiplied does not give your staff more work to operate. We handle the weekly production workflow and return polished resources for your team to review and use.</p></div>
       <ul><li>Reinforce the pastor’s teaching throughout the week.</li><li>Equip families, groups, and leaders with sermon-rooted next steps.</li><li>Reduce weekly preparation for staff and volunteer leaders.</li><li>Move people from hearing toward faithful practice.</li><li>Strengthen existing ministries without adding another program.</li></ul>
     </section>
 
     <section className="hybrid-process section-pad">
-      <div className="section-heading"><p className="eyebrow light">A dependable weekly process</p><h2>Pastoral leadership stays at the center.</h2><p>Sunday Multiplied supports the message and the ministry environments your team already leads.</p></div>
-      <ol><li><span>01</span><div><h3>You preach.</h3><p>The sermon and its pastoral emphasis remain the source.</p></div></li><li><span>02</span><div><h3>We listen + design.</h3><p>We create audience-specific touchpoints rooted in what your church actually heard.</p></div></li><li><span>03</span><div><h3>Your team reviews + shares.</h3><p>Staff receives polished, branded resources ready for the channels you already use.</p></div></li></ol>
+      <div className="section-heading"><p className="eyebrow light">A dependable weekly process</p><h2>Pastoral leadership stays at the center.</h2><p>AI accelerates the work. Pastoral leadership keeps the final word.</p></div>
+      <ol><li><span>01</span><div><h3>You preach.</h3><p>The sermon and its pastoral emphasis remain the source.</p></div></li><li><span>02</span><div><h3>We listen + design.</h3><p>We create audience-specific touchpoints rooted in what your church actually heard.</p></div></li><li><span>03</span><div><h3>Your team reviews + approves.</h3><p>Your ministry team keeps the final word. Review the resources, request changes when needed, and approve what faithfully reflects the message before anything is shared.</p></div></li></ol>
     </section>
 
     <section className="formation section-pad"><div className="formation-quote"><span className="quote-mark">“</span><blockquote>God produces the fruit.<br />We cultivate the conditions<br />for people to <em>abide.</em></blockquote></div><div className="formation-note"><p className="eyebrow">Conviction + craft</p><p>Sunday Multiplied is not a theological shift. It is a pedagogical one—joining confidence in the Spirit’s work with thoughtful rhythms of remembering, conversation, and practice.</p></div></section>
