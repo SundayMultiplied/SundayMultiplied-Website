@@ -1,0 +1,172 @@
+.panel {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid rgba(19, 34, 26, 0.14);
+  border-radius: 14px;
+  background: #f8faf7;
+  color: #23372c;
+}
+
+.heading,
+.recommendation,
+.selected,
+.controls {
+  display: grid;
+  gap: 8px;
+}
+
+.heading {
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 14px;
+}
+
+.heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.heading span,
+.recommendation > span,
+.selected > span {
+  color: #6d7a72;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.heading strong {
+  font-size: 1rem;
+}
+
+.badge {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #e4f1e8;
+  color: #2d6440 !important;
+  font-size: 0.68rem !important;
+}
+
+.recommendation,
+.selected {
+  margin-top: 14px;
+  padding: 13px 14px;
+  border: 1px solid #dde4de;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.selected {
+  border-color: #cfe0d4;
+  background: #f0f7f2;
+}
+
+.recommendation a,
+.selected a {
+  width: fit-content;
+  color: #315b45;
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.controls {
+  margin-top: 16px;
+}
+
+.controls label {
+  color: #32483c;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.inputRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.inputRow input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #cfd8d1;
+  border-radius: 9px;
+  background: #fff;
+  color: #21362b;
+}
+
+.inputRow button,
+.restore {
+  min-height: 42px;
+  border-radius: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inputRow button {
+  padding: 10px 15px;
+  border: 1px solid #173d2b;
+  background: #173d2b;
+  color: #fff;
+}
+
+.restore {
+  width: fit-content;
+  padding: 8px 11px;
+  border: 1px solid #c8d2cb;
+  background: #fff;
+  color: #365547;
+  font-size: 0.8rem;
+}
+
+.inputRow button:hover:not(:disabled) {
+  background: #21513a;
+}
+
+.restore:hover:not(:disabled) {
+  background: #edf3ef;
+}
+
+.inputRow input:focus-visible,
+.inputRow button:focus-visible,
+.restore:focus-visible,
+.recommendation a:focus-visible,
+.selected a:focus-visible {
+  outline: 3px solid rgba(49, 81, 67, 0.22);
+  outline-offset: 2px;
+}
+
+.inputRow button:disabled,
+.restore:disabled,
+.inputRow input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.help,
+.error,
+.success {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.help { color: #6f7a74; }
+.error { color: #8a2f2f; }
+.success { color: #2c6842; font-weight: 700; }
+
+@media (max-width: 680px) {
+  .heading,
+  .inputRow {
+    grid-template-columns: 1fr;
+  }
+
+  .badge,
+  .inputRow button,
+  .restore {
+    width: 100%;
+  }
+}
