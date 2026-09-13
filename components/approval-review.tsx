@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ReviewPackage } from "../lib/approval-types";
+import { FamilyWorshipOverride } from "./family-worship-override";
 
 type Props = { token: string };
 type Decision = "approve" | "request_revision";
@@ -158,6 +159,7 @@ export function ApprovalReview({ token }: Props) {
           {review.resources.map((resource, index) => {
             const decision = decisions[resource.id];
             const draft = revisionDrafts[resource.id] || { sections: [], action: "", message: "" };
+            const isFamily = resource.kind.toLowerCase().includes("family");
             return (
               <article className="approval-resource" key={resource.id}>
                 <div className="approval-resource-number">0{index + 1}</div>
@@ -167,6 +169,9 @@ export function ApprovalReview({ token }: Props) {
                   {resource.previewUrl
                     ? <a href={`/api/reviews/${encodeURIComponent(token)}/resource/${resource.id}`} target="_blank" rel="noreferrer">Open resource ↗</a>
                     : <span className="approval-unavailable">Preview being prepared</span>}
+                  {isFamily && resource.previewUrl && (
+                    <FamilyWorshipOverride token={token} resourceId={resource.id} disabled={alreadyDecided} />
+                  )}
                   {!alreadyDecided && <div className="approval-actions">
                     <button type="button" className={decision === "approve" ? "approval-approve" : "approval-revise"} onClick={() => chooseDecision(resource.id, "approve")}>✓ Approve this resource</button>
                     <button type="button" className={decision === "request_revision" ? "approval-approve" : "approval-revise"} onClick={() => chooseDecision(resource.id, "request_revision")}>Request changes</button>
