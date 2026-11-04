@@ -169,15 +169,25 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/theme-resource-preview" && request.method === "GET") {
       if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
-      const job = url.searchParams.get("job") || "";
-      const kind = url.searchParams.get("kind") || "";
-      if (!/^[a-zA-Z0-9_-]{1,120}$/.test(job) || !["monday", "group", "family", "midweek"].includes(kind)) return Response.json({ error: "Invalid production job or resource type." }, { status: 400 });
+      const church = url.searchParams.get("church") || "";
+      const kind = url.searchParams.get("kind") || "group";
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(church) || !["monday", "group", "family", "midweek"].includes(kind)) return Response.json({ error: "Invalid church or resource type." }, { status: 400 });
+      const headers = new Headers();
+      for (const name of ["cf-access-authenticated-user-email", "oai-authenticated-user-email", "cf-access-jwt-assertion"]) {
+        const value = request.headers.get(name);
+        if (value) headers.set(name, value);
+      }
       try {
-        const source = await fetch(`https://www.sundaymultiplied.com/api/production/preview/${encodeURIComponent(job)}/${kind}`, { redirect: "error" });
+        const jobsResponse = await fetch("https://www.sundaymultiplied.com/api/production/jobs", { headers, redirect: "error" });
+        if (!jobsResponse.ok) return Response.json({ error: "Unable to access production jobs for this church." }, { status: 502 });
+        const listing = await jobsResponse.json() as { jobs?: Array<{ id: string; churchSlug: string; weekOf: string; createdAt: string; resources?: Array<{ kind: string }> }> };
+        const latest = (listing.jobs || []).filter((item) => item.churchSlug === church && item.resources?.some((resource) => resource.kind.toLowerCase() === kind)).sort((a, b) => b.weekOf.localeCompare(a.weekOf) || b.createdAt.localeCompare(a.createdAt))[0];
+        if (!latest) return Response.json({ error: "No produced " + kind + " resource exists for this church yet." }, { status: 404 });
+        const source = await fetch(`https://www.sundaymultiplied.com/api/production/preview/${encodeURIComponent(latest.id)}/${kind}`, { redirect: "error" });
         if (!source.ok) return Response.json({ error: source.status === 404 ? "Resource not found." : "Unable to retrieve resource." }, { status: source.status === 404 ? 404 : 502 });
         const html = await source.text();
         if (html.length > 1_500_000) return Response.json({ error: "Resource is too large to preview." }, { status: 413 });
-        return Response.json({ html }, { headers: { "cache-control": "private, no-store" } });
+        return Response.json({ html, weekOf: latest.weekOf }, { headers: { "cache-control": "private, no-store" } });
       } catch { return Response.json({ error: "Production preview could not be retrieved." }, { status: 502 }); }
     }
     if (url.pathname === "/theme-churches" && request.method === "GET") {
