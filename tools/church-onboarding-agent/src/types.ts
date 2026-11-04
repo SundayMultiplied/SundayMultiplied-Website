@@ -48,6 +48,10 @@ export type BrandProfile = {
   prayerTextColor?: string;
   headingWeight?: "600" | "700" | "800";
   headingTransform?: "none" | "uppercase";
+  headingTreatment?: "default" | "plain" | "highlight";
+  headingTreatmentScope?: "all" | "selected";
+  headingTreatmentSections?: string;
+  headingHighlightColor?: string;
   pageWidth?: string;
   pagePadding?: string;
   sectionSpacing?: string;
@@ -84,6 +88,10 @@ export const defaultBrandProfile = (): ResolvedBrandProfile => ({
   bodyFont: "Arial, sans-serif",
   headingWeight: "800",
   headingTransform: "uppercase",
+  headingTreatment: "default",
+  headingTreatmentScope: "selected",
+  headingTreatmentSections: "big-idea,tension,practice",
+  headingHighlightColor: "#52c2c6",
   cornerRadius: "8px",
   pageWidth: "800px",
   pagePadding: "52px",
