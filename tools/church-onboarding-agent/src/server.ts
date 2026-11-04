@@ -167,6 +167,19 @@ function githubConfig(env: AppEnv) {
 export default {
   async fetch(request: Request, env: AppEnv) {
     const url = new URL(request.url);
+    if (url.pathname === "/theme-resource-preview" && request.method === "GET") {
+      if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
+      const job = url.searchParams.get("job") || "";
+      const kind = url.searchParams.get("kind") || "";
+      if (!/^[a-zA-Z0-9_-]{1,120}$/.test(job) || !["monday", "group", "family", "midweek"].includes(kind)) return Response.json({ error: "Invalid production job or resource type." }, { status: 400 });
+      try {
+        const source = await fetch(`https://www.sundaymultiplied.com/api/production/preview/${encodeURIComponent(job)}/${kind}`, { redirect: "error" });
+        if (!source.ok) return Response.json({ error: source.status === 404 ? "Resource not found." : "Unable to retrieve resource." }, { status: source.status === 404 ? 404 : 502 });
+        const html = await source.text();
+        if (html.length > 1_500_000) return Response.json({ error: "Resource is too large to preview." }, { status: 413 });
+        return Response.json({ html }, { headers: { "cache-control": "private, no-store" } });
+      } catch { return Response.json({ error: "Production preview could not be retrieved." }, { status: 502 }); }
+    }
     if (url.pathname === "/theme-churches" && request.method === "GET") {
       if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
       try { return Response.json({ churches: await listChurchThemes(githubConfig(env)) }); }
