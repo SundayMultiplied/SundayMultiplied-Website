@@ -1,0 +1,203 @@
+{
+  "analyzedAt": "2026-11-04T00:15:42.665Z",
+  "pagesAnalyzed": [
+    "https://www.lowcountrycc.org/",
+    "https://www.lowcountrycc.org/give",
+    "https://www.lowcountrycc.org/messages",
+    "https://www.lowcountrycc.org/about-beliefs",
+    "https://www.lowcountrycc.org/events"
+  ],
+  "stylesheetsAnalyzed": [],
+  "colorCandidates": [
+    {
+      "value": "#112233",
+      "occurrences": 253,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#112255",
+      "occurrences": 253,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#ffffff",
+      "occurrences": 27,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#112244",
+      "occurrences": 15,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#222222",
+      "occurrences": 6,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#000000",
+      "occurrences": 5,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#52c2c8",
+      "occurrences": 5,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#d4d4d4",
+      "occurrences": 5,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#333333",
+      "occurrences": 4,
+      "sources": [
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#dddddd",
+      "occurrences": 4,
+      "sources": [
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#eeeeee",
+      "occurrences": 1,
+      "sources": [
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "#f5f5f5",
+      "occurrences": 1,
+      "sources": [
+        "https://www.lowcountrycc.org/events"
+      ]
+    }
+  ],
+  "fontCandidates": [
+    {
+      "value": "'Libre Franklin'",
+      "occurrences": 50,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    },
+    {
+      "value": "'Fjalla One'",
+      "occurrences": 20,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    }
+  ],
+  "radiusCandidates": [
+    {
+      "value": "50%",
+      "occurrences": 5,
+      "sources": [
+        "https://www.lowcountrycc.org/",
+        "https://www.lowcountrycc.org/give",
+        "https://www.lowcountrycc.org/messages",
+        "https://www.lowcountrycc.org/about-beliefs",
+        "https://www.lowcountrycc.org/events"
+      ]
+    }
+  ],
+  "suggestedProfile": {
+    "primaryColor": "#112233",
+    "secondaryColor": "#112255",
+    "accentColor": "#112244",
+    "backgroundColor": "#ffffff",
+    "textColor": "#112233",
+    "headingFont": "\"Libre Franklin\", Arial, sans-serif",
+    "bodyFont": "\"Fjalla One\", Arial, sans-serif",
+    "cornerRadius": "50%",
+    "buttonStyle": "rounded",
+    "visualTone": "grounded, restrained, welcoming",
+    "visualNotes": "Automated review suggests a grounded, restrained, welcoming visual system. Confirm recommendations against current logo files and recent social graphics."
+  },
+  "contrastChecks": [
+    {
+      "label": "Body text",
+      "foreground": "#112233",
+      "background": "#ffffff",
+      "ratio": 16.15,
+      "level": "pass"
+    },
+    {
+      "label": "Primary text",
+      "foreground": "#112233",
+      "background": "#ffffff",
+      "ratio": 16.15,
+      "level": "pass"
+    },
+    {
+      "label": "Text on primary",
+      "foreground": "#ffffff",
+      "background": "#112233",
+      "ratio": 16.15,
+      "level": "pass"
+    }
+  ],
+  "warnings": []
+}

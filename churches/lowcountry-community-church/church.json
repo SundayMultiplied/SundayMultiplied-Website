@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "church": {
+    "name": "Lowcountry Community Church",
+    "slug": "lowcountry-community-church",
+    "city": "Bluffton",
+    "state": "SC",
+    "timezone": "America/New_York",
+    "website": "https://www.lowcountrycc.org/"
+  },
+  "resources": [
+    "monday",
+    "group",
+    "family"
+  ],
+  "familyWorship": {
+    "style": "contemporary",
+    "platform": "spotify"
+  },
+  "scripture": {
+    "translation": "BSB",
+    "displayMode": "automatic",
+    "provider": "bible_gateway"
+  },
+  "schedule": {
+    "serviceDay": "sunday",
+    "deliveryDay": "Monday"
+  },
+  "approval": {
+    "reviewerConfigured": true,
+    "linkLifetimeDays": 30,
+    "draftRetentionDays": 90,
+    "dashboardMode": "shared"
+  },
+  "brand": {
+    "primaryColor": "#408abf",
+    "secondaryColor": "#83cfc8",
+    "accentColor": "#52c2c6",
+    "backgroundColor": "#ffffff",
+    "textColor": "#516979",
+    "mutedColor": "#68736e",
+    "borderColor": "#d9dfdc",
+    "sectionBackgroundColor": "#f5f7f5",
+    "sectionTextColor": "#4d4d4d",
+    "calloutBackgroundColor": "#eef3ef",
+    "calloutTextColor": "#4d4d4d",
+    "headerBackgroundColor": "#ffffff",
+    "headerTextColor": "#516979",
+    "scriptureBackgroundColor": "#f5f7f5",
+    "scriptureTextColor": "#4d4d4d",
+    "questionBackgroundColor": "#f5f7f5",
+    "questionTextColor": "#4d4d4d",
+    "prayerBackgroundColor": "#52c2c6",
+    "prayerTextColor": "#4d4d4d",
+    "headingFont": "Inter, Arial, sans-serif",
+    "bodyFont": "Inter, Arial, sans-serif",
+    "headingWeight": "800",
+    "headingTransform": "uppercase",
+    "cornerRadius": "0px",
+    "pageWidth": "840px",
+    "pagePadding": "56px",
+    "sectionSpacing": "38px",
+    "buttonStyle": "square",
+    "headerStyle": "split",
+    "logoPosition": "right",
+    "logoSize": "medium",
+    "removeLogoBackground": false,
+    "cardStyle": "flat",
+    "styleTheme": "contemporary",
+    "visualTone": "grounded, restrained, welcoming",
+    "visualNotes": "Automated review suggests a grounded, restrained, welcoming visual system. Confirm recommendations against current logo files and recent social graphics.",
+    "stylesheet": "churches/lowcountry-community-church/styles/lowcountry-community-church.css",
+    "publicStylesheet": "/resources/lowcountry-community-church/church.css",
+    "sharedStylesheet": "/resources/_shared/sunday-multiplied-base.css",
+    "logoUrl": "/api/resource-assets/lowcountry-community-church/logo",
+    "assets": [
+      {
+        "kind": "primary",
+        "filename": "Main-Logo-interim.png",
+        "r2Key": "churches/lowcountry-community-church/brand/primary-Main-Logo-interim.png",
+        "publicUrl": "/api/resource-assets/lowcountry-community-church/logo"
+      },
+      {
+        "kind": "reverse",
+        "filename": "logo_shape.png",
+        "r2Key": "churches/lowcountry-community-church/brand/reverse-logo_shape.png"
+      }
+    ]
+  },
+  "sources": "churches/lowcountry-community-church/sources/streaming.json"
+}
