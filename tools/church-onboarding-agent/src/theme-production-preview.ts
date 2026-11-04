@@ -139,16 +139,38 @@ function enablePreviewSelection() {
   const style = doc.createElement("style");
   style.textContent = '[data-theme-selected] { outline: 3px solid #e49d29 !important; outline-offset: 4px; cursor: pointer; }';
   doc.head.appendChild(style);
+  const editorStyleId = "theme-selection-controls-style";
+  if (!document.getElementById(editorStyleId)) {
+    const editorStyle = document.createElement("style");
+    editorStyle.id = editorStyleId;
+    editorStyle.textContent = '.theme-controls [data-theme-control-selected] { outline: 3px solid #e49d29 !important; outline-offset: 3px; border-radius: 4px; background-color: rgba(228,157,41,.10); }';
+    document.head.appendChild(editorStyle);
+  }
   doc.addEventListener("click", (event) => {
-    const target = event.target as Element;
-    const element = target.closest(".sm-resource__button, .sm-worship-link, .sm-section h2, .sm-title");
+    const target = event.target;
+    if (!(target instanceof doc.defaultView!.Element)) return;
+    const element = target.closest(".sm-resource__button, .sm-worship-link, .sm-title, .sm-section h2, .sm-section--prayer, .sm-section--scripture, .sm-section--questions, .sm-section--big-idea, .sm-section--tension, .sm-section--summary, .sm-section--practice, .sm-header-logo-wrap, .sm-header");
     if (!element) return;
     event.preventDefault();
     doc.querySelectorAll("[data-theme-selected]").forEach((node) => node.removeAttribute("data-theme-selected"));
     element.setAttribute("data-theme-selected", "true");
-    const label = element.matches("a") ? "Button appearance" : element.matches("h1") ? "Typography" : "Section heading treatments";
-    const group = Array.from(document.querySelectorAll(".control-group")).find((node) => node.querySelector("h3")?.textContent?.trim() === label);
-    group?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const section = element.closest(".sm-section");
+    let groupName = "Cards & sections";
+    let controlName = "Section background";
+    if (element.matches(".sm-resource__button, .sm-worship-link")) { groupName = "Button appearance"; controlName = "Button background"; }
+    else if (element.matches(".sm-title")) { groupName = "Typography"; controlName = "Heading font"; }
+    else if (element.matches(".sm-header-logo-wrap, .sm-header")) { groupName = "Header & logo"; controlName = element.matches(".sm-header-logo-wrap") ? "Logo size" : "Header background"; }
+    else if (element.matches("h2")) { groupName = "Section heading treatments"; controlName = "Heading treatment"; }
+    else if (section?.matches(".sm-section--prayer")) { groupName = "Content blocks"; controlName = "Prayer background"; }
+    else if (section?.matches(".sm-section--scripture")) { groupName = "Content blocks"; controlName = "Scripture background"; }
+    else if (section?.matches(".sm-section--questions")) { groupName = "Content blocks"; controlName = "Questions background"; }
+    else if (section?.matches(".sm-section--big-idea")) { groupName = "Cards & sections"; controlName = "Callout background"; }
+    const group = Array.from(document.querySelectorAll(".theme-controls .control-group")).find((node) => node.querySelector("h3")?.textContent?.trim() === groupName);
+    const control = Array.from(group?.querySelectorAll("label") || []).find((node) => node.querySelector("span")?.textContent?.trim() === controlName);
+    document.querySelectorAll("[data-theme-control-selected]").forEach((node) => node.removeAttribute("data-theme-control-selected"));
+    const selected = control || group;
+    selected?.setAttribute("data-theme-control-selected", "true");
+    selected?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 }
 document.addEventListener("load", (event) => {
