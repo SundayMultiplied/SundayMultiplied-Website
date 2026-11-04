@@ -94,6 +94,8 @@ function StandaloneThemeEditor({ initialSlug }: { initialSlug: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [pullRequestUrl, setPullRequestUrl] = useState("");
+  const [draftStatus, setDraftStatus] = useState("");
+  const [hasDraft, setHasDraft] = useState(false);
   const agent = useAgent<OnboardingState>({ agent: "ChurchOnboardingAgent", name: "theme-editor" });
   const setBrand = (patch: Partial<BrandProfile>) => setBrandState((current) => normalizeBrandProfile({ ...current, ...patch }));
   async function load() {
@@ -102,10 +104,38 @@ function StandaloneThemeEditor({ initialSlug }: { initialSlug: string }) {
       const result = await agent.stub.loadExistingTheme(slugify(slug));
       setSlug(result.slug); setChurchName(result.churchName); setBrandState(normalizeBrandProfile(result.brand)); setLogoUrl(`/theme-assets/${result.slug}/logo`);
       history.replaceState(null, "", `?mode=theme&church=${result.slug}`);
+      const draftResponse = await fetch("/theme-draft/" + encodeURIComponent(result.slug), { credentials: "same-origin" });
+      if (draftResponse.ok) {
+        const saved = await draftResponse.json() as { draft?: { brand: BrandProfile; savedAt: string } | null };
+        if (saved.draft) { setBrandState(normalizeBrandProfile(saved.draft.brand)); setHasDraft(true); setDraftStatus("Draft restored · " + new Date(saved.draft.savedAt).toLocaleString()); }
+        else { setHasDraft(false); setDraftStatus("No saved draft. Editing published theme."); }
+      } else { setDraftStatus("Could not check saved draft."); }
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to load this church theme."); }
     finally { setBusy(false); }
   }
+  async function saveDraft() {
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/theme-draft/" + encodeURIComponent(slug), { method: "PUT", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ brand }) });
+      const result = await response.json() as { savedAt?: string; error?: string };
+      if (!response.ok) throw new Error(result.error || "Could not save draft.");
+      setHasDraft(true); setDraftStatus("Draft saved · " + new Date(result.savedAt || Date.now()).toLocaleString());
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to save draft."); }
+    finally { setBusy(false); }
+  }
+  async function discardDraft() {
+    if (!window.confirm("Discard this church's saved draft and reload its published theme?")) return;
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/theme-draft/" + encodeURIComponent(slug), { method: "DELETE", credentials: "same-origin" });
+      if (!response.ok) throw new Error("Could not discard draft.");
+      const result = await agent.stub.loadExistingTheme(slug);
+      setBrandState(normalizeBrandProfile(result.brand)); setHasDraft(false); setDraftStatus("Draft discarded. Published theme restored.");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to discard draft."); }
+    finally { setBusy(false); }
+  }
   async function save() {
+    if (!window.confirm("Create a pull request to publish this theme? Nothing goes live until that PR is merged and deployed.")) return;
     setBusy(true); setError("");
     try { const result = await agent.stub.createThemePullRequest(slug, brand); setPullRequestUrl(result.pullRequestUrl); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to create the theme update."); }
@@ -116,7 +146,7 @@ function StandaloneThemeEditor({ initialSlug }: { initialSlug: string }) {
     <header className="topbar"><div><p className="eyebrow">Sunday Multiplied · Internal</p><h1>Theme Editor</h1><p className="lede">Edit an existing church resource theme without touching CSS.</p></div><div className="topbar-actions"><a className="secondary link" href="/">Back to onboarding</a></div></header>
     {error && <div className="error" role="alert">{error}</div>}
     <section className="theme-loader"><Field label="Church slug" value={slug} onChange={(value) => setSlug(slugify(value))} /><button className="secondary" disabled={busy || !slug} onClick={load}>{busy ? "Loading…" : "Load church theme"}</button>{churchName !== "Church Name" && <strong>{churchName}</strong>}</section>
-    <section className="card card--theme"><ThemeEditor brand={brand} setBrand={setBrand} churchName={churchName} logoUrl={logoUrl} /><footer className="theme-save"><button className="primary" disabled={busy || churchName === "Church Name"} onClick={save}>{busy ? "Working…" : `Create ${churchName} Theme Update PR`}</button>{pullRequestUrl && <a className="secondary link" target="_blank" rel="noreferrer" href={pullRequestUrl}>Open pull request</a>}</footer></section>
+    <section className="card card--theme"><ThemeEditor brand={brand} setBrand={setBrand} churchName={churchName} logoUrl={logoUrl} /><footer className="theme-save"><button className="secondary" disabled={busy || churchName === "Church Name"} onClick={saveDraft}>Save draft</button><button className="primary" disabled={busy || churchName === "Church Name"} onClick={save}>{busy ? "Working…" : "Publish · Create Theme Update PR"}</button>{hasDraft && <button className="secondary" disabled={busy} onClick={discardDraft}>Discard draft</button>}{draftStatus && <span role="status">{draftStatus}</span>}{pullRequestUrl && <a className="secondary link" target="_blank" rel="noreferrer" href={pullRequestUrl}>Open pull request</a>}</footer></section>
   </main>;
 }
 
