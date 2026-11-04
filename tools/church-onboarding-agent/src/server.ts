@@ -172,23 +172,33 @@ export default {
       const church = url.searchParams.get("church") || "";
       const kind = url.searchParams.get("kind") || "group";
       if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(church) || !["monday", "group", "family", "midweek"].includes(kind)) return Response.json({ error: "Invalid church or resource type." }, { status: 400 });
-      const headers = new Headers();
-      for (const name of ["cf-access-authenticated-user-email", "oai-authenticated-user-email", "cf-access-jwt-assertion"]) {
-        const value = request.headers.get(name);
-        if (value) headers.set(name, value);
-      }
       try {
-        const jobsResponse = await fetch("https://www.sundaymultiplied.com/api/production/jobs", { headers, redirect: "error" });
-        if (!jobsResponse.ok) return Response.json({ error: "Unable to access production jobs for this church." }, { status: 502 });
-        const listing = await jobsResponse.json() as { jobs?: Array<{ id: string; churchSlug: string; weekOf: string; createdAt: string; resources?: Array<{ kind: string }> }> };
-        const latest = (listing.jobs || []).filter((item) => item.churchSlug === church && item.resources?.some((resource) => resource.kind.toLowerCase() === kind)).sort((a, b) => b.weekOf.localeCompare(a.weekOf) || b.createdAt.localeCompare(a.createdAt))[0];
+        // The onboarding Worker already has a binding to the same private R2 bucket
+        // used by production. Avoid cross-domain admin authentication entirely.
+        const listing = await env.RESOURCE_ASSETS.list({ prefix: "production/manifests/", limit: 1000 });
+        const candidates: Array<{ id: string; weekOf: string; createdAt: string }> = [];
+        for (const item of listing.objects) {
+          const object = await env.RESOURCE_ASSETS.get(item.key);
+          if (!object) continue;
+          try {
+            const manifest = await object.json<{ id: string; churchSlug: string; weekOf: string; createdAt: string; resources?: Array<{ kind: string }> }>();
+            if (manifest.churchSlug === church && manifest.resources?.some((resource) => resource.kind.toLowerCase() === kind)) {
+              candidates.push({ id: manifest.id, weekOf: manifest.weekOf || "", createdAt: manifest.createdAt || "" });
+            }
+          } catch { /* Ignore malformed manifests. */ }
+        }
+        candidates.sort((a, b) => b.weekOf.localeCompare(a.weekOf) || b.createdAt.localeCompare(a.createdAt));
+        const latest = candidates[0];
         if (!latest) return Response.json({ error: "No produced " + kind + " resource exists for this church yet." }, { status: 404 });
-        const source = await fetch(`https://www.sundaymultiplied.com/api/production/preview/${encodeURIComponent(latest.id)}/${kind}`, { redirect: "error" });
-        if (!source.ok) return Response.json({ error: source.status === 404 ? "Resource not found." : "Unable to retrieve resource." }, { status: source.status === 404 ? 404 : 502 });
-        const html = await source.text();
+        const resource = await env.RESOURCE_ASSETS.get(`production/jobs/${latest.id}/${kind}.html`);
+        if (!resource) return Response.json({ error: "Latest resource file is missing." }, { status: 404 });
+        const html = await resource.text();
         if (html.length > 1_500_000) return Response.json({ error: "Resource is too large to preview." }, { status: 413 });
         return Response.json({ html, weekOf: latest.weekOf }, { headers: { "cache-control": "private, no-store" } });
-      } catch { return Response.json({ error: "Production preview could not be retrieved." }, { status: 502 }); }
+      } catch (error) {
+        console.error("Theme resource preview failed", error);
+        return Response.json({ error: "Production preview could not be retrieved from storage." }, { status: 500 });
+      }
     }
     if (url.pathname === "/theme-churches" && request.method === "GET") {
       if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
