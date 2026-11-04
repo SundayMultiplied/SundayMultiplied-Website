@@ -167,6 +167,30 @@ function githubConfig(env: AppEnv) {
 export default {
   async fetch(request: Request, env: AppEnv) {
     const url = new URL(request.url);
+    const draftMatch = url.pathname.match(/^\/theme-draft\/([a-z0-9]+(?:-[a-z0-9]+)*)$/);
+    if (draftMatch && ["GET", "PUT", "DELETE"].includes(request.method)) {
+      if (!isAuthorized(request)) return Response.json({ error: "Authentication required." }, { status: 401 });
+      const key = `theme-editor/drafts/${draftMatch[1]}.json`;
+      if (request.method === "GET") {
+        const object = await env.RESOURCE_ASSETS.get(key);
+        if (!object) return Response.json({ draft: null }, { headers: { "cache-control": "no-store" } });
+        return Response.json({ draft: await object.json() }, { headers: { "cache-control": "no-store" } });
+      }
+      if (request.method === "DELETE") {
+        await env.RESOURCE_ASSETS.delete(key);
+        return Response.json({ ok: true });
+      }
+      try {
+        const data = await request.json() as { brand?: BrandProfile };
+        if (!data.brand) return Response.json({ error: "Missing theme." }, { status: 400 });
+        const brand = validateThemeColors(data.brand);
+        const savedAt = now();
+        await env.RESOURCE_ASSETS.put(key, JSON.stringify({ brand, savedAt }), { httpMetadata: { contentType: "application/json" } });
+        return Response.json({ ok: true, savedAt });
+      } catch (error) {
+        return Response.json({ error: error instanceof Error ? error.message : "Unable to save draft." }, { status: 400 });
+      }
+    }
     if (url.pathname === "/theme-resource-preview" && request.method === "GET") {
       if (!isAuthorized(request)) return new Response("Cloudflare Access authentication required.", { status: 401 });
       const church = url.searchParams.get("church") || "";
