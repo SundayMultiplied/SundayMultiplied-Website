@@ -47,5 +47,5 @@ function escapeHtml(value: string) {
 
 /** Remove internal-production footer text from recipient-facing resources. */
 export function removeInternalReviewFooter(html: string): string {
-  return html.replace(/<footer\\b[^>]*class=["'][^"']*\\bsm-footer\\b[^"']*["'][^>]*>[\\s\\S]*?<\\/footer>/gi, "");
+  return html.replace(/<footer\b[^>]*class=["'][^"']*\bsm-footer\b[^"']*["'][^>]*>[\s\S]*?<\/footer>/gi, "");
 }
