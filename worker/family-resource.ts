@@ -78,3 +78,13 @@ export function worshipPlatformLabel(platform: WorshipPlatformPreference): strin
   if (platform === "apple_music") return "Apple Music";
   return "YouTube";
 }
+
+/** Keep worship search links in a new tab without granting access to the opener. */
+export function openWorshipLinksInNewTab(html: string): string {
+  return html.replace(/<a\b[^>]*>/gi, (tag) => {
+    if (!/\bsm-worship-link\b/i.test(tag)) return tag;
+    const withoutTarget = tag.replace(/\s+target\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+    const withoutRel = withoutTarget.replace(/\s+rel\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+    return withoutRel.replace(/>$/, ' target="_blank" rel="noopener noreferrer">');
+  });
+}
