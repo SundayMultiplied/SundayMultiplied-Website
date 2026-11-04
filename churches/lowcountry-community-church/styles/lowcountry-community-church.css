@@ -34,7 +34,8 @@ body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; backg
 .sm-header-text { padding: 24px 28px; }
 .sm-header-logo-wrap { min-width: 0; width: min(100%, 306px); max-width: 42%; padding: 22px 18px; justify-content: center; background: #ffffff; color: #516979; }
 
-.sm-meta-part { display: inline-block; white-space: nowrap; }
+.sm-meta-part { display: inline; overflow-wrap: anywhere; }
+.sm-meta-part:last-child { white-space: nowrap; overflow-wrap: normal; }
 .sm-meta-separator { white-space: normal; }
 .sm-section { margin-bottom: 30px; padding: 0; border-bottom: 0; }
 .sm-section h2 { margin: 0 0 12px; color: #408abf; font-family: Inter, Arial, sans-serif; font-size: 20px; line-height: 1.2; font-weight: 800; text-transform: uppercase; }
