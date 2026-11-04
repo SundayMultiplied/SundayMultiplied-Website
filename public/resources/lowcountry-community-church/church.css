@@ -11,36 +11,40 @@
   --sm-color-section-background: #f5f7f5;
   --sm-color-callout-background: #ffffff;
   --sm-color-label: #516979;
-  --sm-font-heading: Inter, Arial, sans-serif;
-  --sm-font-body: Inter, Arial, sans-serif;
+  --sm-font-heading: Arial, Helvetica, sans-serif;
+  --sm-font-body: Arial, Helvetica, sans-serif;
   --sm-corner-radius: 0px;
   --sm-page-width: 840px;
   --sm-page-padding: 56px;
-  --sm-section-spacing: 38px;
+  --sm-section-spacing: 30px;
 }
 
-body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; background: #e9eceb; color: #516979; font-family: Inter, Arial, sans-serif; line-height: 1.65; box-shadow: none; }
-.sm-document { width: min(840px, 100%); max-width: 840px; margin-inline: auto; padding: 56px; color: #516979; background: #ffffff; font-family: Inter, Arial, sans-serif; }
+body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; background: #e9eceb; color: #516979; font-family: Arial, Helvetica, sans-serif; line-height: 1.65; box-shadow: none; }
+.sm-document { width: min(840px, 100%); max-width: 840px; margin-inline: auto; padding: 56px; color: #516979; background: #ffffff; font-family: Arial, Helvetica, sans-serif; }
 .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 38px; padding: 0; background: #ffffff; color: #516979; border-bottom: 4px solid #408abf; border-radius: 0; overflow: hidden; }
 .sm-header--with-logo .sm-header-content { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .sm-header-text { flex: 1 1 auto; min-width: 0; }
-.sm-header-logo-wrap { flex: 0 0 auto; display: flex; align-items: center; order: 1; }
-.sm-church-logo, .sm-resource__header-logo { display: block; max-width: 250px; max-height: 96px; width: auto; height: auto; object-fit: contain; }
+.sm-header-logo-wrap { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; order: 1; }
+.sm-church-logo, .sm-resource__header-logo { display: block; max-width: min(100%, 250px); max-height: 96px; width: auto; height: auto; object-fit: contain; }
 .sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { margin: 0 0 8px; color: var(--sm-color-label); font-size: 12px; font-weight: 800; letter-spacing: .15em; line-height: 1.2; text-transform: uppercase; }
-.sm-title { margin: 0; color: #516979; font-family: Inter, Arial, sans-serif; font-size: 34px; line-height: 1.1; font-weight: 800; text-transform: uppercase; }
-.sm-meta { margin: 10px 0 0; color: #52c2c6; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.sm-title { margin: 0; color: #516979; font-family: Arial, Helvetica, sans-serif; font-size: 34px; line-height: 1.1; font-weight: 800; text-transform: uppercase; }
+.sm-meta { margin: 10px 0 0; line-height: 1.65; overflow-wrap: normal; color: #52c2c6; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 
 .sm-header--with-logo .sm-header-content { gap: 0; align-items: stretch; }
 .sm-header-text { padding: 24px 28px; }
-.sm-header-logo-wrap { min-width: 306px; padding: 22px 28px; justify-content: center; background: #ffffff; color: #516979; }
+.sm-header-logo-wrap { min-width: 0; width: min(100%, 306px); max-width: 42%; padding: 22px 18px; justify-content: center; background: #ffffff; color: #516979; }
 
-.sm-section { margin-bottom: 38px; padding: 0; border-bottom: 0; }
-.sm-section h2 { margin: 0 0 12px; color: #408abf; font-family: Inter, Arial, sans-serif; font-size: 20px; line-height: 1.2; font-weight: 800; text-transform: uppercase; }
-.sm-section h3 { margin: 20px 0 8px; color: #52c2c6; font-family: Inter, Arial, sans-serif; font-size: 15px; line-height: 1.3; font-weight: 800; text-transform: uppercase; }
+.sm-meta-part { display: inline; overflow-wrap: anywhere; }
+.sm-meta-part:last-child { white-space: nowrap; overflow-wrap: normal; }
+.sm-meta-separator { white-space: normal; }
+.sm-section { margin-bottom: 30px; padding: 0; border-bottom: 0; }
+.sm-section h2 { margin: 0 0 12px; color: #408abf; font-family: Arial, Helvetica, sans-serif; font-size: 20px; line-height: 1.2; font-weight: 800; text-transform: uppercase; }
+.sm-section h3 { margin: 20px 0 8px; color: #52c2c6; font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 1.3; font-weight: 800; text-transform: uppercase; }
 .sm-section p, .sm-section li { font-size: 16px; line-height: 1.65; }
 .sm-section li::marker { color: #52c2c6; font-weight: 800; }
 .sm-section--big-idea, .sm-section--reflection { padding: 22px 24px; border-left: 6px solid #52c2c6; border-radius: 0px; background: #ffffff; color: #4d4d4d; }
 .sm-section--big-idea h2, .sm-section--big-idea h3, .sm-section--reflection h2, .sm-section--reflection h3 { color: #4d4d4d; }
+.sm-section--parent-note { padding: 18px 22px; border-left: 5px solid #52c2c6; box-sizing: border-box; }
 .sm-section--scripture { padding: 24px; border: 1px solid #d9dfdc; border-radius: 0px; background: #ffffff; }
 .sm-scripture-reference { color: #52c2c6; font-weight: 800; text-transform: uppercase; }
 .sm-scripture-text { padding: 18px 20px; border-left: 4px solid #52c2c6; background: #f5f7f5; color: #4d4d4d; }
@@ -52,11 +56,17 @@ body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; backg
 .sm-document--monday .sm-section--takeaways, .sm-document--group .sm-section--key-moments { padding: 22px 24px; border: 0; border-radius: 0px; background: #ffffff; color: #4d4d4d; }
 .sm-document--group .sm-section--midweek, .sm-document--group .sm-section--leader-tip { padding: 20px 22px; border-radius: 0px; background: #ffffff; color: #4d4d4d; }
 .sm-document--group .sm-section--midweek h2, .sm-document--group .sm-section--leader-tip h2 { color: #4d4d4d; }
-.sm-section--prayer { padding: 22px 24px; border-radius: 0px; background: #52c2c6; color: #4d4d4d; }
-.sm-section--prayer h2, .sm-section--prayer h3 { color: #4d4d4d; }
+.sm-section--prayer { padding: 22px 24px; border-radius: 0px; background: #85c5c7; color: #fafafa; }
+.sm-section--prayer h2, .sm-section--prayer h3 { color: #fafafa; }
+.sm-section--worship .sm-worship-link { display: table; width: fit-content; max-width: 100%; margin: 14px 0 10px; padding: 11px 18px; background: var(--sm-color-primary); color: #ffffff; font-weight: 800; line-height: 1.35; text-decoration: none; text-align: center; white-space: normal; }
+.sm-section--worship .sm-worship-link:hover, .sm-section--worship .sm-worship-link:focus-visible { background: #27678f; color: #ffffff; text-decoration: underline; }
+.sm-section--worship .sm-worship-link:focus-visible { outline: 3px solid var(--sm-color-accent); outline-offset: 3px; }
 .sm-section--worship { padding: 22px 24px; border-radius: 0px; background: color-mix(in srgb, #408abf 6%, #ffffff); }
 a { color: #408abf; font-weight: 700; text-underline-offset: 3px; }
-.sm-resource__button, .sm-theme-button { display: inline-block; border: 0; padding: 11px 18px; border-radius: 0; background: #408abf; color: #516979; font-weight: 800; }
+.sm-resource__button, .sm-theme-button { display: inline-block; border: 1px solid #408abf; padding: 11px 18px; border-radius: 0; background: #408abf; color: #14211d; font-weight: 800; text-decoration: none; }
+.sm-resource__button:hover, .sm-theme-button:hover { background: #52c2c6; color: #14211d; }
+.sm-section--worship .sm-worship-link { background: #408abf; color: #14211d; border: 1px solid #408abf; border-radius: 0; }
+.sm-section--worship .sm-worship-link:hover { background: #52c2c6; color: #14211d; }
 
 /* Modern composition */
 .sm-title { letter-spacing: -.035em; line-height: .98; }
@@ -67,11 +77,14 @@ a { color: #408abf; font-weight: 700; text-underline-offset: 3px; }
 .sm-scripture-text { border-left-width: 8px; }
 .sm-section--prayer { border-radius: 0; }
 
+
 @media (max-width: 680px) {
   body.sm-resource { padding: 14px; }
   .sm-document { padding: 30px 22px; }
+  .sm-header-text { padding: 18px 0; }
+  .sm-section--parent-note { padding: 16px 18px; }
   .sm-header--with-logo .sm-header-content { align-items: flex-start; flex-direction: column; }
-  .sm-header-logo-wrap { order: -1; min-width: 0; width: 100%; }
+  .sm-header-logo-wrap { order: -1; min-width: 0; width: 100%; max-width: 100%; }
   .sm-church-logo { max-width: 165px; max-height: 72px; }
 }
 @media print {
