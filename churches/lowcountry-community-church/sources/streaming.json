@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "church": "lowcountry-community-church",
+  "links": [
+    {
+      "kind": "sermon_archive",
+      "url": "https://lowcountrycclive.online.church/",
+      "label": "Watch Live",
+      "verifiedAt": "2026-11-04T00:15:42.258Z"
+    },
+    {
+      "kind": "podcast",
+      "url": "https://open.spotify.com/show/6pllr66fBTrzq09NaWGG4K",
+      "label": "podcast",
+      "verifiedAt": "2026-11-04T00:15:42.258Z"
+    },
+    {
+      "kind": "youtube",
+      "label": "YouTube",
+      "url": "https://www.youtube.com/@LowcountryCommunityChurch"
+    }
+  ]
+}
