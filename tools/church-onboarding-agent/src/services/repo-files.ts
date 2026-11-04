@@ -68,6 +68,19 @@ function structuralThemeCss(theme: StyleTheme, b: ReturnType<typeof normalizeBra
 `;
 }
 
+function headingTreatmentCss(b: ReturnType<typeof normalizeBrandProfile>): string {
+  if (b.headingTreatment === "default") return "";
+  if (b.headingTreatment === "plain") return ".sm-section h2::before { content: none !important; }";
+  const valid = (b.headingTreatmentSections || "").split(",").map((part) => part.trim().toLowerCase()).filter((part) => /^[a-z0-9-]+$/.test(part));
+  const selectors = b.headingTreatmentScope === "all"
+    ? [".sm-section > h2"]
+    : valid.map((part) => `.sm-section--${part} > h2`);
+  if (!selectors.length) return "";
+  const safeColor = /^#[0-9a-fA-F]{6}$/.test(b.headingHighlightColor) ? b.headingHighlightColor : b.accentColor;
+  return `${selectors.join(", ")} { display: table; width: fit-content; max-width: 100%; padding: 0 2px; background: linear-gradient(to bottom, transparent 60%, ${safeColor} 60%, ${safeColor} 88%, transparent 88%); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+${selectors.map((selector) => `${selector}::before`).join(", ")} { content: none !important; }`;
+}
+
 export function buildThemeCss(churchName: string, profile: BrandProfile): string {
   const b = normalizeBrandProfile(profile);
   const theme = inferStyleTheme(b);
@@ -151,6 +164,7 @@ ${splitRules}
 a { color: ${b.primaryColor}; font-weight: 700; text-underline-offset: 3px; }
 .sm-resource__button, .sm-theme-button { display: inline-block; border: 0; padding: 11px 18px; border-radius: ${buttonRadius}; background: ${b.primaryColor}; color: ${contrast("#ffffff", b.primaryColor) >= 4.5 ? "#ffffff" : b.textColor}; font-weight: 800; }
 ${structuralThemeCss(theme, b)}
+${headingTreatmentCss(b)}
 @media (max-width: 680px) {
   body.sm-resource { padding: 14px; }
   .sm-document { padding: 30px 22px; }

@@ -146,6 +146,14 @@ function ThemeEditor({ brand, setBrand, churchName, logoUrl }: { brand: Resolved
         <SelectField label="Heading weight" value={brand.headingWeight} onChange={(headingWeight) => setBrand({ headingWeight })} options={[["Semibold", "600"], ["Bold", "700"], ["Extra bold", "800"]]} />
         <SelectField label="Heading case" value={brand.headingTransform} onChange={(headingTransform) => setBrand({ headingTransform })} options={[["Normal", "none"], ["Uppercase", "uppercase"]]} />
       </ControlGroup>
+      <ControlGroup title="Section heading treatments">
+        <SelectField label="Heading treatment" value={brand.headingTreatment} onChange={(headingTreatment) => setBrand({ headingTreatment })} options={[["Theme default", "default"], ["Plain", "plain"], ["Highlight underline", "highlight"]]} />
+        {brand.headingTreatment === "highlight" && <>
+          <SelectField label="Apply heading treatment" value={brand.headingTreatmentScope} onChange={(headingTreatmentScope) => setBrand({ headingTreatmentScope })} options={[["All section headings", "all"], ["Selected sections", "selected"]]} />
+          <ColorField label="Highlight color" value={brand.headingHighlightColor} onChange={(headingHighlightColor) => setBrand({ headingHighlightColor })} />
+          {brand.headingTreatmentScope === "selected" && <label><span>Section names (comma separated)</span><input value={brand.headingTreatmentSections} onChange={(event) => setBrand({ headingTreatmentSections: event.target.value })} placeholder="big-idea, tension, practice" /><small>Examples: big-idea, tension, practice, scripture, prayer, worship, parent-note</small></label>}
+        </>}
+      </ControlGroup>
       <ControlGroup title="Cards & sections">
         <ColorField label="Section background" value={brand.sectionBackgroundColor} onChange={(sectionBackgroundColor) => setBrand({ sectionBackgroundColor })} />
         <ColorField label="Section text" value={brand.sectionTextColor} onChange={(sectionTextColor) => setBrand({ sectionTextColor })} />
