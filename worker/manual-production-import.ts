@@ -1,5 +1,5 @@
 import { strFromU8, unzipSync } from "fflate";
-import { validateFamilyV3Html, resolveFamilyWorshipPreferences } from "./family-resource.ts";
+import { openWorshipLinksInNewTab, validateFamilyV3Html, resolveFamilyWorshipPreferences } from "./family-resource.ts";
 import { validateMidweekV3Html } from "./midweek-resource.ts";
 import type { CanonicalSermonAnalysis } from "./sermon-analysis.ts";
 import type { ChurchConfig, ProductionEnv, ProductionManifest } from "./production-api.ts";
@@ -84,7 +84,7 @@ export async function handleManualProductionImport(
     const resourceHtml = input.resources[kind];
     if (!resourceHtml) continue;
     const storageKey = `production/jobs/${id}/${kind}.html`;
-    await env.BUCKET.put(storageKey, resourceHtml, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
+    await env.BUCKET.put(storageKey, kind === "family" ? openWorshipLinksInNewTab(resourceHtml) : resourceHtml, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
     manifestResources.push({
       kind: titleCase(kind),
       title: `${titleCase(kind)} Multiplied`,
