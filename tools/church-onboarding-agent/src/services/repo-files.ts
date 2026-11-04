@@ -144,6 +144,9 @@ ${splitRules}
 .sm-document--group .sm-section--midweek h2, .sm-document--group .sm-section--leader-tip h2 { color: ${b.calloutTextColor}; }
 .sm-section--prayer { padding: 22px 24px; border-radius: ${b.cornerRadius}; background: ${b.prayerBackgroundColor}; color: ${b.prayerTextColor}; }
 .sm-section--prayer h2, .sm-section--prayer h3 { color: ${b.prayerTextColor}; }
+.sm-section--worship .sm-worship-link { display: table; width: fit-content; max-width: 100%; margin: 14px 0 10px; padding: 11px 18px; background: var(--sm-color-primary); color: #ffffff; font-weight: 800; line-height: 1.35; text-decoration: none; text-align: center; white-space: normal; }
+.sm-section--worship .sm-worship-link:hover, .sm-section--worship .sm-worship-link:focus-visible { background: #27678f; color: #ffffff; text-decoration: underline; }
+.sm-section--worship .sm-worship-link:focus-visible { outline: 3px solid var(--sm-color-accent); outline-offset: 3px; }
 .sm-section--worship { padding: 22px 24px; border-radius: ${b.cornerRadius}; background: color-mix(in srgb, ${b.primaryColor} 6%, ${b.backgroundColor}); }
 a { color: ${b.primaryColor}; font-weight: 700; text-underline-offset: 3px; }
 .sm-resource__button, .sm-theme-button { display: inline-block; border: 0; padding: 11px 18px; border-radius: ${buttonRadius}; background: ${b.primaryColor}; color: ${contrast("#ffffff", b.primaryColor) >= 4.5 ? "#ffffff" : b.textColor}; font-weight: 800; }
