@@ -120,7 +120,8 @@ ${logoBackdropRules}.sm-church-logo, .sm-resource__header-logo { display: block;
 .sm-title { margin: 0; color: ${headerText}; font-family: ${b.headingFont}; font-size: 34px; line-height: 1.1; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
 .sm-meta { margin: 10px 0 0; line-height: 1.65; overflow-wrap: normal; color: ${b.headerStyle === "filled" ? b.headerTextColor : b.mutedColor}; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 ${splitRules}
-.sm-meta-part { display: inline-block; white-space: nowrap; }
+.sm-meta-part { display: inline; overflow-wrap: anywhere; }
+.sm-meta-part:last-child { white-space: nowrap; overflow-wrap: normal; }
 .sm-meta-separator { white-space: normal; }
 .sm-section { margin-bottom: ${b.sectionSpacing}; padding: 0; border-bottom: 0; }
 .sm-section h2 { margin: 0 0 12px; color: ${b.primaryColor}; font-family: ${b.headingFont}; font-size: 20px; line-height: 1.2; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
