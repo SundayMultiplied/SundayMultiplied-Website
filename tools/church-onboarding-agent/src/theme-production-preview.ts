@@ -55,6 +55,10 @@ function currentBrand(): BrandProfile {
     cardStyle: (controlValue("Card treatment") as BrandProfile["cardStyle"]) || b.cardStyle,
     cornerRadius: controlValue("Corner radius") || b.cornerRadius,
     buttonStyle: (controlValue("Button style") as BrandProfile["buttonStyle"]) || b.buttonStyle,
+    buttonBackgroundColor: controlValue("Button background") || b.buttonBackgroundColor,
+    buttonTextColor: controlValue("Button text") || b.buttonTextColor,
+    buttonHoverColor: controlValue("Button hover") || b.buttonHoverColor,
+    buttonBorderColor: controlValue("Button border") || b.buttonBorderColor,
     scriptureBackgroundColor: controlValue("Scripture background") || b.scriptureBackgroundColor,
     scriptureTextColor: controlValue("Scripture text") || b.scriptureTextColor,
     questionBackgroundColor: controlValue("Questions background") || b.questionBackgroundColor,
@@ -127,6 +131,29 @@ function productionDocument() {
 </html>`;
 }
 
+function enablePreviewSelection() {
+  const frame = document.querySelector("iframe.resource-canvas") as HTMLIFrameElement | null;
+  const doc = frame?.contentDocument;
+  if (!doc || doc.documentElement.dataset.selectionReady) return;
+  doc.documentElement.dataset.selectionReady = "true";
+  const style = doc.createElement("style");
+  style.textContent = '[data-theme-selected] { outline: 3px solid #e49d29 !important; outline-offset: 4px; cursor: pointer; }';
+  doc.head.appendChild(style);
+  doc.addEventListener("click", (event) => {
+    const target = event.target as Element;
+    const element = target.closest(".sm-resource__button, .sm-worship-link, .sm-section h2, .sm-title");
+    if (!element) return;
+    event.preventDefault();
+    doc.querySelectorAll("[data-theme-selected]").forEach((node) => node.removeAttribute("data-theme-selected"));
+    element.setAttribute("data-theme-selected", "true");
+    const label = element.matches("a") ? "Button appearance" : element.matches("h1") ? "Typography" : "Section heading treatments";
+    const group = Array.from(document.querySelectorAll(".control-group")).find((node) => node.querySelector("h3")?.textContent?.trim() === label);
+    group?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+document.addEventListener("load", (event) => {
+  if ((event.target as Element)?.matches?.("iframe.resource-canvas")) enablePreviewSelection();
+}, true);
 let queued = 0;
 function renderProductionPreview() {
   window.clearTimeout(queued);
@@ -135,6 +162,7 @@ function renderProductionPreview() {
     if (!iframe || !document.querySelector(".theme-controls")) return;
     const next = productionDocument();
     if (iframe.srcdoc !== next) iframe.srcdoc = next;
+    else enablePreviewSelection();
   }, 20);
 }
 
