@@ -21,7 +21,7 @@ export function injectResourceHeaderMetadata(html: string, metadata: ResourceHea
   ].filter(Boolean);
   if (!parts.length) return result;
 
-  const meta = `<p class="sm-meta">${parts.map(escapeHtml).join(" · ")}</p>`;
+  const meta = `<p class="sm-meta">${parts.map((part) => `<span class="sm-meta-part">${escapeHtml(part)}</span>`).join(`<span class="sm-meta-separator"> · </span>`)}</p>`;
   const existing = /<p\b[^>]*class=["'][^"']*\bsm-meta\b[^"']*["'][^>]*>[\s\S]*?<\/p>/i;
   if (existing.test(result)) return result.replace(existing, meta);
 
