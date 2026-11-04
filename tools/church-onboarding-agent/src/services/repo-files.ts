@@ -85,6 +85,10 @@ export function buildThemeCss(churchName: string, profile: BrandProfile): string
   const b = normalizeBrandProfile(profile);
   const theme = inferStyleTheme(b);
   const label = accessibleLabelColor(b);
+  const buttonBg = /^#[0-9a-fA-F]{6}$/.test(b.buttonBackgroundColor) ? b.buttonBackgroundColor : b.primaryColor;
+  const buttonText = /^#[0-9a-fA-F]{6}$/.test(b.buttonTextColor) ? b.buttonTextColor : (contrast("#ffffff", buttonBg) >= 4.5 ? "#ffffff" : "#14211d");
+  const buttonHover = /^#[0-9a-fA-F]{6}$/.test(b.buttonHoverColor) ? b.buttonHoverColor : b.accentColor;
+  const buttonBorder = /^#[0-9a-fA-F]{6}$/.test(b.buttonBorderColor) ? b.buttonBorderColor : buttonBg;
   const buttonRadius = b.buttonStyle === "rounded" ? "999px" : b.buttonStyle === "square" ? "0" : b.cornerRadius;
   const cardBorder = b.cardStyle === "flat" ? "0" : `1px solid ${b.borderColor}`;
   const cardBackground = b.cardStyle === "flat" ? b.backgroundColor : b.cardStyle === "soft" ? b.sectionBackgroundColor : b.backgroundColor;
@@ -162,7 +166,10 @@ ${splitRules}
 .sm-section--worship .sm-worship-link:focus-visible { outline: 3px solid var(--sm-color-accent); outline-offset: 3px; }
 .sm-section--worship { padding: 22px 24px; border-radius: ${b.cornerRadius}; background: color-mix(in srgb, ${b.primaryColor} 6%, ${b.backgroundColor}); }
 a { color: ${b.primaryColor}; font-weight: 700; text-underline-offset: 3px; }
-.sm-resource__button, .sm-theme-button { display: inline-block; border: 0; padding: 11px 18px; border-radius: ${buttonRadius}; background: ${b.primaryColor}; color: ${contrast("#ffffff", b.primaryColor) >= 4.5 ? "#ffffff" : b.textColor}; font-weight: 800; }
+.sm-resource__button, .sm-theme-button { display: inline-block; border: 1px solid ${buttonBorder}; padding: 11px 18px; border-radius: ${buttonRadius}; background: ${buttonBg}; color: ${buttonText}; font-weight: 800; text-decoration: none; }
+.sm-resource__button:hover, .sm-theme-button:hover { background: ${buttonHover}; color: ${buttonText}; }
+.sm-section--worship .sm-worship-link { background: ${buttonBg}; color: ${buttonText}; border: 1px solid ${buttonBorder}; border-radius: ${buttonRadius}; }
+.sm-section--worship .sm-worship-link:hover { background: ${buttonHover}; color: ${buttonText}; }
 ${structuralThemeCss(theme, b)}
 ${headingTreatmentCss(b)}
 @media (max-width: 680px) {

@@ -29,6 +29,10 @@ export type BrandProfile = {
   bodyFont: string;
   cornerRadius: string;
   buttonStyle: "square" | "soft" | "rounded";
+  buttonBackgroundColor?: string;
+  buttonTextColor?: string;
+  buttonHoverColor?: string;
+  buttonBorderColor?: string;
   visualTone: string;
   visualNotes: string;
   styleTheme?: StyleTheme;
@@ -97,6 +101,10 @@ export const defaultBrandProfile = (): ResolvedBrandProfile => ({
   pagePadding: "52px",
   sectionSpacing: "30px",
   buttonStyle: "soft",
+  buttonBackgroundColor: "",
+  buttonTextColor: "",
+  buttonHoverColor: "",
+  buttonBorderColor: "",
   headerStyle: "plain",
   logoPosition: "right",
   logoSize: "medium",
