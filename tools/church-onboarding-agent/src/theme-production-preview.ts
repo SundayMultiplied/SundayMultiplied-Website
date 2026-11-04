@@ -176,13 +176,34 @@ function enablePreviewSelection() {
 document.addEventListener("load", (event) => {
   if ((event.target as Element)?.matches?.("iframe.resource-canvas")) enablePreviewSelection();
 }, true);
+let realResourceHtml = "";
+window.addEventListener("sm-theme-real-preview", (event) => {
+  realResourceHtml = (event as CustomEvent<{ html: string }>).detail.html;
+  renderProductionPreview();
+});
+function actualResourceDocument(html: string): string {
+  const brand = currentBrand();
+  const css = buildThemeCss(currentChurchName(), brand);
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  doc.querySelectorAll("script, iframe, object, embed, form").forEach((node) => node.remove());
+  doc.querySelectorAll("*").forEach((node) => {
+    Array.from(node.attributes).forEach((attr) => {
+      if (/^on/i.test(attr.name)) node.removeAttribute(attr.name);
+    });
+  });
+  const theme = doc.createElement("style");
+  theme.textContent = css;
+  doc.head.appendChild(theme);
+  return "<!doctype html>\n" + doc.documentElement.outerHTML;
+}
 let queued = 0;
 function renderProductionPreview() {
   window.clearTimeout(queued);
   queued = window.setTimeout(() => {
     const iframe = document.querySelector("iframe.resource-canvas") as HTMLIFrameElement | null;
     if (!iframe || !document.querySelector(".theme-controls")) return;
-    const next = productionDocument();
+    const next = realResourceHtml ? actualResourceDocument(realResourceHtml) : productionDocument();
     if (iframe.srcdoc !== next) iframe.srcdoc = next;
     else enablePreviewSelection();
   }, 20);
