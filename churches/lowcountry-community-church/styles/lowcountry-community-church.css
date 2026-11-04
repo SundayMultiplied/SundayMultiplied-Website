@@ -24,15 +24,15 @@ body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; backg
 .sm-header, .sm-header.sm-header--with-logo { margin-bottom: 38px; padding: 0; background: #ffffff; color: #516979; border-bottom: 4px solid #408abf; border-radius: 0; overflow: hidden; }
 .sm-header--with-logo .sm-header-content { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
 .sm-header-text { flex: 1 1 auto; min-width: 0; }
-.sm-header-logo-wrap { flex: 0 0 auto; display: flex; align-items: center; order: 1; }
-.sm-church-logo, .sm-resource__header-logo { display: block; max-width: 250px; max-height: 96px; width: auto; height: auto; object-fit: contain; }
+.sm-header-logo-wrap { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; order: 1; }
+.sm-church-logo, .sm-resource__header-logo { display: block; max-width: min(100%, 250px); max-height: 96px; width: auto; height: auto; object-fit: contain; }
 .sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { margin: 0 0 8px; color: var(--sm-color-label); font-size: 12px; font-weight: 800; letter-spacing: .15em; line-height: 1.2; text-transform: uppercase; }
 .sm-title { margin: 0; color: #516979; font-family: Inter, Arial, sans-serif; font-size: 34px; line-height: 1.1; font-weight: 800; text-transform: uppercase; }
 .sm-meta { margin: 10px 0 0; color: #52c2c6; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 
 .sm-header--with-logo .sm-header-content { gap: 0; align-items: stretch; }
 .sm-header-text { padding: 24px 28px; }
-.sm-header-logo-wrap { min-width: 306px; padding: 22px 28px; justify-content: center; background: #ffffff; color: #516979; }
+.sm-header-logo-wrap { min-width: 0; width: min(100%, 306px); max-width: 42%; padding: 22px 18px; justify-content: center; background: #ffffff; color: #516979; }
 
 .sm-section { margin-bottom: 38px; padding: 0; border-bottom: 0; }
 .sm-section h2 { margin: 0 0 12px; color: #408abf; font-family: Inter, Arial, sans-serif; font-size: 20px; line-height: 1.2; font-weight: 800; text-transform: uppercase; }
@@ -71,7 +71,7 @@ a { color: #408abf; font-weight: 700; text-underline-offset: 3px; }
   body.sm-resource { padding: 14px; }
   .sm-document { padding: 30px 22px; }
   .sm-header--with-logo .sm-header-content { align-items: flex-start; flex-direction: column; }
-  .sm-header-logo-wrap { order: -1; min-width: 0; width: 100%; }
+  .sm-header-logo-wrap { order: -1; min-width: 0; width: 100%; max-width: 100%; }
   .sm-church-logo { max-width: 165px; max-height: 72px; }
 }
 @media print {
