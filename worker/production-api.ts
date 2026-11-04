@@ -192,6 +192,7 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     const manifest = await loadManifest(env.BUCKET, previewMatch[1]);
     if (manifest) {
       body = injectResourceHeaderMetadata(await object.text(), manifest.metadata, manifest.weekOf);
+      if (previewMatch[2] === "family") body = openWorshipLinksInNewTab(body);
     }
     return new Response(body, {
       headers: {
@@ -512,6 +513,7 @@ async function generateProductionJobResources(request: Request, env: ProductionE
         validateMidweekV3Html(html);
       }
       if (scripturePassage && (kind === "group" || kind === "family")) html = injectBsbScripture(html, scripturePassage, church.scripture);
+      if (kind === "family") html = openWorshipLinksInNewTab(html);
       preparedResources.push({ kind, html });
     }
 
