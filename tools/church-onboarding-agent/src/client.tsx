@@ -163,6 +163,7 @@ function ThemeEditor({ brand, setBrand, churchName, logoUrl }: { brand: Resolved
         <Field label="Corner radius" value={brand.cornerRadius} onChange={(cornerRadius) => setBrand({ cornerRadius })} />
         <SelectField label="Button style" value={brand.buttonStyle} onChange={(buttonStyle) => setBrand({ buttonStyle })} options={[["Square", "square"], ["Soft corners", "soft"], ["Pill / rounded", "rounded"]]} />
       </ControlGroup>
+      <ControlGroup title="Button appearance"><ColorField label="Button background" value={brand.buttonBackgroundColor || brand.primaryColor} onChange={(buttonBackgroundColor) => setBrand({ buttonBackgroundColor })} /><ColorField label="Button text" value={brand.buttonTextColor || "#ffffff"} onChange={(buttonTextColor) => setBrand({ buttonTextColor })} /><ColorField label="Button hover" value={brand.buttonHoverColor || brand.accentColor} onChange={(buttonHoverColor) => setBrand({ buttonHoverColor })} /><ColorField label="Button border" value={brand.buttonBorderColor || brand.primaryColor} onChange={(buttonBorderColor) => setBrand({ buttonBorderColor })} /></ControlGroup>
       <ControlGroup title="Content blocks">
         <ColorField label="Scripture background" value={brand.scriptureBackgroundColor} onChange={(scriptureBackgroundColor) => setBrand({ scriptureBackgroundColor })} />
         <ColorField label="Scripture text" value={brand.scriptureTextColor} onChange={(scriptureTextColor) => setBrand({ scriptureTextColor })} />
