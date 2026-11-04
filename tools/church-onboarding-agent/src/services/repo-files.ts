@@ -118,8 +118,10 @@ body.sm-resource { width: 100%; max-width: none; margin: 0; padding: 28px; backg
 ${logoBackdropRules}.sm-church-logo, .sm-resource__header-logo { display: block; max-width: min(100%, ${logo.width}px); max-height: ${logo.height}px; width: auto; height: auto; object-fit: contain; }
 .sm-eyebrow, .sm-resource__eyebrow, .sm-resource__section-label { margin: 0 0 8px; color: ${b.headerStyle === "filled" ? b.headerTextColor : "var(--sm-color-label)"}; font-size: 12px; font-weight: 800; letter-spacing: .15em; line-height: 1.2; text-transform: uppercase; }
 .sm-title { margin: 0; color: ${headerText}; font-family: ${b.headingFont}; font-size: 34px; line-height: 1.1; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
-.sm-meta { margin: 10px 0 0; color: ${b.headerStyle === "filled" ? b.headerTextColor : b.mutedColor}; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.sm-meta { margin: 10px 0 0; line-height: 1.65; overflow-wrap: normal; color: ${b.headerStyle === "filled" ? b.headerTextColor : b.mutedColor}; opacity: .82; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 ${splitRules}
+.sm-meta-part { display: inline-block; white-space: nowrap; }
+.sm-meta-separator { white-space: normal; }
 .sm-section { margin-bottom: ${b.sectionSpacing}; padding: 0; border-bottom: 0; }
 .sm-section h2 { margin: 0 0 12px; color: ${b.primaryColor}; font-family: ${b.headingFont}; font-size: 20px; line-height: 1.2; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
 .sm-section h3 { margin: 20px 0 8px; color: ${b.accentColor}; font-family: ${b.headingFont}; font-size: 15px; line-height: 1.3; font-weight: ${b.headingWeight}; text-transform: ${b.headingTransform}; }
@@ -127,6 +129,7 @@ ${splitRules}
 .sm-section li::marker { color: ${b.accentColor}; font-weight: 800; }
 .sm-section--big-idea, .sm-section--reflection { padding: 22px 24px; border-left: 6px solid ${b.accentColor}; border-radius: ${b.cornerRadius}; background: ${b.calloutBackgroundColor}; color: ${b.calloutTextColor}; }
 .sm-section--big-idea h2, .sm-section--big-idea h3, .sm-section--reflection h2, .sm-section--reflection h3 { color: ${b.calloutTextColor}; }
+.sm-section--parent-note { padding: 18px 22px; border-left: 5px solid ${b.accentColor}; box-sizing: border-box; }
 .sm-section--scripture { padding: 24px; border: 1px solid ${b.borderColor}; border-radius: ${b.cornerRadius}; background: ${b.backgroundColor}; }
 .sm-scripture-reference { color: ${b.accentColor}; font-weight: 800; text-transform: uppercase; }
 .sm-scripture-text { padding: 18px 20px; border-left: 4px solid ${b.accentColor}; background: ${b.scriptureBackgroundColor}; color: ${b.scriptureTextColor}; }
@@ -147,6 +150,8 @@ ${structuralThemeCss(theme, b)}
 @media (max-width: 680px) {
   body.sm-resource { padding: 14px; }
   .sm-document { padding: 30px 22px; }
+  .sm-header-text { padding: 18px 0; }
+  .sm-section--parent-note { padding: 16px 18px; }
   .sm-header--with-logo .sm-header-content { align-items: flex-start; flex-direction: column; }
   .sm-header-logo-wrap { order: -1; min-width: 0; width: 100%; max-width: 100%; }
   .sm-church-logo { max-width: ${Math.min(165, logo.width)}px; max-height: ${Math.min(72, logo.height)}px; }
