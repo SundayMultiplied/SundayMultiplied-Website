@@ -215,7 +215,7 @@ function ResourceCanvas({ churchName, brand, logoUrl }: { churchName: string; br
       <button type="button" className="secondary" disabled={previewLoading} onClick={loadProductionResource}>{previewLoading ? "Loading…" : "Load resource"}</button>
       <button type="button" className="secondary" onClick={showSample}>Use sample</button>
     </div>
-    {previewError && <p role="alert" className="error">{previewError}</p>
+    {previewError && <p role="alert" className="error">{previewError}</p>}
     <div role="group" aria-label="Preview screen size" style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "10px 0" }}>
       {(["desktop", "mobile", "print"] as const).map((mode) => <button key={mode} type="button" className={previewMode === mode ? "primary" : "secondary"} aria-pressed={previewMode === mode} onClick={() => setPreviewMode(mode)}>{mode === "desktop" ? "Desktop" : mode === "mobile" ? "Mobile (390px)" : "Print page"}</button>)}
     </div>
