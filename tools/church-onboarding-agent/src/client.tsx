@@ -191,27 +191,28 @@ function ResourceCanvas({ churchName, brand, logoUrl }: { churchName: string; br
   const srcDoc = useMemo(() => buildPreviewDocument(churchName, brand, logoUrl), [churchName, brand, logoUrl]);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | "print">("desktop");
   const widths = { desktop: "100%", mobile: "390px", print: "816px" };
-  const [jobId, setJobId] = useState("");
+  const [resourceWeek, setResourceWeek] = useState("");
   const [resourceKind, setResourceKind] = useState("group");
   const [previewError, setPreviewError] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   async function loadProductionResource() {
     setPreviewLoading(true); setPreviewError("");
     try {
-      const response = await fetch("/theme-resource-preview?job=" + encodeURIComponent(jobId.trim()) + "&kind=" + encodeURIComponent(resourceKind), { credentials: "same-origin" });
-      const result = await response.json() as { html?: string; error?: string };
+      const response = await fetch("/theme-resource-preview?church=" + encodeURIComponent(new URLSearchParams(location.search).get("church") || "") + "&kind=" + encodeURIComponent(resourceKind), { credentials: "same-origin" });
+      const result = await response.json() as { html?: string; error?: string; weekOf?: string };
       if (!response.ok || !result.html) throw new Error(result.error || "Could not load resource.");
+      setResourceWeek(result.weekOf || "");
       window.dispatchEvent(new CustomEvent("sm-theme-real-preview", { detail: { html: result.html } }));
     } catch (error) { setPreviewError(error instanceof Error ? error.message : "Could not load resource."); }
     finally { setPreviewLoading(false); }
   }
+  useEffect(() => { if (new URLSearchParams(location.search).get("church")) void loadProductionResource(); }, [resourceKind, churchName]);
   function showSample() { window.dispatchEvent(new CustomEvent("sm-theme-real-preview", { detail: { html: "" } })); setPreviewError(""); }
   return <div className="resource-canvas-wrap" data-preview-mode={previewMode}>
-    <div className="canvas-toolbar"><strong>Resource preview</strong><span>Sample or existing production resource</span></div>
+    <div className="canvas-toolbar"><strong>Resource preview</strong><span>{resourceWeek ? "Most recent sermon · " + resourceWeek : "Sample / latest sermon"}</span></div>
     <div style={{ display: "flex", flexWrap: "wrap", alignItems: "end", gap: 8, margin: "12px 0" }}>
-      <label><span>Production job ID</span><input aria-label="Production job ID" value={jobId} onChange={(event) => setJobId(event.target.value)} placeholder="Paste job ID" /></label>
       <label><span>Resource</span><select aria-label="Resource type" value={resourceKind} onChange={(event) => setResourceKind(event.target.value)}><option value="monday">Monday</option><option value="group">Group</option><option value="family">Family</option><option value="midweek">Midweek</option></select></label>
-      <button type="button" className="secondary" disabled={!jobId.trim() || previewLoading} onClick={loadProductionResource}>{previewLoading ? "Loading…" : "Load resource"}</button>
+      <button type="button" className="secondary" disabled={previewLoading} onClick={loadProductionResource}>{previewLoading ? "Loading…" : "Load resource"}</button>
       <button type="button" className="secondary" onClick={showSample}>Use sample</button>
     </div>
     {previewError && <p role="alert" className="error">{previewError}</p>
