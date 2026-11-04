@@ -50,16 +50,16 @@
     "scriptureTextColor": "#4d4d4d",
     "questionBackgroundColor": "#f5f7f5",
     "questionTextColor": "#4d4d4d",
-    "prayerBackgroundColor": "#52c2c6",
-    "prayerTextColor": "#4d4d4d",
-    "headingFont": "Inter, Arial, sans-serif",
-    "bodyFont": "Inter, Arial, sans-serif",
+    "prayerBackgroundColor": "#85c5c7",
+    "prayerTextColor": "#fafafa",
+    "headingFont": "Arial, Helvetica, sans-serif",
+    "bodyFont": "Arial, Helvetica, sans-serif",
     "headingWeight": "800",
     "headingTransform": "uppercase",
     "cornerRadius": "0px",
     "pageWidth": "840px",
     "pagePadding": "56px",
-    "sectionSpacing": "38px",
+    "sectionSpacing": "30px",
     "buttonStyle": "square",
     "headerStyle": "split",
     "logoPosition": "right",
@@ -85,7 +85,15 @@
         "filename": "logo_shape.png",
         "r2Key": "churches/lowcountry-community-church/brand/reverse-logo_shape.png"
       }
-    ]
+    ],
+    "headingTreatment": "default",
+    "headingTreatmentScope": "selected",
+    "headingTreatmentSections": "big-idea,tension,practice",
+    "headingHighlightColor": "#52c2c6",
+    "buttonBackgroundColor": "",
+    "buttonTextColor": "",
+    "buttonHoverColor": "",
+    "buttonBorderColor": ""
   },
   "sources": "churches/lowcountry-community-church/sources/streaming.json"
 }
