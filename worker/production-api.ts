@@ -1,6 +1,6 @@
 import { PRODUCTION_CHURCHES } from "./generated/church-registry";
 import { generateCanonicalSermonAnalysis, type CanonicalSermonAnalysis, type NormalizedTeachingSource, type TeachingSourceType } from "./sermon-analysis";
-import { injectBsbScripture, injectScriptureReferenceLink, resolveBsbPassage, type ScripturePreferences } from "./scripture-service";
+import { injectBsbScripture, injectScriptureReferenceLink, resolveBsbPassage, DEFAULT_SCRIPTURE_PREFERENCES, type ScripturePreferences } from "./scripture-service";
 import { extractTeachingSourceText, MAX_TOTAL_SUPPLEMENTAL_CHARACTERS } from "./teaching-source-extraction";
 import { loadAnalysisReviewFeedback } from "./analysis-review-api";
 import {
@@ -191,7 +191,19 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
     let body: ReadableStream | string = object.body;
     const manifest = await loadManifest(env.BUCKET, previewMatch[1]);
     if (manifest) {
-      body = injectResourceHeaderMetadata(await object.text(), manifest.metadata, manifest.weekOf);
+      let html = await object.text();
+      if ((previewMatch[2] === "group" || previewMatch[2] === "family") && manifest.metadata.scripture) {
+        // Older resources may contain only a reference because the automatic
+        // length threshold was used when they were generated.
+        try {
+          const passage = await resolveBsbPassage(manifest.metadata.scripture);
+          html = injectBsbScripture(html, passage, { ...DEFAULT_SCRIPTURE_PREFERENCES, displayMode: "full_text" });
+        } catch (error) {
+          console.error("production_preview_scripture_injection_failed", error);
+          // Keep the original resource accessible if Scripture retrieval fails.
+        }
+      }
+      body = injectResourceHeaderMetadata(html, manifest.metadata, manifest.weekOf);
     }
     return new Response(body, {
       headers: {
@@ -511,7 +523,7 @@ async function generateProductionJobResources(request: Request, env: ProductionE
         html = injectScriptureReferenceLink(html, generated.metadata.scripture, church.scripture);
         validateMidweekV3Html(html);
       }
-      if (scripturePassage && (kind === "group" || kind === "family")) html = injectBsbScripture(html, scripturePassage, church.scripture);
+      if (scripturePassage && (kind === "group" || kind === "family")) html = injectBsbScripture(html, scripturePassage, { ...church.scripture, displayMode: "full_text" });
       preparedResources.push({ kind, html });
     }
 
