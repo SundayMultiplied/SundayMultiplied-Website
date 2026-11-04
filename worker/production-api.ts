@@ -12,7 +12,7 @@ import {
   type FamilyWorshipSong,
 } from "./family-resource";
 import { callOpenAiStructured } from "./openai-client.ts";
-import { injectResourceHeaderMetadata } from "./resource-metadata.ts";
+import { injectResourceHeaderMetadata, removeInternalReviewFooter } from "./resource-metadata.ts";
 import { resolveMidweekDeliveryPreferences, validateMidweekV3Html, type MidweekDeliveryPreferences } from "./midweek-resource.ts";
 
 export type ProductionEnv = {
@@ -203,7 +203,7 @@ export async function handleProductionApi(request: Request, env: ProductionEnv):
           // Keep the original resource accessible if Scripture retrieval fails.
         }
       }
-      body = injectResourceHeaderMetadata(html, manifest.metadata, manifest.weekOf);
+      body = removeInternalReviewFooter(injectResourceHeaderMetadata(html, manifest.metadata, manifest.weekOf));
     }
     return new Response(body, {
       headers: {
@@ -630,7 +630,7 @@ HTML CONTRACT
 - Group/Family include exactly one sm-section sm-section--scripture. Scripture reference uses sm-scripture-reference.
 - Group question clusters use sm-question-group with Understand, Reflect, Apply headings.
 - Practice may use sm-practice-scenario, sm-practice-task, sm-practice-share, sm-practice-debrief.
-- Footer inside sm-document: <footer class="sm-footer"><p>Sunday Multiplied</p></footer>.
+- Do not include a footer or any internal review / preparation status text in recipient-facing HTML.
 
 Return only the requested JSON structure.`;
 
@@ -655,7 +655,7 @@ Return only the requested JSON structure.`;
     },
   });
   const resources = Object.fromEntries(
-    Object.entries(parsed.resources).map(([kind, html]) => [kind, html ? injectResourceHeaderMetadata(html, metadata, weekOf) : html]),
+    Object.entries(parsed.resources).map(([kind, html]) => [kind, html ? removeInternalReviewFooter(injectResourceHeaderMetadata(html, metadata, weekOf)) : html]),
   ) as GeneratedPackage["resources"];
   return { metadata, resources, familyWorshipSong: parsed.familyWorshipSong };
 }
