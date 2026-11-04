@@ -189,7 +189,16 @@ function FontField({ label, value, onChange }: { label: string; value: string; o
 
 function ResourceCanvas({ churchName, brand, logoUrl }: { churchName: string; brand: ResolvedBrandProfile; logoUrl?: string }) {
   const srcDoc = useMemo(() => buildPreviewDocument(churchName, brand, logoUrl), [churchName, brand, logoUrl]);
-  return <div className="resource-canvas-wrap"><div className="canvas-toolbar"><strong>Full resource preview</strong><span>Group Multiplied · sample content</span></div><iframe title="Live resource theme preview" className="resource-canvas" srcDoc={srcDoc} /></div>;
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile" | "print">("desktop");
+  const widths = { desktop: "100%", mobile: "390px", print: "816px" };
+  return <div className="resource-canvas-wrap" data-preview-mode={previewMode}>
+    <div className="canvas-toolbar"><strong>Resource preview</strong><span>Group Multiplied · sample content</span></div>
+    <div role="group" aria-label="Preview screen size" style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "10px 0" }}>
+      {(["desktop", "mobile", "print"] as const).map((mode) => <button key={mode} type="button" className={previewMode === mode ? "primary" : "secondary"} aria-pressed={previewMode === mode} onClick={() => setPreviewMode(mode)}>{mode === "desktop" ? "Desktop" : mode === "mobile" ? "Mobile (390px)" : "Print page"}</button>)}
+    </div>
+    {previewMode === "print" && <p className="lede">Print page approximates US Letter width. Use browser Print Preview to verify pagination and print-specific styling.</p>}
+    <div style={{ width: "100%", overflowX: "auto" }}><iframe title={"Live resource theme preview — " + previewMode} className="resource-canvas" srcDoc={srcDoc} style={{ display: "block", width: widths[previewMode], maxWidth: previewMode === "desktop" ? "100%" : "none", minWidth: previewMode === "desktop" ? 0 : widths[previewMode], margin: previewMode === "desktop" ? 0 : "0 auto" }} /></div>
+  </div>;
 }
 
 function escapeHtml(value: string) { return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]!)); }
