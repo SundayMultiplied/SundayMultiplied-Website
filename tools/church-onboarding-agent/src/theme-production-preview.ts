@@ -192,6 +192,18 @@ function actualResourceDocument(html: string): string {
       if (/^on/i.test(attr.name)) node.removeAttribute(attr.name);
     });
   });
+  // Production HTML uses root-relative asset URLs (notably church logos).
+  // srcdoc iframes otherwise resolve them against onboarding.sundaymultiplied.com,
+  // where /api/resource-assets/... does not exist.
+  const productionOrigin = "https://sundaymultiplied.com";
+  doc.querySelectorAll("[src], [href]").forEach((element) => {
+    for (const attribute of ["src", "href"]) {
+      const value = element.getAttribute(attribute);
+      if (value?.startsWith("/") && !value.startsWith("//")) {
+        element.setAttribute(attribute, productionOrigin + value);
+      }
+    }
+  });
   const theme = doc.createElement("style");
   theme.textContent = css;
   doc.head.appendChild(theme);
