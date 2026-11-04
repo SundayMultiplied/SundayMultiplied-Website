@@ -53,16 +53,23 @@ export async function handleManualProductionImport(
   const validation = validateManualProductionImport(input, church);
   if (!validation.ok) return json({ error: validation.error }, 422);
 
+  const replaceJobId = clean(String(form.get("replaceJobId") || ""), 80);
   const duplicate = await findDuplicateManifest(env.BUCKET, input.churchSlug, input.weekOf);
-  if (duplicate) {
+  if (replaceJobId) {
+    if (!/^[a-zA-Z0-9-]{20,80}$/.test(replaceJobId)) return json({ error: "Invalid replacement job ID." }, 400);
+    if (!duplicate || duplicate.id !== replaceJobId) return json({ error: "The selected job does not match the ZIP church and sermon date. No changes were made." }, 409);
+    if (duplicate.status !== "ready_for_internal_review" || duplicate.reviewPackageId || duplicate.reviewUrl || duplicate.analysisReviewId) return json({ error: "This job is linked to a review or is not ready for internal review, so it cannot be replaced." }, 409);
+    if (form.get("confirmReplace") !== "yes") return json({ error: "Confirm replacement before uploading." }, 400);
+  }
+  if (duplicate && !replaceJobId) {
     return json({
       error: `A production job already exists for ${church.name} on ${input.weekOf}. Delete that job first if you intend to replace it.`,
       existingJobId: duplicate.id,
     }, 409);
   }
 
-  const id = crypto.randomUUID();
-  const createdAt = new Date().toISOString();
+  const id = replaceJobId || crypto.randomUUID();
+  const createdAt = replaceJobId && duplicate ? duplicate.createdAt : new Date().toISOString();
   const analysis = input.analysis;
   const controllingSourceId = analysis.source_authority?.controlling_source_id || `transcript-${id}`;
   const transcriptKey = `production/jobs/${id}/sources/${controllingSourceId}/${safeStorageName(input.transcriptFilename)}`;
@@ -129,7 +136,7 @@ export async function handleManualProductionImport(
   };
 
   await env.BUCKET.put(`production/manifests/${id}.json`, JSON.stringify(manifest, null, 2), { httpMetadata: { contentType: "application/json; charset=utf-8" } });
-  return json({ ok: true, job: manifest }, 201);
+  return json({ ok: true, job: manifest, replaced: Boolean(replaceJobId) }, replaceJobId ? 200 : 201);
 }
 
 async function parseIndividualImportForm(form: FormData): Promise<ManualProductionImport | Response> {
