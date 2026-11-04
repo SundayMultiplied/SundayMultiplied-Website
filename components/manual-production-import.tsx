@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 type ImportedJob = {
   id: string;
@@ -12,6 +12,13 @@ type ImportedJob = {
 
 export function ManualProductionImport() {
   const [saving, setSaving] = useState(false);
+  const [replacement, setReplacement] = useState<{ id: string; church: string; week: string } | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("replaceJobId");
+    if (id) setReplacement({ id, church: params.get("church") || "", week: params.get("week") || "" });
+  }, []);
   const [error, setError] = useState("");
   const [job, setJob] = useState<ImportedJob | null>(null);
 
@@ -23,6 +30,11 @@ export function ManualProductionImport() {
     setJob(null);
     try {
       const formData = new FormData(form);
+      if (replacement) {
+        if (!confirmed) throw new Error("Confirm replacement before uploading.");
+        formData.set("replaceJobId", replacement.id);
+        formData.set("confirmReplace", "yes");
+      }
       const response = await fetch("/api/production/import", { method: "POST", body: formData });
       const text = await response.text();
       let data: { error?: string; job?: ImportedJob } = {};
@@ -58,9 +70,15 @@ export function ManualProductionImport() {
 
       {error && <div className="approval-admin-error manual-import-message" role="alert"><strong>Import unavailable</strong><p>{error}</p></div>}
       {job && <div className="approval-notice manual-import-message manual-import-success" role="status">
-        <strong>Imported successfully.</strong> {job.churchName} · {job.metadata.sermonTitle || job.weekOf} is now in the Production queue and ready for internal review. <Link href="/production">Open Production</Link>
+        <strong>{replacement ? "Replaced successfully." : "Imported successfully."}</strong> {job.churchName} · {job.metadata.sermonTitle || job.weekOf} is now in the Production queue and ready for internal review. <Link href="/production">Open Production</Link>
       </div>}
 
+      {replacement && <div className="approval-notice manual-import-info">
+        <strong>Replace existing production job</strong>
+        <p>{replacement.church} · {replacement.week}</p>
+        <p>The ZIP must match this church and sermon date. Its transcript, analysis, and HTML overwrite the current internal resources while keeping the job ID. Jobs already sent for review cannot be replaced.</p>
+        <label><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /> I understand this overwrites the current resources.</label>
+      </div>}
       <form id="manual-production-import-form" className="manual-import-form" onSubmit={(event) => void submit(event)}>
         <div className="manual-import-upload">
           <label htmlFor="manual-production-package">Manual production package <span>.zip</span></label>
@@ -69,11 +87,11 @@ export function ManualProductionImport() {
         </div>
 
         <div className="approval-notice manual-import-info">
-          <strong>No AI call is made.</strong> The importer derives the church and sermon date from the package and rejects malformed packages, blocked fidelity audits, church/date mismatches, missing subscribed resources, obsolete Family/Midweek formats, embedded Group midweek sections, invalid worship links, and duplicate church/date jobs.
+          <strong>No AI call is made.</strong> The importer derives the church and sermon date from the package and rejects malformed packages, blocked fidelity audits, church/date mismatches, missing subscribed resources, obsolete Family/Midweek formats, embedded Group midweek sections, invalid worship links, and duplicate church/date jobs unless explicitly replacing the matching job.
         </div>
 
         <div className="manual-import-actions">
-          <button type="submit" className="manual-import-submit" disabled={saving}>{saving ? "Validating and importing…" : "Import into Production"}</button>
+          <button type="submit" className="manual-import-submit" disabled={saving || (Boolean(replacement) && !confirmed)}>{saving ? "Validating and saving…" : replacement ? "Replace production resources" : "Import into Production"}</button>
         </div>
       </form>
     </section>
