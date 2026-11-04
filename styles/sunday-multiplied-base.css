@@ -68,6 +68,8 @@ body { margin: 0; color: var(--sm-color-text); background: #eee9df; font-family:
 .sm-worship-connection { margin-top: 6px; }
 .sm-worship-link { display: inline-block; margin-top: 10px; padding: 11px 18px; color: #fff; background: var(--sm-color-primary); border-radius: var(--sm-corner-radius); font-size: 14px; font-weight: 800; text-decoration: none; }
 .sm-worship-link:hover, .sm-worship-link:focus-visible { background: var(--sm-color-accent); text-decoration: underline; }
+.sm-section--worship .sm-worship-link { display: table; width: fit-content; max-width: 100%; margin: 14px 0 10px; line-height: 1.35; white-space: normal; text-align: center; }
+.sm-section--worship .sm-worship-link:focus-visible { outline: 3px solid var(--sm-color-accent); outline-offset: 3px; }
 
 @media (max-width: 620px) {
   .sm-header-content { align-items: flex-start; flex-direction: column-reverse; gap: 24px; }
